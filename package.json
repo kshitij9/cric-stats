@@ -14,12 +14,17 @@
     "react-dom": "19.2.3"
   },
   "devDependencies": {
+    "@clickhouse/client": "^1.17.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "clsx": "^2.1.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "lucide-react": "^0.574.0",
+    "recharts": "^3.7.0",
+    "tailwind-merge": "^3.4.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
