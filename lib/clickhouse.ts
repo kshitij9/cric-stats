@@ -10,6 +10,8 @@ const clickhouse = createClient({
   clickhouse_settings: {
     full_column_types: 1,
   },
+  // Ensure the client doesn't try to reuse a broken socket
+  max_open_connections: 10,
 })
 
 export default clickhouse;
