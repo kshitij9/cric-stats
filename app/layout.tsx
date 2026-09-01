@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'CricIntell – Era-Aware Cricket Profiles',
-  description: 'Explore player matchups, era-adjusted performance, and multi-player comparisons powered by ClickHouse.',
+  description: 'Explore player matchups, era-adjusted performance, and multi-player comparisons powered by Postgres.',
   openGraph: {
     title: 'CricIntell – Era-Aware Cricket Profiles',
     description: 'Compare cricket greats across eras with advanced stats and visuals.',

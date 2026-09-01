@@ -1,25 +1,79 @@
 'use client';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useCricketStats } from '@/hooks/useCricketStats';
 import NavTabs from '@/components/NavTabs';
-import { BarChart3 } from 'lucide-react';
+import { BarChart3, Plus, X } from 'lucide-react';
+
+type Factor = {
+  key: string;
+  label: string;
+  unit: string;
+  get: (ctx: {
+    career: any | null;
+    profile: any | null;
+    eraAvg: number | null;
+  }) => number | null;
+};
+
+const FACTORS: Factor[] = [
+  { key: 'innings', label: 'Innings', unit: '', get: ({ career }) => career?.innings ?? null },
+  { key: 'runs', label: 'Runs', unit: '', get: ({ career }) => career?.runs ?? null },
+  { key: 'average', label: 'Average', unit: '', get: ({ career }) => career?.average ?? null },
+  { key: 'strike_rate', label: 'Strike Rate', unit: '', get: ({ career }) => career?.strike_rate ?? null },
+  { key: 'fours', label: 'Fours', unit: '', get: ({ career }) => career?.fours ?? null },
+  { key: 'sixes', label: 'Sixes', unit: '', get: ({ career }) => career?.sixes ?? null },
+  {
+    key: 'boundary_percent',
+    label: 'Boundary %',
+    unit: '%',
+    get: ({ profile }) => profile?.boundary_percent ?? null,
+  },
+  {
+    key: 'survival_rate',
+    label: 'Survival Rate',
+    unit: '%',
+    get: ({ profile }) => profile?.survival_rate ?? null,
+  },
+  {
+    key: 'balls_per_dismissal',
+    label: 'Balls / Dismissal',
+    unit: '',
+    get: ({ profile }) => profile?.balls_per_dismissal ?? null,
+  },
+  {
+    key: 'era_index',
+    label: 'Era Index (avg)',
+    unit: '×',
+    get: ({ eraAvg }) => eraAvg,
+  },
+];
+
+const DEFAULT_FACTOR_KEYS = ['innings', 'runs', 'average', 'strike_rate', 'era_index'];
+const DEFAULT_PLAYERS = ['V Kohli', 'RG Sharma', 'KS Williamson', 'SPD Smith'];
 
 export default function ComparePage() {
   const [format, setFormat] = useState<string>('ODI');
-  const [p1, setP1] = useState('V Kohli');
-  const [p2, setP2] = useState('RG Sharma');
-  const [p3, setP3] = useState('KS Williamson');
-  const [p4, setP4] = useState('SPD Smith');
+  const [players, setPlayers] = useState<string[]>(DEFAULT_PLAYERS);
+  const [factorKeys, setFactorKeys] = useState<string[]>(DEFAULT_FACTOR_KEYS);
 
-  const { data: c1 } = useCricketStats('career', p1);
-  const { data: c2 } = useCricketStats('career', p2);
-  const { data: c3 } = useCricketStats('career', p3);
-  const { data: c4 } = useCricketStats('career', p4);
+  const selectedFactors = useMemo(
+    () => FACTORS.filter((f) => factorKeys.includes(f.key)),
+    [factorKeys]
+  );
 
-  const { data: e1 } = useCricketStats('era', p1);
-  const { data: e2 } = useCricketStats('era', p2);
-  const { data: e3 } = useCricketStats('era', p3);
-  const { data: e4 } = useCricketStats('era', p4);
+  const updatePlayer = (index: number, value: string) => {
+    setPlayers((prev) => prev.map((p, i) => (i === index ? value : p)));
+  };
+
+  const addPlayer = () => setPlayers((prev) => [...prev, '']);
+
+  const removePlayer = (index: number) =>
+    setPlayers((prev) => prev.filter((_, i) => i !== index));
+
+  const toggleFactor = (key: string) =>
+    setFactorKeys((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    );
 
   return (
     <main className="min-h-screen bg-[#050505] text-zinc-100 p-4 md:p-12 font-sans">
@@ -31,18 +85,31 @@ export default function ComparePage() {
           <NavTabs />
         </div>
         <p className="text-sm text-zinc-500 max-w-2xl">
-          Line up multiple greats in the same format and compare their raw career numbers
-          plus average era index. Era index shows how a player&apos;s scoring rate compares
-          to the average batter in the same era and format.
+          Line up any number of players in the same format and compare them across any
+          combination of factors you pick below.
         </p>
       </header>
 
       <section className="max-w-7xl mx-auto bg-zinc-900 border border-zinc-800 rounded-3xl p-8 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <CompareInput label="Player 1" value={p1} onChange={setP1} />
-          <CompareInput label="Player 2" value={p2} onChange={setP2} />
-          <CompareInput label="Player 3" value={p3} onChange={setP3} />
-          <CompareInput label="Player 4" value={p4} onChange={setP4} />
+        <div>
+          <p className="text-xs text-zinc-500 mb-2">Players</p>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            {players.map((p, i) => (
+              <CompareInput
+                key={i}
+                label={`Player ${i + 1}`}
+                value={p}
+                onChange={(v) => updatePlayer(i, v)}
+                onRemove={players.length > 1 ? () => removePlayer(i) : undefined}
+              />
+            ))}
+          </div>
+          <button
+            onClick={addPlayer}
+            className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-sky-400 hover:text-sky-300 transition-colors"
+          >
+            <Plus size={14} /> Add player
+          </button>
         </div>
 
         <FormatPicker
@@ -51,25 +118,59 @@ export default function ComparePage() {
           onChange={setFormat}
         />
 
+        <div>
+          <p className="text-xs text-zinc-500 mb-2">Factors</p>
+          <div className="flex flex-wrap gap-2">
+            {FACTORS.map((f) => {
+              const active = factorKeys.includes(f.key);
+              return (
+                <button
+                  key={f.key}
+                  onClick={() => toggleFactor(f.key)}
+                  className={[
+                    'px-2.5 py-1 rounded-full border text-[11px] font-semibold transition-colors',
+                    active
+                      ? 'bg-sky-500/15 border-sky-500 text-sky-300'
+                      : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-sky-500/70 hover:text-sky-200',
+                  ].join(' ')}
+                >
+                  {f.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full text-xs md:text-sm">
             <thead>
               <tr className="text-zinc-500 border-b border-zinc-800">
                 <th className="py-2 pr-4 text-left font-semibold">Player</th>
-                <th className="py-2 px-4 text-right font-semibold">Innings</th>
-                <th className="py-2 px-4 text-right font-semibold">Runs</th>
-                <th className="py-2 px-4 text-right font-semibold">Avg</th>
-                <th className="py-2 px-4 text-right font-semibold">SR</th>
-                <th className="py-2 pl-4 text-right font-semibold">Era Index (avg)</th>
+                {selectedFactors.map((f) => (
+                  <th key={f.key} className="py-2 px-4 text-right font-semibold">
+                    {f.label}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
-              <CompareRow label={p1} career={c1} era={e1} format={format} />
-              <CompareRow label={p2} career={c2} era={e2} format={format} />
-              <CompareRow label={p3} career={c3} era={e3} format={format} />
-              <CompareRow label={p4} career={c4} era={e4} format={format} />
+              {players
+                .filter((p) => p.trim().length > 0)
+                .map((p, i) => (
+                  <CompareRow
+                    key={`${p}-${i}`}
+                    label={p}
+                    format={format}
+                    factors={selectedFactors}
+                  />
+                ))}
             </tbody>
           </table>
+          {selectedFactors.length === 0 && (
+            <p className="text-xs text-zinc-600 italic mt-4">
+              Pick at least one factor above to see numbers.
+            </p>
+          )}
         </div>
       </section>
     </main>
@@ -80,14 +181,27 @@ function CompareInput({
   label,
   value,
   onChange,
+  onRemove,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  onRemove?: () => void;
 }) {
   return (
     <div>
-      <p className="text-xs text-zinc-500 mb-1">{label}</p>
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-xs text-zinc-500">{label}</p>
+        {onRemove && (
+          <button
+            onClick={onRemove}
+            className="text-zinc-600 hover:text-red-400 transition-colors"
+            aria-label={`Remove ${label}`}
+          >
+            <X size={12} />
+          </button>
+        )}
+      </div>
       <input
         className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-2.5 px-3 text-sm focus:ring-2 focus:ring-sky-500 outline-none"
         value={value}
@@ -129,57 +243,75 @@ function FormatPicker({
 
 function CompareRow({
   label,
-  career,
-  era,
   format,
+  factors,
 }: {
   label: string;
-  career: any;
-  era: any;
   format: string;
+  factors: Factor[];
 }) {
-  const hasCareer = Array.isArray(career) && career.length > 0;
-  const row = hasCareer ? career.find((r: any) => r?.format === format) ?? null : null;
+  const { data: careerByFormat } = useCricketStats('career', label);
+  const { data: profileByFormat } = useCricketStats('player_full_profile', label);
+  const { data: eraData } = useCricketStats('era', label);
 
-  const eraAvg =
-    Array.isArray(era) && era.length
-      ? (() => {
-          const rows = era.filter((r: any) => r?.format === format);
-          return rows.length
-            ? rows.reduce((s: number, x: any) => s + x.era_index, 0) / rows.length
-            : null;
-        })()
-      : null;
+  const career = useMemo(() => {
+    if (!Array.isArray(careerByFormat)) return null;
+    return careerByFormat.find((r: any) => r?.format === format) ?? null;
+  }, [careerByFormat, format]);
 
-  if (!hasCareer && eraAvg == null) {
-    return null;
+  const profile = useMemo(() => {
+    if (!Array.isArray(profileByFormat)) return null;
+    return profileByFormat.find((r: any) => r?.format === format) ?? null;
+  }, [profileByFormat, format]);
+
+  const eraAvg = useMemo(() => {
+    if (!Array.isArray(eraData)) return null;
+    const rows = eraData.filter((r: any) => r?.format === format);
+    if (!rows.length) return null;
+    return rows.reduce((s: number, x: any) => s + Number(x.era_index ?? 0), 0) / rows.length;
+  }, [eraData, format]);
+
+  const hasAnyData = career != null || profile != null || eraAvg != null;
+
+  if (!hasAnyData) {
+    return (
+      <tr>
+        <td className="py-2 pr-4 font-semibold text-zinc-100">{label}</td>
+        <td
+          colSpan={Math.max(factors.length, 1)}
+          className="py-2 px-4 text-right text-zinc-600 italic"
+        >
+          No data for {format}
+        </td>
+      </tr>
+    );
   }
 
   return (
     <tr>
       <td className="py-2 pr-4 font-semibold text-zinc-100">{label}</td>
-      <td className="py-2 px-4 text-right">
-        {row ? row.innings : <span className="text-zinc-600">–</span>}
-      </td>
-      <td className="py-2 px-4 text-right">
-        {row ? row.runs : <span className="text-zinc-600">–</span>}
-      </td>
-      <td className="py-2 px-4 text-right">
-        {row ? row.average : <span className="text-zinc-600">–</span>}
-      </td>
-      <td className="py-2 px-4 text-right">
-        {row ? row.strike_rate : <span className="text-zinc-600">–</span>}
-      </td>
-      <td className="py-2 pl-4 text-right">
-        {eraAvg != null ? (
-          <span className="font-semibold text-emerald-400">
-            {eraAvg.toFixed(2)}×
-          </span>
-        ) : (
-          <span className="text-zinc-600">–</span>
-        )}
-      </td>
+      {factors.map((f) => {
+        const raw = f.get({ career, profile, eraAvg });
+        return (
+          <td key={f.key} className="py-2 px-4 text-right">
+            {raw != null ? (
+              f.key === 'era_index' ? (
+                <span className="font-semibold text-emerald-400">
+                  {Number(raw).toFixed(2)}
+                  {f.unit}
+                </span>
+              ) : (
+                <span>
+                  {Number(raw)}
+                  {f.unit}
+                </span>
+              )
+            ) : (
+              <span className="text-zinc-600">–</span>
+            )}
+          </td>
+        );
+      })}
     </tr>
   );
 }
-

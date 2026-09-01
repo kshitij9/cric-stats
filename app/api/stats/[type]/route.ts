@@ -1,73 +1,89 @@
 import { NextResponse } from 'next/server';
-import clickhouse from '@/lib/clickhouse';
+import { query } from '@/lib/db';
 
 // 1. Define your SQL Logic in a central object
-const QUERIES: Record<string, (params: URLSearchParams) => string> = {
-  player: (p) => `
-    SELECT * FROM cricket.player_stats 
-    WHERE player_name = '${p.get('name')}' 
-    LIMIT 1`,
-  
-    matchup: (p) => `
-      SELECT 
+const QUERIES: Record<string, (params: URLSearchParams) => { query: string; values: any[] }> = {
+  player: (p) => ({
+    query: `
+      SELECT * FROM player_stats
+      WHERE player_name = $1
+      LIMIT 1`,
+    values: [p.get('name')],
+  }),
+
+  matchup: (p) => ({
+    query: `
+      SELECT
           bowler,
-          count() as balls,
-          sum(runs_batter) as runs,
-          countIf(wicket_type != '') as dismissals,
-          round(sum(runs_batter) * 100 / count(), 2) as strike_rate
-      FROM cricket.deliveries
-      WHERE batter = '${p.get('name')}'
+          COUNT(*) AS balls,
+          SUM(runs_batter) AS runs,
+          COUNT(*) FILTER (WHERE wicket_type != '') AS dismissals,
+          ROUND((SUM(runs_batter)::numeric * 100 / NULLIF(COUNT(*), 0)), 2) AS strike_rate
+      FROM deliveries
+      WHERE batter = $1
       GROUP BY bowler
-      HAVING balls > 15
+      HAVING COUNT(*) > 15
       ORDER BY dismissals DESC, strike_rate ASC
       LIMIT 5
     `,
-  
-    era: (p) => `
-    SELECT 
-        p.year,
-        p.format,
-        round(p.sr / e.avg_strike_rate, 2) as era_index
-    FROM (
-        SELECT 
-            toYear(date) as year, 
-            format, 
-            sum(runs_batter) * 100 / count() as sr
-        FROM cricket.deliveries
-        WHERE batter = '${p.get('name')}'
-        GROUP BY year, format
-    ) AS p
-    JOIN cricket.era_averages AS e ON p.year = e.year AND p.format = e.format
-    ORDER BY year ASC
-  `,
+    values: [p.get('name')],
+  }),
 
-  career: (p) => `
-    SELECT 
-        player_name,
-        format,
-        sum(innings_played) as innings,
-        sum(runs_scored) as runs,
-        round(sum(runs_scored) / IF(sum(outs) = 0, 1, sum(outs)), 2) as average,
-        round(sum(runs_scored) * 100 / IF(sum(balls_faced) = 0, 1, sum(balls_faced)), 2) as strike_rate,
-        sum(fours) as fours,
-        sum(sixes) as sixes
-    FROM cricket.player_career_stats
-    WHERE player_name = '${p.get('name')}'
-    GROUP BY player_name, format
-  `,
-  player_full_profile: (p) => `
-    SELECT 
-        player_name,
-        format,
-        round(sum(runs_scored) / IF(sum(outs) = 0, 1, sum(outs)), 2) as average,
-        round(sum(runs_scored) * 100 / sum(balls_faced), 2) as strike_rate,
-        round(sum(fours * 4 + sixes * 6) * 100 / sum(runs_scored), 1) as boundary_percent,
-        round(sum(balls_faced) / IF(sum(outs) = 0, 1, sum(outs)), 1) as balls_per_dismissal,
-        round((1 - (sum(outs) / sum(innings_played))) * 100, 1) as survival_rate
-    FROM cricket.player_career_stats
-    WHERE player_name = '${p.get('name')}'
-    GROUP BY player_name, format
-  `
+  era: (p) => ({
+    query: `
+      SELECT
+          p.year,
+          p.format,
+          ROUND((p.sr / e.avg_strike_rate)::numeric, 2) AS era_index
+      FROM (
+          SELECT
+              EXTRACT(YEAR FROM date)::int AS year,
+              format,
+              (SUM(runs_batter)::numeric * 100 / NULLIF(COUNT(*), 0)) AS sr
+          FROM deliveries
+          WHERE batter = $1
+          GROUP BY year, format
+      ) AS p
+      JOIN era_averages AS e ON p.year = e.year AND p.format = e.format
+      ORDER BY year ASC
+    `,
+    values: [p.get('name')],
+  }),
+
+  career: (p) => ({
+    query: `
+      SELECT
+          player_name,
+          format,
+          SUM(innings_played) AS innings,
+          SUM(runs_scored) AS runs,
+          ROUND(SUM(runs_scored)::numeric / NULLIF(SUM(outs), 0), 2) AS average,
+          ROUND(SUM(runs_scored)::numeric * 100 / NULLIF(SUM(balls_faced), 0), 2) AS strike_rate,
+          SUM(fours) AS fours,
+          SUM(sixes) AS sixes
+      FROM player_career_stats
+      WHERE player_name = $1
+      GROUP BY player_name, format
+    `,
+    values: [p.get('name')],
+  }),
+
+  player_full_profile: (p) => ({
+    query: `
+      SELECT
+          player_name,
+          format,
+          ROUND(SUM(runs_scored)::numeric / NULLIF(SUM(outs), 0), 2) AS average,
+          ROUND(SUM(runs_scored)::numeric * 100 / NULLIF(SUM(balls_faced), 0), 2) AS strike_rate,
+          ROUND(SUM(fours * 4 + sixes * 6)::numeric * 100 / NULLIF(SUM(runs_scored), 0), 1) AS boundary_percent,
+          ROUND(SUM(balls_faced)::numeric / NULLIF(SUM(outs), 0), 1) AS balls_per_dismissal,
+          ROUND((1 - (SUM(outs)::numeric / NULLIF(SUM(innings_played), 0))) * 100, 1) AS survival_rate
+      FROM player_career_stats
+      WHERE player_name = $1
+      GROUP BY player_name, format
+    `,
+    values: [p.get('name')],
+  }),
 };
 
 export async function GET(
@@ -80,9 +96,8 @@ export async function GET(
   if (!QUERIES[type]) return NextResponse.json({ error: 'Invalid type' }, { status: 404 });
 
   try {
-    const query = QUERIES[type](searchParams);
-    const resultSet = await clickhouse.query({ query, format: 'JSONEachRow' });
-    const data = await resultSet.json();
+    const { query: sql, values } = QUERIES[type](searchParams);
+    const data = await query(sql, values);
     return NextResponse.json(data);
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
