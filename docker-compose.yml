@@ -30,7 +30,8 @@ services:
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER:-cricket}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-cricket}
     ports:
-      - "3000:3000"
+      # host 3000 is already taken by the "homepage" container on this box
+      - "3001:3000"
 
 volumes:
   pgdata:

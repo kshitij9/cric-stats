@@ -8,6 +8,7 @@ const TABS = [
   { href: '/player', label: 'Player Profile' },
   { href: '/duel', label: 'Era Duel' },
   { href: '/compare', label: 'Multi-Player Compare' },
+  { href: '/recommend', label: 'Recommend' },
 ];
 
 export default function NavTabs() {

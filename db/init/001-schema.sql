@@ -1,6 +1,36 @@
 -- Postgres auto-runs any *.sql placed here on first container start
--- (only when the data directory is empty).
+-- (only when the data directory is empty). db/etl/run.sh also pipes this file
+-- through psql before every load, so an existing volume picks up changes here
+-- too -- every statement is written to be idempotent.
 
+-- ---------------------------------------------------------------------------
+-- matches: one row per match, the context the ball-by-ball feed hangs off.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS matches (
+    match_id        TEXT PRIMARY KEY,
+    date            DATE NOT NULL,
+    format          TEXT NOT NULL,
+    venue           TEXT,
+    city            TEXT,
+    event           TEXT,
+    season          TEXT,
+    team_type       TEXT,
+    gender          TEXT,
+    team1           TEXT,
+    team2           TEXT,
+    toss_winner     TEXT,
+    toss_decision   TEXT,          -- 'bat' | 'field'
+    winner          TEXT,          -- NULL for tie / no result / draw
+    result_margin   TEXT,          -- '7 wickets', '45 runs', 'tie', ...
+    player_of_match TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_matches_venue  ON matches (venue);
+CREATE INDEX IF NOT EXISTS idx_matches_format ON matches (format);
+
+-- ---------------------------------------------------------------------------
+-- deliveries: ball-by-ball. A handful of match/innings context columns are
+-- denormalised on here so the hot-path stat queries never need a join.
+-- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS deliveries (
     id            BIGSERIAL PRIMARY KEY,
     match_id      TEXT      NOT NULL,
@@ -15,12 +45,29 @@ CREATE TABLE IF NOT EXISTS deliveries (
     runs_batter   SMALLINT  NOT NULL DEFAULT 0,
     extras        SMALLINT  NOT NULL DEFAULT 0,
     extras_type   TEXT      NOT NULL DEFAULT '',
-    wicket_type   TEXT      NOT NULL DEFAULT ''
+    wicket_type   TEXT      NOT NULL DEFAULT '',
+    player_out    TEXT      NOT NULL DEFAULT '',    -- who was dismissed (striker OR non-striker on run-outs)
+    venue         TEXT      NOT NULL DEFAULT '',
+    batting_team  TEXT      NOT NULL DEFAULT '',
+    bowling_team  TEXT      NOT NULL DEFAULT '',
+    phase         TEXT      NOT NULL DEFAULT 'na',  -- powerplay | middle | death | na (Tests)
+    gender        TEXT      NOT NULL DEFAULT ''     -- 'male' | 'female' (from matches)
 );
 
--- Every stats query filters deliveries by batter first, then aggregates
--- (matchup groups by bowler, era groups by year/format) — one index covers both.
-CREATE INDEX IF NOT EXISTS idx_deliveries_batter ON deliveries (batter);
+-- pre-existing volumes: backfill the columns added after the first cut
+ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS player_out   TEXT NOT NULL DEFAULT '';
+ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS venue        TEXT NOT NULL DEFAULT '';
+ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS batting_team TEXT NOT NULL DEFAULT '';
+ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS bowling_team TEXT NOT NULL DEFAULT '';
+ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS phase        TEXT NOT NULL DEFAULT 'na';
+ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS gender       TEXT NOT NULL DEFAULT '';
+
+-- Every stats query filters deliveries by batter first, then aggregates.
+CREATE INDEX IF NOT EXISTS idx_deliveries_batter        ON deliveries (batter);
+CREATE INDEX IF NOT EXISTS idx_deliveries_batter_bowler ON deliveries (batter, bowler);
+CREATE INDEX IF NOT EXISTS idx_deliveries_batter_venue  ON deliveries (batter, venue);
+-- recommender discovery mode scans a whole (format, gender) slice
+CREATE INDEX IF NOT EXISTS idx_deliveries_fmt_gender    ON deliveries (format, gender);
 
 CREATE TABLE IF NOT EXISTS player_career_stats (
     player_name     TEXT    NOT NULL,

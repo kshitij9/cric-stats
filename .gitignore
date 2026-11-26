@@ -37,6 +37,11 @@ yarn-error.log*
 # vercel
 .vercel
 
+# cricsheet ETL working dir (downloads + generated CSVs)
+/db/etl/_etl/
+/db/etl/_etl.log
+__pycache__/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
