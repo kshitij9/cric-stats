@@ -9,12 +9,30 @@ Written 26 November 2026.
 | 0. Protect what exists | Done 26 November 2026 |
 | 1. Safe, repeatable loading | Done 26 November 2026 |
 | 2. Store the data correctly | Done 26 November 2026; tier A venue merges approved, B and C not yet reviewed |
-| 3 to 6 | Not started |
+| 3. Define each stat once | Done 26 November 2026 |
+| 4 to 6 | Not started |
+
+Notes from step 3:
+
+- **The screens show no data on this branch until step 4.** They still send
+  player names; the APIs now require player IDs and a format.
+- Step 4 changes to make: pass player IDs and venue IDs (a venue picker is needed
+  as well as the player search); rename `survival_rate` to `not_out_percent`; use
+  the career `era_index` from the API; the recommender now returns `player_id`.
+- Which balls and wickets count is defined by generated columns in
+  `db/init/001-schema.sql`; `lib/stats.ts` turns counts into rates.
+- `db/etl/verify_stats.py` checks a candidate app against the source files. On
+  the September data it found no differences in 24,834 values (377 player and
+  format pairs, plus every career row and era baseline). It covers much of step
+  5's player checks.
+- The recommender takes about 1.5 to 1.9 seconds for a whole-format search,
+  against about 0.9 before, because dismissals are now counted from `wickets`.
+- Test the app with the image `cric-stats-app:candidate` against `cricket_next`.
 
 Notes from step 2:
 
-- `cricket_next` holds the September data in the new tables. `verify.py` found no
-  differences from the source files in any of 20,949 innings.
+- `cricket_next` holds the September data in the new tables, with 460 grounds.
+  `verify.py` found no differences from the source files in any of 20,949 innings.
 - Tier A venue merges are approved. To accept B or C rows later, mark them `y` in
   `db/venues/venue_merges.csv` (or use
   `db/venues/propose_merges.py --approve B,C --groups N`), then run
@@ -23,10 +41,6 @@ Notes from step 2:
   Premier League, a decision Cricsheet explains at
   <https://cricsheet.org/withheld-matches>. Step 4's coverage note must say so,
   and the predictor cannot rate Afghanistan from this source.
-- For step 3: `deliveries.extras_type`, `wicket_type` and `player_out` are kept so
-  the current queries still work. Move the queries to the new columns and the
-  `wickets` table, then drop them. Career rows already use the new counting rules.
-  `era_averages` still uses the old definition.
 - For step 4: only some players have a full first name to search by (about 4 in
   10, counting names that already include one).
 - `players.name` comes from Cricsheet's register and can be a former name (e.g.

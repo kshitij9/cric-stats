@@ -84,16 +84,16 @@ WHERE c.runs IS DISTINCT FROM d.runs
 UNION ALL
 SELECT format('dismissals differ: %s in career table, %s in wickets', c.n, w.n)
 FROM (SELECT coalesce(sum(outs), 0) AS n FROM player_career_stats) c,
-     (SELECT count(*) AS n FROM wickets
-       WHERE kind NOT IN ('retired hurt', 'retired not out')) w
+     (SELECT count(*) AS n FROM wickets WHERE dismissal) w
 WHERE c.n <> w.n
 
 UNION ALL
-SELECT format('no era average for %s %s', d.format, d.year)
-FROM (SELECT DISTINCT extract(year FROM date)::int AS year, format
-      FROM deliveries) d
+SELECT format('no era average for %s %s %s', d.gender, d.format, d.year)
+FROM (SELECT DISTINCT extract(year FROM date)::int AS year, format, gender
+      FROM deliveries WHERE ball_faced) d
 WHERE NOT EXISTS (SELECT 1 FROM era_averages e
-                  WHERE e.year = d.year AND e.format = d.format)
+                  WHERE e.year = d.year AND e.format = d.format
+                    AND e.gender = d.gender)
 
 UNION ALL
 SELECT format('latest match is dated in the future: %s', max(date))

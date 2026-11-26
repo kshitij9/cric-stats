@@ -86,9 +86,9 @@ CREATE TABLE IF NOT EXISTS match_players (
 -- denormalised on here so the hot-path stat queries never need a join.
 -- Super overs are not included.
 --
--- extras_type, wicket_type and player_out describe only the FIRST extra and
--- wicket of a ball. They remain until the app's queries move to the columns
--- below and to the wickets table.
+-- ball_faced, legal_ball, bowler_runs (and dismissal, bowlers_wicket in wickets)
+-- are computed here so that every query counts by the same rules. lib/stats.ts
+-- turns the counts into rates.
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS deliveries (
     id             BIGINT    PRIMARY KEY,
@@ -112,9 +112,9 @@ CREATE TABLE IF NOT EXISTS deliveries (
     byes           SMALLINT  NOT NULL DEFAULT 0,
     legbyes        SMALLINT  NOT NULL DEFAULT 0,
     penalty        SMALLINT  NOT NULL DEFAULT 0,
-    extras_type    TEXT      NOT NULL DEFAULT '',
-    wicket_type    TEXT      NOT NULL DEFAULT '',
-    player_out     TEXT      NOT NULL DEFAULT '',
+    ball_faced     BOOLEAN   GENERATED ALWAYS AS (wides = 0) STORED,
+    legal_ball     BOOLEAN   GENERATED ALWAYS AS (wides = 0 AND noballs = 0) STORED,
+    bowler_runs    SMALLINT  GENERATED ALWAYS AS (runs_batter + wides + noballs) STORED,
     venue          TEXT      NOT NULL DEFAULT '',
     venue_id       TEXT,
     batting_team   TEXT      NOT NULL DEFAULT '',
@@ -135,6 +135,11 @@ CREATE TABLE IF NOT EXISTS wickets (
     player_out_id TEXT     NOT NULL,
     player_out    TEXT     NOT NULL,
     kind          TEXT     NOT NULL,
+    dismissal     BOOLEAN  GENERATED ALWAYS AS (
+                      kind NOT IN ('retired hurt', 'retired not out')) STORED,
+    bowlers_wicket BOOLEAN GENERATED ALWAYS AS (
+                      kind IN ('bowled', 'caught', 'caught and bowled', 'lbw',
+                               'stumped', 'hit wicket')) STORED,
     PRIMARY KEY (delivery_id, wicket_no)
 );
 
@@ -155,15 +160,13 @@ CREATE TABLE IF NOT EXISTS player_career_stats (
     PRIMARY KEY (player_id, format, season)
 );
 
+-- the scoring rate of an average batter, for the era index
 CREATE TABLE IF NOT EXISTS era_averages (
     year            INTEGER      NOT NULL,
     format          TEXT         NOT NULL,
-    avg_strike_rate NUMERIC(6,2) NOT NULL,
-    PRIMARY KEY (year, format)
+    gender          TEXT         NOT NULL,
+    runs            INTEGER      NOT NULL,  -- off the bat
+    balls           INTEGER      NOT NULL,  -- faced
+    avg_strike_rate NUMERIC(6,2) NOT NULL,  -- runs per 100 balls faced
+    PRIMARY KEY (year, format, gender)
 );
-
--- player_stats intentionally NOT created: app/api/stats/[type]/route.ts's
--- "player" query type is dead code (never called from the frontend),
--- does SELECT *, and its real shape is unknown. GET /api/stats/player
--- will error until either the shape becomes known (add a migration) or
--- the dead "player" entry is removed from QUERIES.

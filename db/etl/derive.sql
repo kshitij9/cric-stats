@@ -22,9 +22,10 @@ UPDATE match_players p SET player_id = s.new_player_id
 -- ---------------------------------------------------------------------------
 -- player_career_stats: one row per player, format and calendar year.
 --   innings   batted, ran as non-striker, or was dismissed without doing either
---   balls     deliveries faced, not counting wides
---   outs      every wicket kind except retired hurt and retired not out
+--   balls     balls faced
+--   outs      dismissals
 --   fours/sixes  boundaries only; all-run fours and sixes are runs, not these
+-- (what is a ball faced or a dismissal is defined in db/init/001-schema.sql)
 -- ---------------------------------------------------------------------------
 WITH appearances AS (
     SELECT batter_id AS player_id, match_id, innings, format, date FROM deliveries
@@ -41,7 +42,7 @@ innings AS (
 batting AS (
     SELECT batter_id AS player_id, format, extract(year FROM date)::int AS season,
            sum(runs_batter)                                     AS runs,
-           count(*) FILTER (WHERE wides = 0)                    AS balls,
+           count(*) FILTER (WHERE ball_faced)                   AS balls,
            count(*) FILTER (WHERE boundary AND runs_batter = 4) AS fours,
            count(*) FILTER (WHERE boundary AND runs_batter = 6) AS sixes
       FROM deliveries GROUP BY 1, 2, 3
@@ -50,7 +51,7 @@ dismissals AS (
     SELECT w.player_out_id AS player_id, d.format,
            extract(year FROM d.date)::int AS season, count(*) AS outs
       FROM wickets w JOIN deliveries d ON d.id = w.delivery_id
-     WHERE w.kind NOT IN ('retired hurt', 'retired not out')
+     WHERE w.dismissal
      GROUP BY 1, 2, 3
 )
 INSERT INTO player_career_stats (player_id, player_name, format, season,
@@ -64,14 +65,16 @@ SELECT i.player_id, p.name, i.format, i.season, i.n,
   LEFT JOIN dismissals o USING (player_id, format, season);
 
 -- ---------------------------------------------------------------------------
--- era_averages: runs off the bat per 100 deliveries, by year and format.
+-- era_averages: runs off the bat per 100 balls faced, by year, format and gender.
 -- ---------------------------------------------------------------------------
-INSERT INTO era_averages (year, format, avg_strike_rate)
-SELECT extract(year FROM date)::int, format,
-       round(sum(runs_batter)::numeric * 100 / nullif(count(*), 0), 2)
+INSERT INTO era_averages (year, format, gender, runs, balls, avg_strike_rate)
+SELECT extract(year FROM date)::int, format, gender,
+       sum(runs_batter),
+       count(*) FILTER (WHERE ball_faced),
+       round(sum(runs_batter)::numeric * 100 / count(*) FILTER (WHERE ball_faced), 2)
   FROM deliveries
- GROUP BY 1, 2
-HAVING count(*) > 0;
+ GROUP BY 1, 2, 3
+HAVING count(*) FILTER (WHERE ball_faced) > 0;
 
 ANALYZE venues;
 ANALYZE venue_aliases;

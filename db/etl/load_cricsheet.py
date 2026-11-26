@@ -74,8 +74,8 @@ TABLES = {
         "id", "match_id", "date", "format", "innings", "over", "ball",
         "batter", "batter_id", "non_striker", "non_striker_id", "bowler",
         "bowler_id", "runs_batter", "boundary", "extras", "wides", "noballs",
-        "byes", "legbyes", "penalty", "extras_type", "wicket_type",
-        "player_out", "venue", "venue_id", "batting_team", "bowling_team",
+        "byes", "legbyes", "penalty", "venue", "venue_id", "batting_team",
+        "bowling_team",
         "phase", "powerplay", "gender", "team_type"],
     "wickets": ["delivery_id", "wicket_no", "player_out_id", "player_out", "kind"],
     "match_players": ["match_id", "team", "player_id", "player_name"],
@@ -529,7 +529,6 @@ def main():
                         if wickets is None and "wicket" in dl:
                             wickets = [dl["wicket"]]
                         wickets = wickets or []
-                        first = wickets[0] if wickets else {}
 
                         delivery_id = counts["deliveries"] + 1
                         boundary = runs_batter in (4, 6) and not runs.get("non_boundary")
@@ -543,8 +542,7 @@ def main():
                             runs_batter, "t" if boundary else "f", extras_total,
                             *(extras.get(k, 0) for k in
                               ("wides", "noballs", "byes", "legbyes", "penalty")),
-                            next(iter(extras), ""), first.get("kind", ""),
-                            first.get("player_out", ""), venue, vid,
+                            venue, vid,
                             batting_team, bowling_team, ph, powerplay, gender,
                             team_type,
                         ])

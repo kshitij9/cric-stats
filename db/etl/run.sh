@@ -142,7 +142,7 @@ psql -c 'CREATE TABLE etl_staging._player_splits (player_id text, gender text, n
 # table -> text columns where an empty CSV field means '' rather than NULL
 declare -A KEEP_EMPTY=(
   [matches]=''
-  [deliveries]='extras_type, wicket_type, player_out, venue, batting_team, bowling_team, phase, powerplay, gender, team_type'
+  [deliveries]='venue, batting_team, bowling_team, phase, powerplay, gender, team_type'
   [wickets]='player_out, kind'
   [match_players]='team'
   [players]='gender'
