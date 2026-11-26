@@ -9,6 +9,7 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from 'recharts';
+import type { Career, Format } from '@/lib/types';
 
 type RadarMetric = {
   metric: string;
@@ -27,7 +28,7 @@ function maxesForFormat(format: string) {
       return {
         strike_rate: 200,
         boundary_percent: 80,
-        survival_rate: 40,
+        not_out_percent: 40,
         balls_per_dismissal: 45,
         era_index: 1.8,
       };
@@ -35,7 +36,7 @@ function maxesForFormat(format: string) {
       return {
         strike_rate: 85,
         boundary_percent: 65,
-        survival_rate: 40,
+        not_out_percent: 40,
         balls_per_dismissal: 140,
         era_index: 1.6,
       };
@@ -44,7 +45,7 @@ function maxesForFormat(format: string) {
       return {
         strike_rate: 150,
         boundary_percent: 75,
-        survival_rate: 40,
+        not_out_percent: 40,
         balls_per_dismissal: 90,
         era_index: 1.7,
       };
@@ -59,29 +60,27 @@ function toScore(raw: number | null | undefined, max: number) {
 export default function PlayerRadar({
   format,
   profile,
-  eraIndexAvg,
 }: {
-  format: string;
-  profile: any | null;
-  eraIndexAvg: number | null;
+  format: Format;
+  profile: Career | null;
 }) {
   if (!profile) {
     return (
       <div className="h-[320px] flex items-center justify-center text-zinc-500 italic">
-        No profile data available for this player...
+        No batting data for this player in this format.
       </div>
     );
   }
 
   const maxes = maxesForFormat(format);
 
-  const boundaryPercent =
-    profile.boundary_percent != null ? Number(profile.boundary_percent) : null;
-  const strikeRate = profile.strike_rate != null ? Number(profile.strike_rate) : null;
-  const survivalRate =
-    profile.survival_rate != null ? Number(profile.survival_rate) : null;
-  const ballsPerDismissal =
-    profile.balls_per_dismissal != null ? Number(profile.balls_per_dismissal) : null;
+  const {
+    boundary_percent: boundaryPercent,
+    strike_rate: strikeRate,
+    not_out_percent: notOutPercent,
+    balls_per_dismissal: ballsPerDismissal,
+    era_index: eraIndex,
+  } = profile;
 
   const metrics: RadarMetric[] = [
     {
@@ -97,9 +96,9 @@ export default function PlayerRadar({
       unit: '',
     },
     {
-      metric: 'Survival Rate',
-      score: toScore(survivalRate, maxes.survival_rate),
-      raw: survivalRate,
+      metric: 'Not-out %',
+      score: toScore(notOutPercent, maxes.not_out_percent),
+      raw: notOutPercent,
       unit: '%',
     },
     {
@@ -109,9 +108,9 @@ export default function PlayerRadar({
       unit: '',
     },
     {
-      metric: 'Era Index (avg)',
-      score: toScore(eraIndexAvg, maxes.era_index),
-      raw: eraIndexAvg,
+      metric: 'Era Index',
+      score: toScore(eraIndex, maxes.era_index),
+      raw: eraIndex,
       unit: '×',
     },
   ];
@@ -137,7 +136,7 @@ export default function PlayerRadar({
               border: '1px solid #27272a',
               borderRadius: '12px',
             }}
-            formatter={(value: any, _name: any, ctx: any) => {
+            formatter={(_value, _name, ctx) => {
               const raw = ctx?.payload?.raw;
               const unit = ctx?.payload?.unit ?? '';
               if (raw == null) return ['–', ''];

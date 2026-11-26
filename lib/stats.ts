@@ -1,4 +1,6 @@
+import { careerSpans } from '@/lib/coverage';
 import { query } from '@/lib/db';
+import type { Format } from '@/lib/types';
 
 /**
  * What each statistic means. Every screen and the recommender use these.
@@ -24,8 +26,8 @@ import { query } from '@/lib/db';
  * is total runs over total expected runs, so each year weighs by its balls.
  */
 
-export const FORMATS = ['Test', 'ODI', 'T20'] as const;
-export type Format = (typeof FORMATS)[number];
+export type { Format };
+export const FORMATS: readonly Format[] = ['Test', 'ODI', 'T20'];
 
 export const isFormat = (value: string): value is Format =>
   (FORMATS as readonly string[]).includes(value);
@@ -149,14 +151,22 @@ export async function career(player: Player, format: Format) {
     [player.player_id, format],
   );
   if (!counts) return null;
-  const years = await eraYears(player.player_id, format);
+  const [years, spans] = await Promise.all([
+    eraYears(player.player_id, format),
+    careerSpans([player.player_id], format),
+  ]);
+  const span = spans.get(player.player_id);
   return {
     player_id: player.player_id,
+    name: player.name,
     player_name: player.name,
     unique_name: player.unique_name,
     format,
     ...battingFigures(counts),
     era_index: eraIndex(total(years, 'runs'), total(years, 'expected_runs')),
+    first_match: span?.first_match ?? null,
+    last_match: span?.last_match ?? null,
+    may_be_incomplete: span?.may_be_incomplete ?? false,
   };
 }
 

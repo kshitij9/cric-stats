@@ -1,7 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import IncompleteMark from '@/components/IncompleteMark';
 import NavTabs from '@/components/NavTabs';
+import PlayerSearch from '@/components/PlayerSearch';
+import VenueSearch from '@/components/VenueSearch';
+import { KOHLI, SHARMA, WILLIAMSON } from '@/lib/defaults';
+import type { Coverage, Format, PlayerRef, VenueRef } from '@/lib/types';
 import { Sparkles, Plus, X, AlertTriangle } from 'lucide-react';
 
 type Role = 'batter' | 'bowler';
@@ -16,35 +21,43 @@ type FactorDetail = {
 };
 
 type Available = {
+  player_id: string;
   player: string;
+  unique_name: string;
   data_available: true;
   rank: number;
+  may_be_incomplete: boolean;
   predicted: Record<string, number>;
-  baseline: Record<string, number>;
+  baseline: Record<string, number | null>;
   factors: Partial<Record<'venue' | 'matchup' | 'opposition' | 'phase' | 'innings', FactorDetail>>;
   missing_context: string[];
   sample_balls: number;
   confidence: 'none' | 'low' | 'medium' | 'high';
 };
-type PlayerResult = Available | { player: string; data_available: false };
+type PlayerResult =
+  | Available
+  | { player_id: string; player: string; unique_name: string; data_available: false };
 
 type RecResponse = {
   role: Role;
   format: string;
   mode: Mode;
   recommendation: string | null;
+  recommendation_id: string | null;
   caveats: string[];
   players: PlayerResult[];
 };
 
-const FORMATS = ['ODI', 'T20', 'Test'];
+const FORMATS: Format[] = ['ODI', 'T20', 'Test'];
 const PHASES = ['powerplay', 'middle', 'death'];
 const GENDERS: { v: string; label: string }[] = [
   { v: 'male', label: 'Men' },
   { v: 'female', label: 'Women' },
   { v: 'any', label: 'All' },
 ];
-const DEFAULT_PLAYERS = ['V Kohli', 'RG Sharma', 'KS Williamson'];
+const DEFAULT_PLAYERS = [KOHLI, SHARMA, WILLIAMSON];
+
+type Slot = { key: number; player: PlayerRef | null };
 
 const CONF_STYLE: Record<string, string> = {
   high: 'bg-emerald-500/15 border-emerald-500 text-emerald-300',
@@ -85,50 +98,66 @@ function viewFor(role: Role) {
 
 function baseValue(p: Available, key: string): number | null {
   if (key in p.baseline) return p.baseline[key];
-  if (key === 'expected_runs_per_dismissal') {
-    return round((p.baseline.balls_per_dismissal * p.baseline.strike_rate) / 100, 1);
-  }
   return null;
 }
 
 export default function RecommendPage() {
   const [role, setRole] = useState<Role>('batter');
   const [mode, setMode] = useState<Mode>('discovery');
-  const [format, setFormat] = useState('ODI');
+  const [format, setFormat] = useState<Format>('ODI');
   const [gender, setGender] = useState('male');
-  const [players, setPlayers] = useState<string[]>(DEFAULT_PLAYERS);
+  const [slots, setSlots] = useState<Slot[]>(() =>
+    DEFAULT_PLAYERS.map((player, key) => ({ key, player })),
+  );
+  const nextKey = useRef(DEFAULT_PLAYERS.length);
 
-  const [venue, setVenue] = useState('');
-  const [opponent, setOpponent] = useState('');
+  const [venue, setVenue] = useState<VenueRef | null>(null);
+  const [opponent, setOpponent] = useState<PlayerRef | null>(null);
   const [opposition, setOpposition] = useState('');
   const [phase, setPhase] = useState('');
   const [innings, setInnings] = useState('');
   const [limit, setLimit] = useState(10);
   const [minSample, setMinSample] = useState(80);
+  const [teams, setTeams] = useState<Coverage['teams']>({});
+  const latest = useRef(0); // only the newest request may show its answer
+
+  useEffect(() => {
+    fetch('/api/coverage')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((c: Coverage) => setTeams(c.teams))
+      .catch(() => setTeams({}));
+  }, []);
+
+  const teamChoices = useMemo(() => {
+    const chosen = gender === 'any' || mode === 'shortlist' ? Object.keys(teams) : [gender];
+    return [...new Set(chosen.flatMap((g) => teams[g] ?? []))].sort();
+  }, [teams, gender, mode]);
 
   const [result, setResult] = useState<RecResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const opponentLabel = role === 'batter' ? 'Bowler' : 'Batsman';
+  const opponentLabel = role === 'batter' ? 'Bowler' : 'Batter';
 
   const run = useCallback(async () => {
+    const request = ++latest.current;
     const params = new URLSearchParams({ role, format, gender });
     if (mode === 'shortlist') {
-      const names = players.map((p) => p.trim()).filter(Boolean);
-      if (names.length === 0) {
+      const ids = slots.flatMap((s) => (s.player ? [s.player.player_id] : []));
+      if (ids.length === 0) {
         setError('Add at least one player, or switch to Discover.');
         setResult(null);
+        setLoading(false);
         return;
       }
-      params.set('players', names.join(','));
+      params.set('players', ids.join(','));
     } else {
       params.set('limit', String(limit));
       params.set('min_sample', String(minSample));
     }
-    if (venue.trim()) params.set('venue', venue.trim());
-    if (opponent.trim()) params.set('opponent', opponent.trim());
-    if (opposition.trim()) params.set('opposition', opposition.trim());
+    if (venue) params.set('venue', venue.venue_id);
+    if (opponent) params.set('opponent', opponent.player_id);
+    if (opposition) params.set('opposition', opposition);
     if (phase && format !== 'Test') params.set('phase', phase);
     if (innings) params.set('innings', innings);
 
@@ -138,22 +167,25 @@ export default function RecommendPage() {
       const res = await fetch(`/api/recommend?${params.toString()}`);
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error ?? `Request failed (${res.status})`);
+      if (request !== latest.current) return;
       setResult(json as RecResponse);
-    } catch (err: any) {
-      setError(err?.message ?? 'Request failed');
+    } catch (err) {
+      if (request !== latest.current) return;
+      setError((err as Error).message);
       setResult(null);
-    } finally {
-      setLoading(false);
     }
-  }, [role, mode, format, gender, players, venue, opponent, opposition, phase, innings, limit, minSample]);
+    setLoading(false);
+  }, [role, mode, format, gender, slots, venue, opponent, opposition, phase, innings, limit, minSample]);
 
-  // re-run when the "structural" knobs change; text fields wait for the button
+  // re-run when the "structural" knobs change; other choices wait for the button
   useEffect(() => {
-    run();
+    const timer = setTimeout(run, 0);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role, mode, format, gender]);
 
-  const view = useMemo(() => viewFor(role), [role]);
+  // describe the answer on screen, which may be for the role chosen before
+  const view = useMemo(() => viewFor(result?.role ?? role), [result, role]);
 
   const ranked = (result?.players ?? []).filter((p): p is Available => p.data_available);
   const unavailable = (result?.players ?? []).filter((p) => !p.data_available);
@@ -189,7 +221,10 @@ export default function RecommendPage() {
             options={['batter', 'bowler']}
             optionLabels={{ batter: 'Batters', bowler: 'Bowlers' }}
             value={role}
-            onChange={(v) => setRole(v as Role)}
+            onChange={(v) => {
+              setRole(v as Role);
+              setOpponent(null); // a bowler chosen for batters is no opponent for bowlers
+            }}
           />
           <PillGroup
             label="Pool"
@@ -200,13 +235,18 @@ export default function RecommendPage() {
           />
 
           <div className="grid grid-cols-2 gap-4">
-            <PillGroup label="Format" options={FORMATS} value={format} onChange={setFormat} />
+            <PillGroup label="Format" options={FORMATS} value={format} onChange={(v) => setFormat(v as Format)} />
             <PillGroup
               label="Players"
               options={GENDERS.map((g) => g.v)}
               optionLabels={Object.fromEntries(GENDERS.map((g) => [g.v, g.label]))}
               value={gender}
-              onChange={setGender}
+              onChange={(v) => {
+                setGender(v);
+                setOpposition(''); // the list of teams changes with it
+              }}
+              disabled={mode === 'shortlist'}
+              disabledNote="set by your shortlist"
             />
           </div>
 
@@ -214,19 +254,23 @@ export default function RecommendPage() {
             <div>
               <p className="text-xs text-zinc-500 mb-2">Shortlist</p>
               <div className="space-y-2">
-                {players.map((p, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <input
-                      className="flex-1 bg-zinc-950 border border-zinc-800 rounded-2xl py-2.5 px-3 text-sm focus:ring-2 focus:ring-sky-500 outline-none"
-                      value={p}
-                      placeholder={`${opponentLabel === 'Bowler' ? 'Batter' : 'Bowler'} ${i + 1}`}
-                      onChange={(e) =>
-                        setPlayers((prev) => prev.map((x, j) => (j === i ? e.target.value : x)))
-                      }
-                    />
-                    {players.length > 1 && (
+                {slots.map((slot, i) => (
+                  <div key={slot.key} className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <PlayerSearch
+                        selected={slot.player}
+                        placeholder={`${role === 'batter' ? 'Batter' : 'Bowler'} ${i + 1}`}
+                        onSelect={(player) =>
+                          setSlots((prev) =>
+                            prev.map((s) => (s.key === slot.key ? { ...s, player } : s)),
+                          )
+                        }
+                        clearable
+                      />
+                    </div>
+                    {slots.length > 1 && (
                       <button
-                        onClick={() => setPlayers((prev) => prev.filter((_, j) => j !== i))}
+                        onClick={() => setSlots((prev) => prev.filter((s) => s.key !== slot.key))}
                         className="text-zinc-600 hover:text-red-400 transition-colors"
                         aria-label={`Remove ${i + 1}`}
                       >
@@ -237,8 +281,12 @@ export default function RecommendPage() {
                 ))}
               </div>
               <button
-                onClick={() => setPlayers((prev) => [...prev, ''])}
-                className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-sky-400 hover:text-sky-300 transition-colors"
+                onClick={() => {
+                  const key = nextKey.current++;
+                  setSlots((prev) => [...prev, { key, player: null }]);
+                }}
+                disabled={slots.length >= 20}
+                className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-sky-400 hover:text-sky-300 transition-colors disabled:opacity-40"
               >
                 <Plus size={14} /> Add
               </button>
@@ -261,14 +309,28 @@ export default function RecommendPage() {
             <p className="text-[11px] uppercase tracking-wider text-zinc-600 font-bold">
               Context — leave blank to ignore
             </p>
-            <TextField label="Venue" value={venue} onChange={setVenue} placeholder="e.g. Eden Gardens, Kolkata" />
-            <TextField
-              label={opponentLabel}
-              value={opponent}
-              onChange={setOpponent}
-              placeholder={role === 'batter' ? 'e.g. TA Boult' : 'e.g. V Kohli'}
+            <VenueSearch label="Venue" selected={venue} onSelect={setVenue} />
+            <PlayerSearch
+              label={`Opposing ${opponentLabel.toLowerCase()}`}
+              selected={opponent}
+              onSelect={setOpponent}
+              clearable
             />
-            <TextField label="Opposition team" value={opposition} onChange={setOpposition} placeholder="e.g. Australia" />
+            <label className="block">
+              <span className="block text-xs text-zinc-500 mb-1">Opposition team</span>
+              <select
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-2.5 px-3 text-sm focus:ring-2 focus:ring-sky-500 outline-none"
+                value={opposition}
+                onChange={(e) => setOpposition(e.target.value)}
+              >
+                <option value="">Any team</option>
+                {teamChoices.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </label>
             <PillGroup
               label="Phase"
               options={PHASES}
@@ -310,15 +372,16 @@ export default function RecommendPage() {
               <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6">
                 <p className="text-xs text-zinc-500 uppercase tracking-wider font-bold mb-1">
                   {result.mode === 'discovery' ? 'Top pick' : 'Recommendation'}
-                  <span className="text-zinc-600"> · {result.format} · {role}s</span>
+                  <span className="text-zinc-600"> · {result.format} · {result.role}s</span>
                 </p>
                 {result.recommendation && ranked[0] ? (
                   <p className="text-2xl font-black italic tracking-tight">
-                    {result.recommendation}
+                    {ranked[0].unique_name}
+                    <IncompleteMark show={ranked[0].may_be_incomplete} />
                     <span className="text-sky-400">
                       {' · '}
                       {ranked[0].predicted[view.headline]}{' '}
-                      {role === 'batter' ? 'proj. runs/dismissal' : 'proj. runs/wicket'}
+                      {result.role === 'batter' ? 'proj. runs/dismissal' : 'proj. runs/wicket'}
                     </span>
                   </p>
                 ) : (
@@ -337,13 +400,19 @@ export default function RecommendPage() {
               </div>
 
               {ranked.map((p) => (
-                <RecCard key={p.player} p={p} role={role} view={view} barBasis={barBasis} />
+                <RecCard
+                  key={p.player_id}
+                  p={p}
+                  role={result.role}
+                  view={viewFor(result.role)}
+                  barBasis={barBasis}
+                />
               ))}
 
               {unavailable.length > 0 && (
                 <p className="text-xs text-zinc-600 italic px-2">
-                  No {result.format} {role === 'batter' ? 'batting' : 'bowling'} data for:{' '}
-                  {unavailable.map((p) => p.player).join(', ')}
+                  No {result.format} {result.role === 'batter' ? 'batting' : 'bowling'} data for:{' '}
+                  {unavailable.map((p) => p.unique_name).join(', ')}
                 </p>
               )}
             </>
@@ -399,7 +468,10 @@ function RecCard({
           >
             {p.rank}
           </span>
-          <span className="font-black italic tracking-tight text-lg">{p.player}</span>
+          <span className="font-black italic tracking-tight text-lg">
+            {p.unique_name}
+            <IncompleteMark show={p.may_be_incomplete} />
+          </span>
         </div>
         <span
           className={[
@@ -511,30 +583,6 @@ function Stat({
   );
 }
 
-function TextField({
-  label,
-  value,
-  onChange,
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-}) {
-  return (
-    <div>
-      <p className="text-xs text-zinc-500 mb-1">{label}</p>
-      <input
-        className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-2.5 px-3 text-sm focus:ring-2 focus:ring-sky-500 outline-none"
-        value={value}
-        placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-      />
-    </div>
-  );
-}
-
 function NumberField({
   label,
   value,
@@ -613,9 +661,4 @@ function PillGroup({
       </div>
     </div>
   );
-}
-
-function round(n: number, dp: number) {
-  const f = 10 ** dp;
-  return Math.round(n * f) / f;
 }

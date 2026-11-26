@@ -10,6 +10,7 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
+import type { Career, Format } from '@/lib/types';
 
 type DuelRadarMetric = {
   metric: string;
@@ -30,7 +31,7 @@ function maxesForFormat(format: string) {
       return {
         strike_rate: 200,
         boundary_percent: 80,
-        survival_rate: 40,
+        not_out_percent: 40,
         balls_per_dismissal: 45,
         era_index: 1.8,
       };
@@ -38,7 +39,7 @@ function maxesForFormat(format: string) {
       return {
         strike_rate: 85,
         boundary_percent: 65,
-        survival_rate: 40,
+        not_out_percent: 40,
         balls_per_dismissal: 140,
         era_index: 1.6,
       };
@@ -47,7 +48,7 @@ function maxesForFormat(format: string) {
       return {
         strike_rate: 150,
         boundary_percent: 75,
-        survival_rate: 40,
+        not_out_percent: 40,
         balls_per_dismissal: 90,
         era_index: 1.7,
       };
@@ -59,25 +60,13 @@ function toScore(raw: number | null | undefined, max: number) {
   return clamp((raw / max) * 100, 0, 100);
 }
 
-function extractProfile(profile: any | null) {
-  if (!profile) {
-    return {
-      boundaryPercent: null,
-      strikeRate: null,
-      survivalRate: null,
-      ballsPerDismissal: null,
-    };
-  }
+function extractProfile(profile: Career | null) {
   return {
-    boundaryPercent:
-      profile.boundary_percent != null ? Number(profile.boundary_percent) : null,
-    strikeRate: profile.strike_rate != null ? Number(profile.strike_rate) : null,
-    survivalRate:
-      profile.survival_rate != null ? Number(profile.survival_rate) : null,
-    ballsPerDismissal:
-      profile.balls_per_dismissal != null
-        ? Number(profile.balls_per_dismissal)
-        : null,
+    boundaryPercent: profile?.boundary_percent ?? null,
+    strikeRate: profile?.strike_rate ?? null,
+    notOutPercent: profile?.not_out_percent ?? null,
+    ballsPerDismissal: profile?.balls_per_dismissal ?? null,
+    eraIndex: profile?.era_index ?? null,
   };
 }
 
@@ -87,21 +76,17 @@ export default function DuelRadar({
   labelB,
   profileA,
   profileB,
-  eraIndexAvgA,
-  eraIndexAvgB,
 }: {
-  format: string;
+  format: Format;
   labelA: string;
   labelB: string;
-  profileA: any | null;
-  profileB: any | null;
-  eraIndexAvgA: number | null;
-  eraIndexAvgB: number | null;
+  profileA: Career | null;
+  profileB: Career | null;
 }) {
-  if (!profileA && !profileB && eraIndexAvgA == null && eraIndexAvgB == null) {
+  if (!profileA && !profileB) {
     return (
       <div className="h-[320px] flex items-center justify-center text-zinc-500 italic">
-        No profile data available yet for these players in {format}.
+        No batting data for these players in {format}.
       </div>
     );
   }
@@ -128,11 +113,11 @@ export default function DuelRadar({
       unit: '',
     },
     {
-      metric: 'Survival Rate',
-      scoreA: toScore(a.survivalRate, maxes.survival_rate),
-      scoreB: toScore(b.survivalRate, maxes.survival_rate),
-      rawA: a.survivalRate,
-      rawB: b.survivalRate,
+      metric: 'Not-out %',
+      scoreA: toScore(a.notOutPercent, maxes.not_out_percent),
+      scoreB: toScore(b.notOutPercent, maxes.not_out_percent),
+      rawA: a.notOutPercent,
+      rawB: b.notOutPercent,
       unit: '%',
     },
     {
@@ -144,11 +129,11 @@ export default function DuelRadar({
       unit: '',
     },
     {
-      metric: 'Era Index (avg)',
-      scoreA: toScore(eraIndexAvgA, maxes.era_index),
-      scoreB: toScore(eraIndexAvgB, maxes.era_index),
-      rawA: eraIndexAvgA,
-      rawB: eraIndexAvgB,
+      metric: 'Era Index',
+      scoreA: toScore(a.eraIndex, maxes.era_index),
+      scoreB: toScore(b.eraIndex, maxes.era_index),
+      rawA: a.eraIndex,
+      rawB: b.eraIndex,
       unit: '×',
     },
   ];
@@ -174,7 +159,7 @@ export default function DuelRadar({
               border: '1px solid #27272a',
               borderRadius: '12px',
             }}
-            formatter={(_value: any, _name: any, ctx: any) => {
+            formatter={(_value, _name, ctx) => {
               const rawA = ctx?.payload?.rawA;
               const rawB = ctx?.payload?.rawB;
               const unit = ctx?.payload?.unit ?? '';

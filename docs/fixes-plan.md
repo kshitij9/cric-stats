@@ -10,15 +10,25 @@ Written 26 November 2026.
 | 1. Safe, repeatable loading | Done 26 November 2026 |
 | 2. Store the data correctly | Done 26 November 2026; tier A venue merges approved, B and C not yet reviewed |
 | 3. Define each stat once | Done 26 November 2026 |
-| 4 to 6 | Not started |
+| 4. Update the screens | Done 26 November 2026 |
+| 5. Verify | In progress |
+| 6. Switch over | Not started |
+
+Notes from step 4:
+
+- Preview: the container `cric-stats-candidate` serves this branch against
+  `cricket_next` on port 3002. `docker stop cric-stats-candidate` removes it; it
+  does not restart after a reboot.
+- A browser test of all five pages, using two pairs of namesakes, passed 38
+  checks. The script is not in the repository.
+- The "may be incomplete" dates are in `lib/coverage.ts`: men's Tests before 2004
+  and ODIs before July 2004; all women's careers beginning before 2018.
+- Venue search lists unreviewed spellings (tiers B and C) as separate grounds.
+- `npx eslint .` reports three older findings, in `lib/db.ts` and the unused
+  `components/ComparisonCard.tsx`.
 
 Notes from step 3:
 
-- **The screens show no data on this branch until step 4.** They still send
-  player names; the APIs now require player IDs and a format.
-- Step 4 changes to make: pass player IDs and venue IDs (a venue picker is needed
-  as well as the player search); rename `survival_rate` to `not_out_percent`; use
-  the career `era_index` from the API; the recommender now returns `player_id`.
 - Which balls and wickets count is defined by generated columns in
   `db/init/001-schema.sql`; `lib/stats.ts` turns counts into rates.
 - `db/etl/verify_stats.py` checks a candidate app against the source files. On

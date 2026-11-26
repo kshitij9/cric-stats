@@ -3,12 +3,13 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, ReferenceLine 
 } from 'recharts';
+import type { EraYear } from '@/lib/types';
 
-export default function EraChart({ data }: { data: any[] }) {
+export default function EraChart({ data }: { data: EraYear[] }) {
   if (!data || data.length === 0) {
     return (
       <div className="h-[300px] flex items-center justify-center text-zinc-500 italic">
-        No era data available for this player...
+        No era data for this player in this format.
       </div>
     );
   }
@@ -35,7 +36,10 @@ export default function EraChart({ data }: { data: any[] }) {
             dy={10}
           />
           <YAxis 
-            domain={[0.5, 'auto']} 
+            domain={[
+              (lowest: number) => Math.min(0.5, Math.floor(lowest * 2) / 2),
+              (highest: number) => Math.max(1.5, Math.ceil(highest * 2) / 2),
+            ]}
             axisLine={false} 
             tickLine={false} 
             tick={{ fill: '#71717a', fontSize: 12 }} 
@@ -43,9 +47,13 @@ export default function EraChart({ data }: { data: any[] }) {
           <Tooltip 
             contentStyle={{ backgroundColor: '#09090b', border: '1px solid #27272a', borderRadius: '12px' }}
             itemStyle={{ color: '#3b82f6', fontWeight: 'bold' }}
+            formatter={(value, _name, item) => [
+              `${Number(value).toFixed(2)}× from ${(item?.payload as EraYear).balls} balls`,
+              'Era index',
+            ]}
           />
-          {/* Baseline: 1.0 represents the global average for that year */}
-          <ReferenceLine y={1} stroke="#ef4444" strokeDasharray="3 3" label={{ position: 'right', value: 'Avg', fill: '#ef4444', fontSize: 10 }} />
+          {/* 1.0 is an average batter of that year, format and gender */}
+          <ReferenceLine y={1} stroke="#ef4444" strokeDasharray="3 3" label={{ position: 'insideTopRight', value: 'Avg', fill: '#ef4444', fontSize: 10 }} />
           <Area 
             type="monotone" 
             dataKey="era_index" 

@@ -1,8 +1,10 @@
+import { careerSpans } from '@/lib/coverage';
 import { query } from '@/lib/db';
 import {
   battingFigures,
   bowlingFigures,
   round,
+  type Format,
   type Player,
 } from '@/lib/stats';
 
@@ -309,7 +311,7 @@ function scoreBowler(r: Row, keys: SliceKey[]) {
 
 export async function recommend(opts: {
   role: Role;
-  format: string;
+  format: Format;
   players: Player[] | null; // null => discovery
   ctx: Ctx;
   limit: number;
@@ -374,7 +376,16 @@ export async function recommend(opts: {
     .sort((a, b) => b.score - a.score);
 
   const shown = discovery ? ranked.slice(0, limit) : ranked;
-  shown.forEach((p, i) => ((p as Record<string, unknown>).rank = i + 1));
+  const spans = await careerSpans(
+    shown.map((p) => p.player_id),
+    format,
+  );
+  shown.forEach((p, i) =>
+    Object.assign(p, {
+      rank: i + 1,
+      may_be_incomplete: spans.get(p.player_id)?.may_be_incomplete ?? false,
+    }),
+  );
 
   const unavailable = scored.filter((p) => !p.data_available).map((p) => p.unique_name);
 

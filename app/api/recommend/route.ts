@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { recommend, type Ctx, type Role } from '@/lib/recommend';
-import { findPlayers, isFormat, isPlayerId, FORMATS } from '@/lib/stats';
+import { findPlayers, isFormat, isPlayerId, FORMATS, type Format } from '@/lib/stats';
 
 /**
  * GET/POST /api/recommend
@@ -27,7 +27,7 @@ const GENDERS = new Set(['male', 'female', '']); // '' => both
 
 type Parsed = {
   role: Role;
-  format: string;
+  format: Format;
   players: string[] | null; // player IDs
   ctx: Ctx;
   limit: number;
