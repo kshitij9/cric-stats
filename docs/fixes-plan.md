@@ -7,7 +7,23 @@ Written 26 November 2026.
 | Step | State |
 |---|---|
 | 0. Protect what exists | Done 26 November 2026 |
-| 1 to 6 | Not started |
+| 1. Safe, repeatable loading | Done 26 November 2026 |
+| 2 to 6 | Not started |
+
+Notes from step 1:
+
+- `./db/etl/run.sh` now loads into `cricket_next` by default. Loading the live
+  database needs `--db cricket --live`; step 6's cron job must pass both.
+- `cricket_next` holds the September data and matched `cricket` row for row
+  after step 1.
+- A pinned, read-only copy of the September downloads is in
+  `db/etl/_etl/snapshot-2026-09-02/`. An online run replaces the files in
+  `db/etl/_etl/cache/`, so use the snapshot paths for step 5's September checks.
+- The sanity checks are in `db/etl/checks.sql` and
+  `checks-against-current.sql`. Step 5's comparison with the source files is
+  still to be written.
+- Stopping a run during the final publish statement leaves either the old data or
+  the complete new data, since the statement may finish inside the container.
 
 Restore points from step 0:
 

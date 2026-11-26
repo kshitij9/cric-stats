@@ -1,7 +1,8 @@
 -- Postgres auto-runs any *.sql placed here on first container start
--- (only when the data directory is empty). db/etl/run.sh also pipes this file
--- through psql before every load, so an existing volume picks up changes here
--- too -- every statement is written to be idempotent.
+-- (only when the data directory is empty). db/etl/run.sh also applies this file
+-- to an empty staging schema on every load, then publishes those tables in place
+-- of the old ones, so an existing volume picks up changes here on its next load.
+-- Keep names unqualified; every statement is written to be idempotent.
 
 -- ---------------------------------------------------------------------------
 -- matches: one row per match, the context the ball-by-ball feed hangs off.
