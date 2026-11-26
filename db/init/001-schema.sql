@@ -1,8 +1,49 @@
--- Postgres auto-runs any *.sql placed here on first container start
--- (only when the data directory is empty). db/etl/run.sh also applies this file
--- to an empty staging schema on every load, then publishes those tables in place
--- of the old ones, so an existing volume picks up changes here on its next load.
+-- Tables. Postgres auto-runs the *.sql files here, in name order, on first
+-- container start (empty data directory only). db/etl/run.sh also applies this
+-- file to an empty staging schema on every load, then publishes those tables in
+-- place of the old ones, so an existing volume picks up changes on its next load.
 -- Keep names unqualified; every statement is written to be idempotent.
+-- Secondary indexes are in 003-indexes.sql.
+--
+-- Players are identified by Cricsheet's ID. Names are kept beside the IDs but
+-- are not unique: different people share them.
+
+-- ---------------------------------------------------------------------------
+-- venues: one row per ground. Source spellings map to a ground through
+-- venue_aliases; spellings are merged only as listed (and approved) in
+-- db/venues/venue_merges.csv.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS venues (
+    venue_id TEXT PRIMARY KEY,
+    name     TEXT NOT NULL,
+    city     TEXT NOT NULL DEFAULT ''
+);
+
+-- (venue name, city) together: "County Ground" alone is six different grounds.
+CREATE TABLE IF NOT EXISTS venue_aliases (
+    venue_name TEXT NOT NULL,
+    city       TEXT NOT NULL DEFAULT '',
+    venue_id   TEXT NOT NULL,
+    PRIMARY KEY (venue_name, city)
+);
+
+-- ---------------------------------------------------------------------------
+-- players: one row per person. An ID that the source uses in both men's and
+-- women's matches is split in two (see db/etl/derive.sql).
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS players (
+    player_id   TEXT PRIMARY KEY,
+    name        TEXT NOT NULL,   -- scorecard name, e.g. 'V Kohli'
+    unique_name TEXT NOT NULL,   -- tells namesakes apart, e.g. 'Rashid Khan (2)'
+    gender      TEXT NOT NULL    -- 'male' | 'female'
+);
+
+-- other names to search by, e.g. 'Virat Kohli'; not every player has one
+CREATE TABLE IF NOT EXISTS player_aliases (
+    player_id TEXT NOT NULL,
+    alias     TEXT NOT NULL,
+    PRIMARY KEY (player_id, alias)
+);
 
 -- ---------------------------------------------------------------------------
 -- matches: one row per match, the context the ball-by-ball feed hangs off.
@@ -11,11 +52,12 @@ CREATE TABLE IF NOT EXISTS matches (
     match_id        TEXT PRIMARY KEY,
     date            DATE NOT NULL,
     format          TEXT NOT NULL,
-    venue           TEXT,
+    venue           TEXT,          -- as spelled in the source
     city            TEXT,
+    venue_id        TEXT,
     event           TEXT,
     season          TEXT,
-    team_type       TEXT,
+    team_type       TEXT,          -- 'international' | 'club'
     gender          TEXT,
     team1           TEXT,
     team2           TEXT,
@@ -23,68 +65,95 @@ CREATE TABLE IF NOT EXISTS matches (
     toss_decision   TEXT,          -- 'bat' | 'field'
     winner          TEXT,          -- NULL for tie / no result / draw
     result_margin   TEXT,          -- '7 wickets', '45 runs', 'tie', ...
+    result_method   TEXT,          -- e.g. 'D/L'; NULL when decided normally
+    eliminator      TEXT,          -- super over winner of a tied match
+    bowl_out        TEXT,          -- bowl-out winner of a tied match
     player_of_match TEXT
 );
-CREATE INDEX IF NOT EXISTS idx_matches_venue  ON matches (venue);
-CREATE INDEX IF NOT EXISTS idx_matches_format ON matches (format);
+
+-- Who was named in each side. The team is part of the key because the source
+-- gives one ID to a name that appears on both sides of the same match.
+CREATE TABLE IF NOT EXISTS match_players (
+    match_id    TEXT NOT NULL,
+    team        TEXT NOT NULL,
+    player_id   TEXT NOT NULL,
+    player_name TEXT NOT NULL,     -- as spelled on this scorecard
+    PRIMARY KEY (match_id, team, player_id)
+);
 
 -- ---------------------------------------------------------------------------
 -- deliveries: ball-by-ball. A handful of match/innings context columns are
 -- denormalised on here so the hot-path stat queries never need a join.
+-- Super overs are not included.
+--
+-- extras_type, wicket_type and player_out describe only the FIRST extra and
+-- wicket of a ball. They remain until the app's queries move to the columns
+-- below and to the wickets table.
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS deliveries (
-    id            BIGSERIAL PRIMARY KEY,
-    match_id      TEXT      NOT NULL,
-    date          DATE      NOT NULL,
-    format        TEXT      NOT NULL,
-    innings       SMALLINT  NOT NULL,
-    over          SMALLINT  NOT NULL,
-    ball          SMALLINT  NOT NULL,
-    batter        TEXT      NOT NULL,
-    non_striker   TEXT      NOT NULL,
-    bowler        TEXT      NOT NULL,
-    runs_batter   SMALLINT  NOT NULL DEFAULT 0,
-    extras        SMALLINT  NOT NULL DEFAULT 0,
-    extras_type   TEXT      NOT NULL DEFAULT '',
-    wicket_type   TEXT      NOT NULL DEFAULT '',
-    player_out    TEXT      NOT NULL DEFAULT '',    -- who was dismissed (striker OR non-striker on run-outs)
-    venue         TEXT      NOT NULL DEFAULT '',
-    batting_team  TEXT      NOT NULL DEFAULT '',
-    bowling_team  TEXT      NOT NULL DEFAULT '',
-    phase         TEXT      NOT NULL DEFAULT 'na',  -- powerplay | middle | death | na (Tests)
-    gender        TEXT      NOT NULL DEFAULT ''     -- 'male' | 'female' (from matches)
+    id             BIGINT    PRIMARY KEY,
+    match_id       TEXT      NOT NULL,
+    date           DATE      NOT NULL,
+    format         TEXT      NOT NULL,
+    innings        SMALLINT  NOT NULL,
+    over           SMALLINT  NOT NULL,            -- 0-based
+    ball           SMALLINT  NOT NULL,            -- 1-based, counting wides and no-balls
+    batter         TEXT      NOT NULL,
+    batter_id      TEXT      NOT NULL,
+    non_striker    TEXT      NOT NULL,
+    non_striker_id TEXT      NOT NULL,
+    bowler         TEXT      NOT NULL,
+    bowler_id      TEXT      NOT NULL,
+    runs_batter    SMALLINT  NOT NULL DEFAULT 0,
+    boundary       BOOLEAN   NOT NULL DEFAULT false, -- a 4 or 6 off the bat, not all-run
+    extras         SMALLINT  NOT NULL DEFAULT 0,  -- total of the five below
+    wides          SMALLINT  NOT NULL DEFAULT 0,
+    noballs        SMALLINT  NOT NULL DEFAULT 0,
+    byes           SMALLINT  NOT NULL DEFAULT 0,
+    legbyes        SMALLINT  NOT NULL DEFAULT 0,
+    penalty        SMALLINT  NOT NULL DEFAULT 0,
+    extras_type    TEXT      NOT NULL DEFAULT '',
+    wicket_type    TEXT      NOT NULL DEFAULT '',
+    player_out     TEXT      NOT NULL DEFAULT '',
+    venue          TEXT      NOT NULL DEFAULT '',
+    venue_id       TEXT,
+    batting_team   TEXT      NOT NULL DEFAULT '',
+    bowling_team   TEXT      NOT NULL DEFAULT '',
+    phase          TEXT      NOT NULL DEFAULT 'na', -- by over number: powerplay | middle | death | na (Tests)
+    powerplay      TEXT      NOT NULL DEFAULT '',   -- from the source: mandatory | batting | fielding | ''
+    gender         TEXT      NOT NULL DEFAULT '',   -- 'male' | 'female' (from matches)
+    team_type      TEXT      NOT NULL DEFAULT ''
 );
 
--- pre-existing volumes: backfill the columns added after the first cut
-ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS player_out   TEXT NOT NULL DEFAULT '';
-ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS venue        TEXT NOT NULL DEFAULT '';
-ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS batting_team TEXT NOT NULL DEFAULT '';
-ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS bowling_team TEXT NOT NULL DEFAULT '';
-ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS phase        TEXT NOT NULL DEFAULT 'na';
-ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS gender       TEXT NOT NULL DEFAULT '';
+-- ---------------------------------------------------------------------------
+-- wickets: every dismissal event, including retirements. The player out may be
+-- the striker, the non-striker or (retired out, timed out) neither.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS wickets (
+    delivery_id   BIGINT   NOT NULL,
+    wicket_no     SMALLINT NOT NULL,   -- 1, 2, ... within the delivery
+    player_out_id TEXT     NOT NULL,
+    player_out    TEXT     NOT NULL,
+    kind          TEXT     NOT NULL,
+    PRIMARY KEY (delivery_id, wicket_no)
+);
 
--- Every stats query filters deliveries by batter first, then aggregates.
-CREATE INDEX IF NOT EXISTS idx_deliveries_batter        ON deliveries (batter);
-CREATE INDEX IF NOT EXISTS idx_deliveries_batter_bowler ON deliveries (batter, bowler);
-CREATE INDEX IF NOT EXISTS idx_deliveries_batter_venue  ON deliveries (batter, venue);
--- recommender discovery mode scans a whole (format, gender) slice
-CREATE INDEX IF NOT EXISTS idx_deliveries_fmt_gender    ON deliveries (format, gender);
-
+-- ---------------------------------------------------------------------------
+-- Summaries, built from the tables above by db/etl/derive.sql.
+-- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS player_career_stats (
+    player_id       TEXT    NOT NULL,
     player_name     TEXT    NOT NULL,
     format          TEXT    NOT NULL,
-    season          INTEGER NOT NULL, -- grain assumption: one row per player/format/season; confirm against the future ETL
+    season          INTEGER NOT NULL,  -- calendar year the match started
     innings_played  INTEGER NOT NULL DEFAULT 0,
     runs_scored     INTEGER NOT NULL DEFAULT 0,
     outs            INTEGER NOT NULL DEFAULT 0,
     balls_faced     INTEGER NOT NULL DEFAULT 0,
     fours           INTEGER NOT NULL DEFAULT 0,
     sixes           INTEGER NOT NULL DEFAULT 0,
-    PRIMARY KEY (player_name, format, season)
+    PRIMARY KEY (player_id, format, season)
 );
--- No separate composite index needed: the PK (player_name, format, season)
--- IS a btree on those columns, and Postgres can use its leftmost prefix
--- (player_name) or (player_name, format) for the app's WHERE/GROUP BY.
 
 CREATE TABLE IF NOT EXISTS era_averages (
     year            INTEGER      NOT NULL,

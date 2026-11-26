@@ -11,6 +11,9 @@
 #   --force         load even if the sources and loader have not changed
 #   --allow-shrink  accept fewer matches, or an older latest match, than now held
 #   --work DIR      where downloads and CSVs are kept (default: db/etl/_etl)
+#   --register DIR  use people.csv and names.csv from DIR instead of downloading
+#
+# Venue spellings are merged only where db/venues/venue_merges.csv approves it.
 #
 # New data is built in a staging schema, checked, and then published in a single
 # statement. A run that fails or is stopped leaves the existing data as it was.
@@ -25,11 +28,14 @@ TARGET=cricket_next
 LIVE=0 FORCE=0 ALLOW_SHRINK=0
 WORK=""
 FETCH_FLAGS=()
+LOADER_FLAGS=()
 SOURCES=()
 while [ $# -gt 0 ]; do
   case "$1" in
     --db)           [ $# -ge 2 ] || die "--db needs a name"; TARGET="$2"; shift ;;
     --work)         [ $# -ge 2 ] || die "--work needs a directory"; WORK="$(realpath -m -- "$2")"; shift ;;
+    --register)     [ $# -ge 2 ] || die "--register needs a directory"
+                    LOADER_FLAGS+=(--register "$(realpath -m -- "$2")"); shift ;;
     --live)         LIVE=1 ;;
     --offline)      FETCH_FLAGS+=(--offline) ;;
     --force)        FORCE=1 ;;
@@ -89,7 +95,7 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 echo "==> checking sources"
-python3 -I db/etl/load_cricsheet.py --out "$OUT" --fetch-only "${FETCH_FLAGS[@]}" "${SOURCES[@]}"
+python3 -I db/etl/load_cricsheet.py --out "$OUT" --fetch-only "${FETCH_FLAGS[@]}" "${LOADER_FLAGS[@]}" "${SOURCES[@]}"
 
 echo "==> preparing database $TARGET"
 exists="$(pg psql -X -At -U "$PGUSER" -d postgres -c "SELECT 1 FROM pg_database WHERE datname = '$TARGET'" </dev/null)"
@@ -99,9 +105,12 @@ if [ -z "$exists" ]; then
 fi
 psql < db/init/002-data-loads.sql
 
-CODE_VERSION="$(cat db/etl/run.sh db/etl/load_cricsheet.py db/etl/checks.sql \
-  db/etl/checks-against-current.sql db/etl/publish.sql db/init/001-schema.sql \
-  | sha256sum | cut -d' ' -f1)"
+# everything besides the source files that decides what gets loaded
+CODE_FILES=(db/etl/run.sh db/etl/load_cricsheet.py db/etl/derive.sql db/etl/checks.sql
+  db/etl/checks-against-current.sql db/etl/publish.sql
+  db/init/001-schema.sql db/init/003-indexes.sql)
+[ ! -f db/venues/venue_merges.csv ] || CODE_FILES+=(db/venues/venue_merges.csv)
+CODE_VERSION="$(cat "${CODE_FILES[@]}" | sha256sum | cut -d' ' -f1)"
 
 if [ "$FORCE" -ne 1 ]; then
   unchanged="$(ask -v sources="$(cat "$OUT/sources.json")" -v code="$CODE_VERSION" <<'SQL'
@@ -120,7 +129,7 @@ fi
 
 echo "==> extracting Cricsheet data"
 # --offline: use exactly the files checked above
-python3 -I db/etl/load_cricsheet.py --out "$OUT" --offline "${SOURCES[@]}"
+python3 -I db/etl/load_cricsheet.py --out "$OUT" --offline "${LOADER_FLAGS[@]}" "${SOURCES[@]}"
 
 echo "==> building staging tables"
 STAGING=1
@@ -128,26 +137,34 @@ psql -c 'DROP SCHEMA IF EXISTS etl_staging CASCADE' -c 'CREATE SCHEMA etl_stagin
 { echo 'SET search_path = etl_staging;'
   cat db/init/001-schema.sql; } | psql
 
-echo "==> loading matches + deliveries + player_career_stats"
-psql -c "\copy etl_staging.matches(match_id,date,format,venue,city,event,season,team_type,gender,team1,team2,toss_winner,toss_decision,winner,result_margin,player_of_match) FROM STDIN WITH (FORMAT csv, HEADER true)" < "$OUT/matches.csv"
-psql -c "\copy etl_staging.deliveries(match_id,date,format,innings,over,ball,batter,non_striker,bowler,runs_batter,extras,extras_type,wicket_type,player_out,venue,batting_team,bowling_team,phase,gender) FROM STDIN WITH (FORMAT csv, HEADER true, FORCE_NOT_NULL (extras_type, wicket_type, player_out, venue, batting_team, bowling_team, phase, gender))" < "$OUT/deliveries.csv"
-psql -c "\copy etl_staging.player_career_stats(player_name,format,season,innings_played,runs_scored,outs,balls_faced,fours,sixes) FROM STDIN WITH (FORMAT csv, HEADER true)" < "$OUT/player_career_stats.csv"
+echo "==> loading tables"
+psql -c 'CREATE TABLE etl_staging._player_splits (player_id text, gender text, new_player_id text)' </dev/null
+# table -> text columns where an empty CSV field means '' rather than NULL
+declare -A KEEP_EMPTY=(
+  [matches]=''
+  [deliveries]='extras_type, wicket_type, player_out, venue, batting_team, bowling_team, phase, powerplay, gender, team_type'
+  [wickets]='player_out, kind'
+  [match_players]='team'
+  [players]='gender'
+  [player_aliases]=''
+  [venues]='city'
+  [venue_aliases]='city'
+  [_player_splits]=''
+)
+for table in matches deliveries wickets match_players players player_aliases \
+             venues venue_aliases _player_splits; do
+  columns="$(head -n 1 "$OUT/$table.csv" | tr -d '\r')"
+  options="FORMAT csv, HEADER match"
+  [ -z "${KEEP_EMPTY[$table]}" ] || options+=", FORCE_NOT_NULL (${KEEP_EMPTY[$table]})"
+  psql -c "\copy etl_staging.$table($columns) FROM STDIN WITH ($options)" < "$OUT/$table.csv"
+done
 
-echo "==> deriving era_averages"
-psql <<'SQL'
-INSERT INTO etl_staging.era_averages (year, format, avg_strike_rate)
-SELECT EXTRACT(YEAR FROM date)::int AS year,
-       format,
-       ROUND(SUM(runs_batter)::numeric * 100 / NULLIF(COUNT(*), 0), 2)
-FROM etl_staging.deliveries
-GROUP BY 1, 2
-HAVING COUNT(*) > 0;
+echo "==> indexing"
+{ echo 'SET search_path = etl_staging;'
+  cat db/init/003-indexes.sql; } | psql
 
-ANALYZE etl_staging.matches;
-ANALYZE etl_staging.deliveries;
-ANALYZE etl_staging.player_career_stats;
-ANALYZE etl_staging.era_averages;
-SQL
+echo "==> building player identities and summary tables"
+psql < db/etl/derive.sql
 
 echo "==> checking the new data"
 psql -v manifest="$(cat "$OUT/manifest.json")" -v code="$CODE_VERSION" <<'SQL'

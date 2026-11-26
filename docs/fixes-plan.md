@@ -8,7 +8,31 @@ Written 26 November 2026.
 |---|---|
 | 0. Protect what exists | Done 26 November 2026 |
 | 1. Safe, repeatable loading | Done 26 November 2026 |
-| 2 to 6 | Not started |
+| 2. Store the data correctly | Done 26 November 2026; tier A venue merges approved, B and C not yet reviewed |
+| 3 to 6 | Not started |
+
+Notes from step 2:
+
+- `cricket_next` holds the September data in the new tables. `verify.py` found no
+  differences from the source files in any of 20,949 innings.
+- Tier A venue merges are approved. To accept B or C rows later, mark them `y` in
+  `db/venues/venue_merges.csv` (or use
+  `db/venues/propose_merges.py --approve B,C --groups N`), then run
+  `./db/etl/run.sh --offline`.
+- **The source withholds every Afghanistan men's match** and the Afghanistan
+  Premier League, a decision Cricsheet explains at
+  <https://cricsheet.org/withheld-matches>. Step 4's coverage note must say so,
+  and the predictor cannot rate Afghanistan from this source.
+- For step 3: `deliveries.extras_type`, `wicket_type` and `player_out` are kept so
+  the current queries still work. Move the queries to the new columns and the
+  `wickets` table, then drop them. Career rows already use the new counting rules.
+  `era_averages` still uses the old definition.
+- For step 4: only some players have a full first name to search by (about 4 in
+  10, counting names that already include one).
+- `players.name` comes from Cricsheet's register and can be a former name (e.g.
+  `NR Sciver`); scorecard spellings are in `player_aliases`.
+- Source limits: four player IDs were used for both men and women and are split
+  in two; one 2020 match gives the same ID to a "J Butler" in each side.
 
 Notes from step 1:
 

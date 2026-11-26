@@ -2,28 +2,24 @@
 """
 Cricsheet -> Postgres ETL (stdlib only).
 
-Reads Cricsheet ball-by-ball JSON bundles and writes three CSV files that map
-1:1 onto the tables in db/init/001-schema.sql:
+Reads Cricsheet ball-by-ball JSON bundles and the Cricsheet people register, and
+writes one CSV per table that run.sh loads (see TABLES below), each matching
+db/init/001-schema.sql, plus <out>/manifest.json recording the source files used
+and the number of rows written to each CSV. run.sh checks the database against it.
 
-    <out>/matches.csv             -> matches
-    <out>/deliveries.csv          -> deliveries
-    <out>/player_career_stats.csv -> player_career_stats
-
-plus <out>/manifest.json, which records the source files used and the number of
-rows written to each CSV. run.sh checks the database against it.
-
-era_averages is derived from deliveries in SQL afterwards (see run.sh), so it
-is not emitted here.
+player_career_stats and era_averages are not written here: db/etl/derive.sql
+builds them from the loaded tables, so each counting rule exists only once.
 
 Sources may be Cricsheet download URLs or local .zip paths. Default is the
 three international bundles (Tests, ODIs, T20Is; men's and women's). Downloads
 are cached under <out>/cache/. A cached file is replaced only when the server
-has a newer one and the new download is a complete, readable zip.
+has a newer one and the new download is complete and readable.
 
     python3 load_cricsheet.py --out ./_etl
     python3 load_cricsheet.py --out ./_etl https://cricsheet.org/downloads/ipl_json.zip
     python3 load_cricsheet.py --out ./_etl --offline      # cached files only
     python3 load_cricsheet.py --out ./_etl --fetch-only   # refresh the cache
+    python3 load_cricsheet.py --out ./_etl --register DIR # people.csv, names.csv from DIR
 """
 
 import argparse
@@ -33,7 +29,9 @@ import http.client
 import io
 import json
 import os
+import re
 import sys
+import unicodedata
 import urllib.error
 import urllib.request
 import zipfile
@@ -46,6 +44,17 @@ DEFAULT_SOURCES = [
     "https://cricsheet.org/downloads/t20s_json.zip",
 ]
 
+REGISTER_URL = "https://cricsheet.org/register/"
+# file name -> the columns it must start with
+REGISTER_FILES = {
+    "people.csv": ["identifier", "name", "unique_name"],
+    "names.csv": ["identifier", "name"],
+}
+
+DEFAULT_VENUE_MERGES = os.path.normpath(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                 "..", "venues", "venue_merges.csv"))
+
 # Cricsheet match_type -> the format strings the frontend filters on.
 FORMAT_MAP = {
     "Test": "Test", "MDM": "Test",
@@ -53,10 +62,39 @@ FORMAT_MAP = {
     "T20": "T20", "IT20": "T20", "T20I": "T20",
 }
 
+# table -> CSV header. run.sh loads <out>/<table>.csv into the table of the same
+# name, matching columns by these headers.
+TABLES = {
+    "matches": [
+        "match_id", "date", "format", "venue", "city", "venue_id", "event",
+        "season", "team_type", "gender", "team1", "team2", "toss_winner",
+        "toss_decision", "winner", "result_margin", "result_method",
+        "eliminator", "bowl_out", "player_of_match"],
+    "deliveries": [
+        "id", "match_id", "date", "format", "innings", "over", "ball",
+        "batter", "batter_id", "non_striker", "non_striker_id", "bowler",
+        "bowler_id", "runs_batter", "boundary", "extras", "wides", "noballs",
+        "byes", "legbyes", "penalty", "extras_type", "wicket_type",
+        "player_out", "venue", "venue_id", "batting_team", "bowling_team",
+        "phase", "powerplay", "gender", "team_type"],
+    "wickets": ["delivery_id", "wicket_no", "player_out_id", "player_out", "kind"],
+    "match_players": ["match_id", "team", "player_id", "player_name"],
+    "players": ["player_id", "name", "unique_name", "gender"],
+    "player_aliases": ["player_id", "alias"],
+    "venues": ["venue_id", "name", "city"],
+    "venue_aliases": ["venue_name", "city", "venue_id"],
+    # the loader's own: IDs that derive.sql must split by gender
+    "_player_splits": ["player_id", "gender", "new_player_id"],
+}
+
 
 def log(*a):
     print(*a, file=sys.stderr, flush=True)
 
+
+# ---------------------------------------------------------------------------
+# fetching
+# ---------------------------------------------------------------------------
 
 def sha256_of(path):
     h = hashlib.sha256()
@@ -96,7 +134,27 @@ def check_zip(path):
         raise ValueError(f"not a readable zip ({e})") from e
 
 
-def download(url, dest):
+def check_register(columns):
+    """A validator for a register CSV that must start with `columns`."""
+    def check(path):
+        try:
+            with open(path, newline="", encoding="utf-8") as f:
+                rows = csv.reader(f, strict=True)
+                header = next(rows, [])
+                if header[:len(columns)] != columns:
+                    raise ValueError(f"unexpected columns: {header[:5]}")
+                n = 0
+                for n, row in enumerate(rows, 1):
+                    if len(row) != len(header):
+                        raise ValueError(f"row {n} has {len(row)} fields, not {len(header)}")
+                if n == 0:
+                    raise ValueError("no rows")
+        except (csv.Error, UnicodeDecodeError) as e:
+            raise ValueError(f"not a readable CSV ({e})") from e
+    return check
+
+
+def download(url, dest, check=check_zip):
     """Bring the cached copy of `url` at `dest` up to date."""
     have = os.path.isfile(dest) and os.path.getsize(dest) > 0
     headers = {"User-Agent": "cric-stats-etl"}
@@ -117,7 +175,7 @@ def download(url, dest):
         size = os.path.getsize(part)
         if expected is not None and size != int(expected):
             raise ValueError(f"incomplete download: {size} of {expected} bytes")
-        check_zip(part)
+        check(part)
         meta = {"url": url, "last_modified": served, "sha256": sha256_of(part)}
         os.replace(part, dest)
         write_json(dest + ".meta.json", meta)
@@ -134,7 +192,7 @@ def download(url, dest):
             os.remove(part)
 
 
-def fetch(source, cache_dir, offline=False):
+def fetch(source, cache_dir, offline=False, check=check_zip):
     """Return a local path for `source`, refreshing the cache if it is a URL."""
     if not source.startswith(("http://", "https://")):
         if not os.path.isfile(source):
@@ -143,7 +201,7 @@ def fetch(source, cache_dir, offline=False):
     os.makedirs(cache_dir, exist_ok=True)
     dest = os.path.join(cache_dir, os.path.basename(source))
     if not offline:
-        download(source, dest)
+        download(source, dest, check)
     elif os.path.isfile(dest) and os.path.getsize(dest) > 0:
         log(f"  cached  {dest}")
     else:
@@ -162,6 +220,10 @@ def describe(source, path):
     }
 
 
+# ---------------------------------------------------------------------------
+# reading matches
+# ---------------------------------------------------------------------------
+
 def dget(d, *keys):
     """First present key (handles Cricsheet's old batsman/wicket spellings)."""
     for k in keys:
@@ -177,6 +239,25 @@ def phase_of(fmt, over_no):
     if fmt == "ODI":
         return "powerplay" if over_no < 10 else "middle" if over_no < 40 else "death"
     return "na"
+
+
+def powerplay_spans(innings):
+    """[(first, last, type)] with positions as (0-based over, 1-based delivery).
+
+    The source writes a position as over.delivery, counting wides and no-balls,
+    so 5.10 is the tenth delivery of the sixth over and differs from 5.1. The
+    match must be parsed with parse_float=str to keep that distinction. An end
+    of .6 is cricket notation for "end of the over", even if the over ran long.
+    """
+    def position(value):
+        over, _, ball = str(value).partition(".")
+        return int(over), int(ball or 0)
+
+    spans = []
+    for pp in innings.get("powerplays", []):
+        first, (over, ball) = position(pp["from"]), position(pp["to"])
+        spans.append((first, (over, 10_000 if ball == 6 else ball), pp["type"]))
+    return spans
 
 
 def result_margin(outcome):
@@ -198,8 +279,104 @@ def iter_matches(zip_path):
                 continue
             match_id = os.path.splitext(os.path.basename(name))[0]
             with zf.open(name) as fh:
-                yield match_id, json.load(io.TextIOWrapper(fh, "utf-8"))
+                yield match_id, json.load(io.TextIOWrapper(fh, "utf-8"), parse_float=str)
 
+
+# ---------------------------------------------------------------------------
+# venues
+# ---------------------------------------------------------------------------
+
+def venue_id(name, city):
+    """A readable ID that stays the same from load to load."""
+    plain = unicodedata.normalize("NFKD", f"{name} {city}").encode("ascii", "ignore").decode()
+    slug = re.sub(r"[^a-z0-9]+", "-", plain.lower()).strip("-")[:60].rstrip("-")
+    digest = hashlib.sha1(f"{name}\0{city}".encode()).hexdigest()[:6]
+    return f"{slug}-{digest}"
+
+
+def read_venue_merges(path):
+    """{(venue, city): (canonical_venue, canonical_city)} for approved rows only."""
+    merges = {}
+    if not os.path.exists(path):
+        return merges
+    with open(path, newline="", encoding="utf-8-sig") as f:
+        for line, row in enumerate(csv.DictReader(f), start=2):
+            approve = (row.get("approve") or "").strip().lower()
+            if approve in ("", "n", "no"):
+                continue
+            if approve not in ("y", "yes"):
+                sys.exit(f"{path} line {line}: approve must be y, n or blank, not {approve!r}")
+            try:
+                alias = (row["venue"], row["city"])
+                target = (row["canonical_venue"], row["canonical_city"])
+            except KeyError as e:
+                sys.exit(f"{path}: missing column {e}")
+            if not target[0]:
+                sys.exit(f"{path} line {line}: no canonical venue")
+            if merges.get(alias, target) != target:
+                sys.exit(f"{path} line {line}: {alias} is approved into two different venues")
+            merges[alias] = target
+    return merges
+
+
+# ---------------------------------------------------------------------------
+# players
+# ---------------------------------------------------------------------------
+
+class Players:
+    """Everyone seen in the matches, and what each was called."""
+
+    def __init__(self):
+        self.genders = defaultdict(dict)   # id -> {gender: first match date}
+        self.names = defaultdict(dict)     # (id, gender) -> {scorecard name: latest date}
+
+    def see(self, pid, name, gender, date):
+        first = self.genders[pid].get(gender)
+        if first is None or date < first:
+            self.genders[pid][gender] = date
+        used = self.names[(pid, gender)]
+        if date > used.get(name, ""):
+            used[name] = date
+
+    def tables(self, people, aliases):
+        """Rows for players, player_aliases and _player_splits."""
+        players, alias_rows, splits = [], [], []
+        for pid in sorted(self.genders):
+            # The ID stays with the gender that used it first (stable as data
+            # grows); any other gender is a different person.
+            order = sorted(self.genders[pid], key=lambda g: (self.genders[pid][g], g))
+            for gender in order:
+                primary = gender == order[0]
+                new_id = pid if primary else f"{pid}-{gender[:1]}"
+                used = self.names[(pid, gender)]
+                latest = max(used, key=lambda n: (used[n], n))
+                registered = people.get(pid)
+                if primary and registered:
+                    name, unique = registered
+                else:
+                    name = latest
+                    label = ("women" if gender == "female" else "men") if not primary else pid
+                    unique = f"{latest} ({label})"
+                players.append([new_id, name, unique, gender])
+                others = set(used) | (aliases.get(pid, set()) if primary else set())
+                alias_rows += [[new_id, a] for a in sorted(others - {name, ""})]
+                if not primary:
+                    splits.append([pid, gender, new_id])
+        return players, alias_rows, splits
+
+
+def read_register(people_csv, names_csv):
+    with open(people_csv, newline="", encoding="utf-8") as f:
+        people = {r["identifier"]: (r["name"], r["unique_name"] or r["name"])
+                  for r in csv.DictReader(f)}
+    aliases = defaultdict(set)
+    with open(names_csv, newline="", encoding="utf-8") as f:
+        for r in csv.DictReader(f):
+            aliases[r["identifier"]].add(r["name"])
+    return people, aliases
+
+
+# ---------------------------------------------------------------------------
 
 def main():
     ap = argparse.ArgumentParser()
@@ -210,14 +387,15 @@ def main():
                     help="use cached downloads; do not contact the server")
     ap.add_argument("--fetch-only", action="store_true",
                     help="refresh the cache, write sources.json and stop")
+    ap.add_argument("--register",
+                    help="folder holding people.csv and names.csv (default: download)")
+    ap.add_argument("--venue-merges", default=DEFAULT_VENUE_MERGES,
+                    help="CSV of venue spellings; only rows marked approved are merged")
     args = ap.parse_args()
     sources = args.sources or DEFAULT_SOURCES
 
     os.makedirs(args.out, exist_ok=True)
     cache_dir = os.path.join(args.out, "cache")
-    deliveries_csv = os.path.join(args.out, "deliveries.csv")
-    matches_csv = os.path.join(args.out, "matches.csv")
-    career_csv = os.path.join(args.out, "player_career_stats.csv")
     manifest_json = os.path.join(args.out, "manifest.json")
 
     # Fetch everything before writing anything, so a failed download stops early.
@@ -225,7 +403,19 @@ def main():
     for source in sources:
         log(f"source: {source}")
         paths.append(fetch(source, cache_dir, args.offline))
-    described = [describe(s, p) for s, p in zip(sources, paths)]
+    register, register_sources = {}, []
+    for fname, columns in REGISTER_FILES.items():
+        source = (os.path.join(args.register, fname) if args.register
+                  else REGISTER_URL + fname)
+        log(f"source: {source}")
+        check = check_register(columns)
+        register[fname] = fetch(source, cache_dir, args.offline, check)
+        try:
+            check(register[fname])
+        except ValueError as e:
+            sys.exit(f"{register[fname]}: {e}")
+        register_sources.append((source, register[fname]))
+    described = [describe(s, p) for s, p in [*zip(sources, paths), *register_sources]]
 
     if args.fetch_only:
         write_json(os.path.join(args.out, "sources.json"), described)
@@ -235,144 +425,166 @@ def main():
     if os.path.exists(manifest_json):
         os.remove(manifest_json)
 
-    # career[(player, format, season)] -> [innings, runs, outs, balls, 4s, 6s]
-    career = defaultdict(lambda: [0, 0, 0, 0, 0, 0])
+    people, aliases = read_register(register["people.csv"], register["names.csv"])
+    merges = read_venue_merges(args.venue_merges)
+    players = Players()
+    venues = {}          # venue_id -> (name, city)
+    venue_aliases = {}   # (venue, city) -> venue_id
 
-    n_matches = n_skipped = n_deliveries = 0
+    counts = dict.fromkeys(TABLES, 0)
+    handles = {t: open(os.path.join(args.out, f"{t}.csv"), "w", newline="", encoding="utf-8")
+               for t in TABLES}
+    writers = {t: csv.writer(h) for t, h in handles.items()}
+    for table, header in TABLES.items():
+        writers[table].writerow(header)
 
-    with open(deliveries_csv, "w", newline="") as dfh, \
-         open(matches_csv, "w", newline="") as mfh:
-        w = csv.writer(dfh)
-        w.writerow(["match_id", "date", "format", "innings", "over", "ball",
-                    "batter", "non_striker", "bowler", "runs_batter",
-                    "extras", "extras_type", "wicket_type", "player_out",
-                    "venue", "batting_team", "bowling_team", "phase", "gender"])
-        mw = csv.writer(mfh)
-        mw.writerow(["match_id", "date", "format", "venue", "city", "event",
-                     "season", "team_type", "gender", "team1", "team2",
-                     "toss_winner", "toss_decision", "winner", "result_margin",
-                     "player_of_match"])
+    def write(table, row):
+        assert len(row) == len(TABLES[table]), table
+        writers[table].writerow(row)
+        counts[table] += 1
 
-        for source, zip_path in zip(sources, paths):
-            log(f"reading: {zip_path}")
-            matches_before = n_matches
-            for match_id, match in iter_matches(zip_path):
-                info = match.get("info", {})
-                fmt = FORMAT_MAP.get(info.get("match_type", ""))
-                dates = info.get("dates") or []
-                if not fmt or not dates:
-                    n_skipped += 1
-                    continue
-                date = dates[0]
-                season = int(date[:4])
-                teams = info.get("teams") or []
-                venue = info.get("venue", "") or ""
-                gender = info.get("gender", "") or ""
-                event = info.get("event")
-                mw.writerow([
-                    match_id, date, fmt, venue, info.get("city", ""),
-                    event.get("name", "") if isinstance(event, dict) else "",
-                    info.get("season", ""), info.get("team_type", ""),
-                    info.get("gender", ""),
-                    teams[0] if len(teams) > 0 else "",
-                    teams[1] if len(teams) > 1 else "",
-                    (info.get("toss") or {}).get("winner", ""),
-                    (info.get("toss") or {}).get("decision", ""),
-                    (info.get("outcome") or {}).get("winner", ""),
-                    result_margin(info.get("outcome") or {}),
-                    (info.get("player_of_match") or [""])[0],
-                ])
+    n_skipped = 0
 
-                for i, inn in enumerate(match.get("innings", []), start=1):
-                    if inn.get("super_over"):
-                        continue
-                    overs = inn.get("overs")
-                    if not overs:
-                        continue
-
-                    batting_team = inn.get("team", "")
-                    bowling_team = (next((t for t in teams if t != batting_team), "")
-                                    if len(teams) == 2 else "")
-                    batted = set()  # players who came to the crease this innings
-
-                    for ov in overs:
-                        over_no = ov.get("over", 0)
-                        ph = phase_of(fmt, over_no)
-                        for b, dl in enumerate(ov.get("deliveries", []), start=1):
-                            batter = dget(dl, "batter", "batsman")
-                            non_striker = dl.get("non_striker", "")
-                            bowler = dl.get("bowler", "")
-                            runs = dl.get("runs", {})
-                            runs_batter = int(dget(runs, "batter", "batsman") or 0)
-                            extras_total = int(runs.get("extras", 0) or 0)
-                            extras = dl.get("extras", {}) or {}
-                            extras_type = next(iter(extras), "")
-
-                            wickets = dl.get("wickets")
-                            if wickets is None and "wicket" in dl:
-                                wickets = [dl["wicket"]]
-                            wickets = wickets or []
-                            wicket_type = wickets[0].get("kind", "") if wickets else ""
-                            player_out = wickets[0].get("player_out", "") if wickets else ""
-
-                            w.writerow([match_id, date, fmt, i, over_no, b,
-                                        batter, non_striker, bowler, runs_batter,
-                                        extras_total, extras_type, wicket_type,
-                                        player_out, venue, batting_team,
-                                        bowling_team, ph, gender])
-                            n_deliveries += 1
-
-                            if batter:
-                                batted.add(batter)
-                            if non_striker:
-                                batted.add(non_striker)
-
-                            c = career[(batter, fmt, season)]
-                            c[1] += runs_batter                 # runs
-                            if "wides" not in extras:
-                                c[3] += 1                        # balls faced
-                            if runs_batter == 4:
-                                c[4] += 1
-                            elif runs_batter == 6:
-                                c[5] += 1
-
-                            for wk in wickets:
-                                out = wk.get("player_out")
-                                if out:
-                                    career[(out, fmt, season)][2] += 1  # outs
-
-                    for p in batted:
-                        career[(p, fmt, season)][0] += 1             # innings
-
-                n_matches += 1
-                if n_matches % 1000 == 0:
-                    log(f"  ...{n_matches} matches, {n_deliveries} deliveries")
-
-            if n_matches == matches_before:
-                sys.exit(f"no usable matches in {source}")
-
-    n_career = 0
-    with open(career_csv, "w", newline="") as cfh:
-        w = csv.writer(cfh)
-        w.writerow(["player_name", "format", "season", "innings_played",
-                    "runs_scored", "outs", "balls_faced", "fours", "sixes"])
-        for (player, fmt, season), (inns, runs, outs, balls, f4, f6) in sorted(career.items()):
-            if not player:
+    for source, zip_path in zip(sources, paths):
+        log(f"reading: {zip_path}")
+        matches_before = counts["matches"]
+        for match_id, match in iter_matches(zip_path):
+            info = match.get("info", {})
+            fmt = FORMAT_MAP.get(info.get("match_type", ""))
+            dates = info.get("dates") or []
+            if not fmt or not dates:
+                n_skipped += 1
                 continue
-            w.writerow([player, fmt, season, inns, runs, outs, balls, f4, f6])
-            n_career += 1
+            date = dates[0]
+            teams = info.get("teams") or []
+            venue = info.get("venue", "") or ""
+            city = info.get("city", "") or ""
+            gender = info.get("gender", "") or ""
+            team_type = info.get("team_type", "") or ""
+            event = info.get("event")
+            outcome = info.get("outcome") or {}
+            registry = (info.get("registry") or {}).get("people") or {}
 
-    write_json(manifest_json, {
-        "sources": described,
-        "row_counts": {"matches": n_matches, "deliveries": n_deliveries,
-                       "player_career_stats": n_career},
-    })
+            def person(name):
+                """The ID of a player named in this match."""
+                pid = registry.get(name)
+                if not pid:
+                    sys.exit(f"match {match_id}: no register ID for player {name!r}")
+                players.see(pid, name, gender, date)
+                return pid
 
-    log(f"done: {n_matches} matches loaded, {n_skipped} skipped, "
-        f"{n_deliveries} deliveries, {n_career} career rows")
-    log(f"  {deliveries_csv}")
-    log(f"  {matches_csv}")
-    log(f"  {career_csv}")
+            vid = ""
+            if venue:
+                vid = venue_aliases.get((venue, city))
+                if vid is None:
+                    canonical = merges.get((venue, city), (venue, city))
+                    vid = venue_id(*canonical)
+                    if venues.setdefault(vid, canonical) != canonical:
+                        sys.exit(f"two venues share the ID {vid}")
+                    venue_aliases[(venue, city)] = vid
+
+            write("matches", [
+                match_id, date, fmt, venue, city, vid,
+                event.get("name", "") if isinstance(event, dict) else "",
+                info.get("season", ""), team_type, gender,
+                teams[0] if len(teams) > 0 else "",
+                teams[1] if len(teams) > 1 else "",
+                (info.get("toss") or {}).get("winner", ""),
+                (info.get("toss") or {}).get("decision", ""),
+                outcome.get("winner", ""), result_margin(outcome),
+                outcome.get("method", ""), outcome.get("eliminator", ""),
+                outcome.get("bowl_out", ""),
+                (info.get("player_of_match") or [""])[0],
+            ])
+
+            for team, squad in (info.get("players") or {}).items():
+                for name in squad:
+                    write("match_players", [match_id, team, person(name), name])
+
+            for i, inn in enumerate(match.get("innings", []), start=1):
+                if inn.get("super_over"):
+                    continue
+                overs = inn.get("overs")
+                if not overs:
+                    continue
+
+                batting_team = inn.get("team", "")
+                bowling_team = (next((t for t in teams if t != batting_team), "")
+                                if len(teams) == 2 else "")
+                spans = powerplay_spans(inn)
+
+                for ov in overs:
+                    over_no = ov.get("over", 0)
+                    ph = phase_of(fmt, over_no)
+                    for b, dl in enumerate(ov.get("deliveries", []), start=1):
+                        batter = dget(dl, "batter", "batsman")
+                        non_striker = dl.get("non_striker", "")
+                        bowler = dl.get("bowler", "")
+                        runs = dl.get("runs", {})
+                        runs_batter = int(dget(runs, "batter", "batsman") or 0)
+                        extras_total = int(runs.get("extras", 0) or 0)
+                        extras = dl.get("extras", {}) or {}
+
+                        wickets = dl.get("wickets")
+                        if wickets is None and "wicket" in dl:
+                            wickets = [dl["wicket"]]
+                        wickets = wickets or []
+                        first = wickets[0] if wickets else {}
+
+                        delivery_id = counts["deliveries"] + 1
+                        boundary = runs_batter in (4, 6) and not runs.get("non_boundary")
+                        powerplay = next((kind for lo, hi, kind in spans
+                                          if lo <= (over_no, b) <= hi), "")
+                        write("deliveries", [
+                            delivery_id, match_id, date, fmt, i, over_no, b,
+                            batter, person(batter),
+                            non_striker, person(non_striker),
+                            bowler, person(bowler),
+                            runs_batter, "t" if boundary else "f", extras_total,
+                            *(extras.get(k, 0) for k in
+                              ("wides", "noballs", "byes", "legbyes", "penalty")),
+                            next(iter(extras), ""), first.get("kind", ""),
+                            first.get("player_out", ""), venue, vid,
+                            batting_team, bowling_team, ph, powerplay, gender,
+                            team_type,
+                        ])
+                        for n, wk in enumerate(wickets, start=1):
+                            out = wk.get("player_out", "")
+                            write("wickets", [delivery_id, n, person(out), out,
+                                              wk.get("kind", "")])
+
+            if counts["matches"] % 1000 == 0:
+                log(f"  ...{counts['matches']} matches, {counts['deliveries']} deliveries")
+
+        if counts["matches"] == matches_before:
+            sys.exit(f"no usable matches in {source}")
+
+    player_rows, alias_rows, split_rows = players.tables(people, aliases)
+    for row in player_rows:
+        write("players", row)
+    for row in alias_rows:
+        write("player_aliases", row)
+    for row in split_rows:
+        write("_player_splits", row)
+    for vid, (name, city) in sorted(venues.items()):
+        write("venues", [vid, name, city])
+    for (name, city), vid in sorted(venue_aliases.items()):
+        write("venue_aliases", [name, city, vid])
+    for h in handles.values():
+        h.close()
+
+    unused = sorted(set(merges) - set(venue_aliases))
+    if unused:
+        log(f"note: {len(unused)} approved venue merges match nothing in these sources, "
+            f"e.g. {unused[0]}")
+    for pid, gender, new_id in split_rows:
+        log(f"note: player ID {pid} appears in men's and women's matches; "
+            f"{gender} matches recorded as {new_id}")
+
+    write_json(manifest_json, {"sources": described, "row_counts": counts})
+    log(f"done: {counts['matches']} matches loaded, {n_skipped} skipped, "
+        f"{counts['deliveries']} deliveries, {counts['players']} players, "
+        f"{counts['venues']} venues ({len(venue_aliases)} spellings)")
 
 
 if __name__ == "__main__":

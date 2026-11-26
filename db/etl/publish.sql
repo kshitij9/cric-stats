@@ -57,8 +57,10 @@ BEGIN
     INSERT INTO public.data_loads (code_version, sources, row_counts, latest_match_date)
     SELECT code_version,
            manifest->'sources',
-           manifest->'row_counts'
-               || jsonb_build_object('era_averages', (SELECT count(*) FROM public.era_averages)),
+           (manifest->'row_counts') - '_player_splits'
+               || jsonb_build_object(
+                      'player_career_stats', (SELECT count(*) FROM public.player_career_stats),
+                      'era_averages',        (SELECT count(*) FROM public.era_averages)),
            (SELECT max(date) FROM public.matches)
       FROM etl_staging._load_manifest;
 
