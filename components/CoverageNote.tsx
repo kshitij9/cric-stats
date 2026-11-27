@@ -1,34 +1,34 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useApp } from '@/hooks/useApp';
+import { useJson } from '@/hooks/useJson';
+import { day } from '@/lib/dates';
 import type { Coverage } from '@/lib/types';
-
-const day = (iso: string) =>
-  new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'UTC',
-  });
 
 /** What the numbers on every screen are based on. */
 export default function CoverageNote() {
-  const [coverage, setCoverage] = useState<Coverage | null>(null);
-  const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    fetch('/api/coverage')
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
-      .then(setCoverage)
-      .catch(() => setFailed(true));
-  }, []);
+  const { competition } = useApp();
+  const { data, error } = useJson<Coverage>(`/api/coverage?competition=${competition}`);
 
   return (
-    <aside className="bg-zinc-950 border-b border-zinc-800 px-4 md:px-12 py-2 text-[11px] leading-relaxed text-zinc-400">
-      {coverage ? (
+    <footer className="mx-auto max-w-6xl border-t border-zinc-800 px-4 py-6 text-xs leading-relaxed text-zinc-500">
+      {!data ? (
+        error ? 'Could not read what period the data covers.' : 'Reading data coverage…'
+      ) : competition === 'ipl' ? (
         <>
-          <span className="font-semibold text-zinc-200">
-            Data: internationals from {day(coverage.from)} to {day(coverage.to)}
+          <span className="font-semibold text-zinc-300">
+            Data: the IPL from {day(data.from)} to {day(data.to)}.
+          </span>{' '}
+          Super overs are not counted. Ball-by-ball data from{' '}
+          <a className="underline hover:text-sky-300" href="https://cricsheet.org" target="_blank" rel="noreferrer">
+            Cricsheet
+          </a>
+          .
+        </>
+      ) : (
+        <>
+          <span className="font-semibold text-zinc-300">
+            Data: internationals from {day(data.from)} to {day(data.to)}
           </span>
           , men&apos;s and women&apos;s. No Afghanistan men&apos;s matches (
           <a
@@ -42,11 +42,7 @@ export default function CoverageNote() {
           ). Super overs are not counted. Early years are thin, as is women&apos;s cricket before
           2018; <span className="text-amber-400">†</span> marks careers that may be incomplete.
         </>
-      ) : failed ? (
-        'Could not read what period the data covers.'
-      ) : (
-        'Reading data coverage…'
       )}
-    </aside>
+    </footer>
   );
 }

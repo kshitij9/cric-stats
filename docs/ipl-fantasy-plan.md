@@ -7,7 +7,7 @@ Written 27 November 2026.
 | 0. Keep development apart | Done 27 November 2026 |
 | 1. Load the IPL, kept separate | Done 27 November 2026 |
 | 2. Fantasy data and points | Not started |
-| 3. Screens | Not started |
+| 3. Screens | Redesign and competition switch done 27 November; bowling and combined T20 view not started |
 | 4. Picks | Not started |
 
 Notes from steps 0 and 1:
@@ -16,7 +16,7 @@ Notes from steps 0 and 1:
   `COMPOSE_PROJECT_NAME=cric-stats`. Do not run `docker compose up` from it.
 - Matches, balls, careers and era baselines carry a `competition`
   (`international` or `ipl`). The APIs take `competition`, defaulting to
-  international; `ipl` needs format `T20`. The screens do not offer it yet.
+  international; `ipl` needs format `T20`.
 - A club match from any other competition stops the load.
 - Renamed franchises are in `db/teams/franchises.csv`. Deccan Chargers and
   Sunrisers Hyderabad, Gujarat Lions and Gujarat Titans, and Pune Warriors and
@@ -33,6 +33,21 @@ Notes from steps 0 and 1:
 - **Going live:** the new app and the new data must arrive together. The old app
   on the new data would mix the IPL into T20 internationals, and the new app
   cannot read the old data. Load a second database and swap, as in the fixes.
+
+Notes from step 3 (brought ahead of step 2):
+
+- Screens are Home, Player, Compare and Picks, under one header with the
+  IPL / International switch (IPL by default). The choice, the player and the
+  comparison list are remembered in the browser. `/duel` leads to Compare.
+- Compare takes up to six batters (colours checked for colour blindness). The
+  radar charts were replaced by season charts and bars.
+- Picks updates as choices change. Because that sends more searches, the app now
+  sets three database options per connection (`lib/db.ts`): without them 32 of
+  84 simultaneous searches failed, the database container having only 64 MB of
+  shared memory. With them none failed.
+- 63 browser checks passed (script outside the repository, `ui.mjs`).
+- Still to do here: bowling figures on Player and Compare, the combined T20
+  view, and an option to leave out retired players from Picks.
 
 ## Goal
 

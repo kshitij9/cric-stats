@@ -1,33 +1,18 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import CoverageNote from "@/components/CoverageNote";
+import type { Metadata } from 'next';
+import { Geist } from 'next/font/google';
+import './globals.css';
+import AppHeader from '@/components/AppHeader';
+import CoverageNote from '@/components/CoverageNote';
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
 });
 
 export const metadata: Metadata = {
-  title: 'CricIntell – Era-Aware Cricket Profiles',
-  description: 'Explore player matchups, era-adjusted performance, and multi-player comparisons powered by Postgres.',
-  openGraph: {
-    title: 'CricIntell – Era-Aware Cricket Profiles',
-    description: 'Compare cricket greats across eras with advanced stats and visuals.',
-    url: 'https://cric-stats-one.vercel.app',
-    siteName: 'CricIntell',
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'CricIntell – Era-Aware Cricket Profiles',
-    description: 'Compare players, matchups, and era index at a glance.',
-  },
+  title: 'CricIntell – player stats and match picks',
+  description:
+    'Player profiles, side-by-side comparison and matchup-based picks for the IPL and international cricket.',
 };
 
 export default function RootLayout({
@@ -37,11 +22,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} antialiased`}>
+        <AppHeader />
+        <main className="mx-auto min-h-[70vh] max-w-6xl space-y-6 px-4 py-6 md:py-8">
+          {children}
+        </main>
         <CoverageNote />
-        {children}
       </body>
     </html>
   );

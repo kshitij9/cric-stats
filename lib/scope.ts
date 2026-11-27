@@ -9,9 +9,9 @@ export const isFormat = (value: string): value is Format =>
 export const isCompetition = (value: string): value is Competition =>
   (COMPETITIONS as readonly string[]).includes(value);
 
-/** How a message names a scope: 'Test', 'ODI', 'T20' (internationals) or 'IPL'. */
+/** How a message names a scope: 'Test', 'ODI', 'T20I' (internationals) or 'IPL'. */
 export const scopeName = ({ format, competition }: Scope) =>
-  competition === 'ipl' ? 'IPL' : format;
+  competition === 'ipl' ? 'IPL' : format === 'T20' ? 'T20I' : format;
 
 /** The competition asked for; none given means internationals. */
 export function parseCompetition(value: unknown): Competition | { error: string } {

@@ -95,7 +95,7 @@ export default function SearchBox<Chosen, Found extends Chosen>({
           aria-activedescendant={open && items[active] ? `${id}-${active}` : undefined}
           aria-label={label ? undefined : placeholder}
           autoComplete="off"
-          className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-2.5 pl-9 pr-8 text-sm focus:ring-2 focus:ring-sky-500 outline-none"
+          className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 pl-9 pr-8 text-sm focus:ring-2 focus:ring-sky-500 outline-none"
           placeholder={placeholder}
           value={typed ?? (selected ? itemText(selected) : '')}
           onFocus={(e) => e.target.select()}
@@ -136,7 +136,7 @@ export default function SearchBox<Chosen, Found extends Chosen>({
         <ul
           id={`${id}-list`}
           role="listbox"
-          className="absolute z-20 mt-1 w-full min-w-[260px] max-h-80 overflow-y-auto rounded-2xl border border-zinc-700 bg-zinc-950 shadow-2xl"
+          className="absolute z-20 mt-1 w-full min-w-[260px] max-h-80 overflow-y-auto rounded-xl border border-zinc-700 bg-zinc-950 shadow-2xl"
         >
           {status ? (
             <li className="px-3 py-2 text-xs text-zinc-500">{status}</li>

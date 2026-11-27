@@ -1,5 +1,5 @@
 import { careerSpans } from '@/lib/coverage';
-import { query } from '@/lib/db';
+import { query, queryWholeFormat } from '@/lib/db';
 import { scopeName } from '@/lib/scope';
 import { battingFigures, bowlingFigures, round, type Player } from '@/lib/stats';
 import type { Scope } from '@/lib/types';
@@ -351,9 +351,10 @@ export async function recommend(opts: {
     ctx.gender,
     competition,
   ];
+  const run = discovery ? queryWholeFormat : query;
   const [ballRows, eventRows] = await Promise.all([
-    query(sql.balls, [...params, baselineFloor]),
-    query(sql.events, params),
+    run(sql.balls, [...params, baselineFloor]),
+    run(sql.events, params),
   ]);
   // a player with no wickets simply has no event row
   const events = new Map(eventRows.map((r) => [r.player_id as string, r]));

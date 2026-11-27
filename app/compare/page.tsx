@@ -1,123 +1,160 @@
 'use client';
 
-import ComparisonTable, { FACTORS } from '@/components/ComparisonTable';
-import FormatPicker from '@/components/FormatPicker';
-import NavTabs from '@/components/NavTabs';
+import { Scale, X } from 'lucide-react';
+import { useState } from 'react';
+import MetricBars from '@/components/charts/MetricBars';
+import SeasonLines from '@/components/charts/SeasonLines';
+import ComparisonTable from '@/components/ComparisonTable';
 import PlayerSearch from '@/components/PlayerSearch';
-import { QUICK_PICKS } from '@/lib/defaults';
-import type { Format, PlayerRef } from '@/lib/types';
-import { BarChart3, Plus, X } from 'lucide-react';
-import { useRef, useState } from 'react';
-
-const DEFAULT_FACTOR_KEYS = ['innings', 'runs', 'average', 'strike_rate', 'era_index'];
-
-type Slot = { key: number; player: PlayerRef | null };
+import { Card, Empty, Loading, PageHeader } from '@/components/ui';
+import { useApp } from '@/hooks/useApp';
+import { useCricketStatsList } from '@/hooks/useCricketStats';
+import { MAX_COMPARE, PLAYER_COLORS } from '@/lib/colors';
+import { DEFAULT_FACTORS, FACTORS } from '@/lib/factors';
+import { scopeName } from '@/lib/scope';
+import type { Career, EraYear } from '@/lib/types';
 
 export default function ComparePage() {
-  const [format, setFormat] = useState<Format>('ODI');
-  const [slots, setSlots] = useState<Slot[]>(() =>
-    QUICK_PICKS.map((player, key) => ({ key, player })),
-  );
-  // a key that stays with its box when others are removed
-  const nextKey = useRef(QUICK_PICKS.length);
-  const [factorKeys, setFactorKeys] = useState<string[]>(DEFAULT_FACTOR_KEYS);
+  const { scope, compared, addCompared, removeCompared } = useApp();
+  const [chosen, setChosen] = useState<string[]>(DEFAULT_FACTORS);
+  const ids = compared.map((p) => p.player_id);
+  const careers = useCricketStatsList<Career[]>('career', ids, scope);
+  const eras = useCricketStatsList<EraYear[]>('era', ids, scope);
+  const factors = FACTORS.filter((f) => chosen.includes(f.key));
+  const label = scopeName(scope);
 
-  const selectedFactors = FACTORS.filter((f) => factorKeys.includes(f.key));
+  const withData = compared.flatMap((p, i) => {
+    const career = careers[i]?.data?.[0];
+    return career
+      ? [{ id: p.player_id, name: p.unique_name, color: PLAYER_COLORS[p.slot], career }]
+      : [];
+  });
+  const series = compared.map((p, i) => ({
+    id: p.player_id,
+    name: p.unique_name,
+    color: PLAYER_COLORS[p.slot],
+    years: eras[i]?.data ?? [],
+  }));
+  const seasonsReady = eras.every((e) => !e.loading);
+  const hasSeasons = series.some((s) => s.years.length > 0);
 
-  const choose = (key: number, player: PlayerRef | null) =>
-    setSlots((prev) => prev.map((s) => (s.key === key ? { ...s, player } : s)));
-
-  const addPlayer = () => {
-    const key = nextKey.current++;
-    setSlots((prev) => [...prev, { key, player: null }]);
-  };
-
-  const toggleFactor = (key: string) =>
-    setFactorKeys((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
-    );
+  const toggle = (key: string) =>
+    setChosen((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
 
   return (
-    <main className="min-h-screen bg-[#050505] text-zinc-100 p-4 md:p-12 font-sans">
-      <header className="max-w-7xl mx-auto flex flex-col gap-4 mb-10">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-3xl font-black italic tracking-tighter uppercase flex items-center gap-3">
-            <BarChart3 className="text-sky-400" /> Multi-Player Comparison
-          </h1>
-          <NavTabs />
-        </div>
-        <p className="text-sm text-zinc-500 max-w-2xl">
-          Line up any number of players in the same format and compare their batting across any
-          combination of factors you pick below.
-        </p>
-      </header>
+    <>
+      <PageHeader icon={Scale} title="Compare">
+        Put up to {MAX_COMPARE} batters side by side. Choose the figures that matter to you; the best
+        in each is marked.
+      </PageHeader>
 
-      <section className="max-w-7xl mx-auto bg-zinc-900 border border-zinc-800 rounded-3xl p-8 space-y-6">
-        <div>
-          <p className="text-xs text-zinc-500 mb-2">Players</p>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-            {slots.map((slot, i) => (
-              <div key={slot.key}>
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-xs text-zinc-500">Player {i + 1}</p>
-                  {slots.length > 1 && (
-                    <button
-                      onClick={() => setSlots((prev) => prev.filter((s) => s.key !== slot.key))}
-                      className="text-zinc-600 hover:text-red-400 transition-colors"
-                      aria-label={`Remove Player ${i + 1}`}
-                    >
-                      <X size={12} />
-                    </button>
-                  )}
-                </div>
-                <PlayerSearch
-                  selected={slot.player}
-                  onSelect={(p) => choose(slot.key, p)}
-                  placeholder={`Search player ${i + 1}`}
-                  clearable
-                />
-              </div>
-            ))}
+      <Card title="Players">
+        <ul className="flex flex-wrap gap-2">
+          {compared.map((p) => (
+            <li
+              key={p.player_id}
+              className="flex items-center gap-2 rounded-full border border-zinc-700 bg-zinc-950 py-1.5 pl-3 pr-1.5 text-sm font-semibold"
+            >
+              <span
+                aria-hidden
+                className="size-2.5 rounded-full"
+                style={{ background: PLAYER_COLORS[p.slot] }}
+              />
+              {p.unique_name}
+              <button
+                type="button"
+                aria-label={`Remove ${p.unique_name}`}
+                onClick={() => removeCompared(p.player_id)}
+                className="rounded-full p-1 text-zinc-500 hover:bg-zinc-800 hover:text-red-400"
+              >
+                <X size={14} />
+              </button>
+            </li>
+          ))}
+        </ul>
+        {compared.length < MAX_COMPARE ? (
+          <div className="max-w-md">
+            <PlayerSearch
+              label="Add a player"
+              selected={null}
+              onSelect={(p) => p && addCompared(p)}
+            />
           </div>
-          <button
-            onClick={addPlayer}
-            className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-sky-400 hover:text-sky-300 transition-colors"
-          >
-            <Plus size={14} /> Add player
-          </button>
-        </div>
+        ) : (
+          <p className="text-xs text-zinc-500">
+            That is the most that can be compared. Remove one to add another.
+          </p>
+        )}
+      </Card>
 
-        <FormatPicker value={format} onChange={setFormat} accent="sky" />
-
-        <div>
-          <p className="text-xs text-zinc-500 mb-2">Factors</p>
-          <div className="flex flex-wrap gap-2">
-            {FACTORS.map((f) => {
-              const active = factorKeys.includes(f.key);
-              return (
+      {compared.length === 0 ? (
+        <Empty>Add a player to start comparing.</Empty>
+      ) : (
+        <>
+          <Card title="Figures to show">
+            <div className="flex flex-wrap gap-2">
+              {FACTORS.map((f) => (
                 <button
                   key={f.key}
-                  aria-pressed={active}
-                  onClick={() => toggleFactor(f.key)}
-                  className={[
-                    'px-2.5 py-1 rounded-full border text-[11px] font-semibold transition-colors',
-                    active
-                      ? 'bg-sky-500/15 border-sky-500 text-sky-300'
-                      : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-sky-500/70 hover:text-sky-200',
-                  ].join(' ')}
+                  type="button"
+                  title={f.help}
+                  aria-pressed={chosen.includes(f.key)}
+                  onClick={() => toggle(f.key)}
+                  className="rounded-full border border-zinc-800 bg-zinc-950 px-3 py-1.5 text-xs font-semibold text-zinc-400 hover:border-sky-500 aria-pressed:border-sky-500 aria-pressed:bg-sky-500/15 aria-pressed:text-sky-200"
                 >
                   {f.label}
                 </button>
-              );
-            })}
-          </div>
-        </div>
+              ))}
+            </div>
+            <div className="flex gap-4 text-xs font-semibold text-sky-400">
+              <button type="button" onClick={() => setChosen(FACTORS.map((f) => f.key))}>
+                Show all
+              </button>
+              <button type="button" onClick={() => setChosen(DEFAULT_FACTORS)}>
+                Reset
+              </button>
+            </div>
+          </Card>
 
-        <ComparisonTable players={slots} format={format} factors={selectedFactors} />
-        {selectedFactors.length === 0 && (
-          <p className="text-xs text-zinc-600 italic">Pick at least one factor above to see numbers.</p>
-        )}
-      </section>
-    </main>
+          {factors.length === 0 ? (
+            <Empty>Choose at least one figure above.</Empty>
+          ) : (
+            <>
+              <Card title={`${label} career batting`}>
+                <ComparisonTable
+                  players={compared}
+                  careers={careers}
+                  factors={factors}
+                  scopeLabel={label}
+                />
+              </Card>
+              {withData.length > 1 && (
+                <Card title="Side by side" hint="Each figure has its own scale, starting at zero.">
+                  <MetricBars players={withData} factors={factors} />
+                </Card>
+              )}
+            </>
+          )}
+
+          {!seasonsReady ? (
+            <Loading height="h-72" />
+          ) : (
+            hasSeasons && (
+              <div className="grid gap-6">
+                <Card title="Runs by season">
+                  <SeasonLines metric="runs" series={series} />
+                </Card>
+                <Card
+                  title="Era index by season"
+                  hint="Scoring speed against the average batter that year. The grey line, 1.00, is average. A season with only a few balls can swing widely."
+                >
+                  <SeasonLines metric="era_index" series={series} />
+                </Card>
+              </div>
+            )
+          )}
+        </>
+      )}
+    </>
   );
 }

@@ -1,42 +1,17 @@
-import { useEffect, useState } from 'react';
-import type { Format } from '@/lib/types';
+'use client';
 
-type Result<T> = { url: string; data: T | null; error: string | null };
+import { useJson, useJsonList } from '@/hooks/useJson';
+import type { Scope } from '@/lib/types';
 
-/**
- * One player's statistics in one format. `data` only ever belongs to the player
- * and format asked for now: it is null while a new choice is loading.
- */
-export function useCricketStats<T>(type: string, playerId: string | null | undefined, format: Format) {
-  const url = playerId
-    ? `/api/stats/${type}?id=${encodeURIComponent(playerId)}&format=${format}`
-    : null;
-  const [result, setResult] = useState<Result<T> | null>(null);
+const url = (type: string, playerId: string, { format, competition }: Scope) =>
+  `/api/stats/${type}?id=${encodeURIComponent(playerId)}&format=${format}&competition=${competition}`;
 
-  useEffect(() => {
-    if (!url) return;
-    const controller = new AbortController();
+/** One player's statistics in one scope. */
+export function useCricketStats<T>(type: string, playerId: string, scope: Scope) {
+  return useJson<T>(url(type, playerId, scope));
+}
 
-    const load = async () => {
-      try {
-        const response = await fetch(url, { signal: controller.signal });
-        const json = await response.json();
-        if (!response.ok) throw new Error(json?.error ?? `Request failed (${response.status})`);
-        setResult({ url, data: json as T, error: null });
-      } catch (err) {
-        if (controller.signal.aborted) return;
-        setResult({ url, data: null, error: (err as Error).message });
-      }
-    };
-
-    load();
-    return () => controller.abort();
-  }, [url]);
-
-  const current = result && result.url === url ? result : null;
-  return {
-    data: current?.data ?? null,
-    error: current?.error ?? null,
-    loading: url !== null && current === null,
-  };
+/** The same statistics for several players, in the order given. */
+export function useCricketStatsList<T>(type: string, playerIds: string[], scope: Scope) {
+  return useJsonList<T>(playerIds.map((id) => url(type, id, scope)));
 }
