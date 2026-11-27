@@ -1,442 +1,412 @@
 group,tier,approve,venue,city,canonical_venue,canonical_city,matches,first_year,last_year,most_frequent_team,why
 1,A,y,Adelaide Oval,,Adelaide Oval,Adelaide,45,2005,2018,Australia,no city given
-1,A,y,Adelaide Oval,Adelaide,Adelaide Oval,Adelaide,27,2003,2026,Australia,same name and city
-2,A,y,Allan Border Field,Brisbane,Allan Border Field,Brisbane,11,2017,2020,Australia,same name and city
-2,A,y,"Allan Border Field, Brisbane",Brisbane,Allan Border Field,Brisbane,8,2023,2026,Australia,same name and city
-3,A,y,AMI Stadium,Christchurch,AMI Stadium,Christchurch,9,2005,2011,New Zealand,same name and city
-3,C,,Jade Stadium,Christchurch,AMI Stadium,Christchurch,4,2006,2008,New Zealand,Lancaster Park under an earlier name
-3,C,,"Jade Stadium, Christchurch",Christchurch,AMI Stadium,Christchurch,1,2003,2003,India,Lancaster Park under an earlier name
-4,A,y,Amini Park,Port Moresby,Amini Park,Port Moresby,6,2019,2019,Papua New Guinea,same name and city
-4,A,y,"Amini Park, Port Moresby",Port Moresby,Amini Park,Port Moresby,32,2022,2026,Papua New Guinea,same name and city
-5,B,,Antigua Recreation Ground,St John's,Antigua Recreation Ground,Antigua,2,2004,2005,West Indies,same name; city given as St John's
+1,A,y,Adelaide Oval,Adelaide,Adelaide Oval,Adelaide,28,2003,2026,Australia,same name and city
+2,A,y,Allan Border Field,Brisbane,Allan Border Field,Brisbane,0,2017,2020,Australia,same name and city
+2,A,y,"Allan Border Field, Brisbane",Brisbane,Allan Border Field,Brisbane,22,2023,2026,Australia,same name and city
+3,A,y,AMI Stadium,Christchurch,AMI Stadium,Christchurch,0,2005,2011,New Zealand,same name and city
+3,A,y,"AMI Stadium, Christchurch",Christchurch,AMI Stadium,Christchurch,8,2008,2011,New Zealand,same name and city
+3,C,,"Jade Stadium, Christchurch",Christchurch,AMI Stadium,Christchurch,6,2003,2007,New Zealand,Lancaster Park under an earlier name
+4,A,y,Amini Park,Port Moresby,Amini Park,Port Moresby,0,2019,2019,Papua New Guinea,same name and city
+4,A,y,"Amini Park, Port Moresby",Port Moresby,Amini Park,Port Moresby,38,2022,2026,Papua New Guinea,same name and city
 5,A,y,"Antigua Recreation Ground, St John's",Antigua,Antigua Recreation Ground,Antigua,4,2006,2009,West Indies,same name and city
-5,B,,"Antigua Recreation Ground, St John's, Antigua",St John's,Antigua Recreation Ground,Antigua,1,2003,2003,Australia,same name; city given as St John's
-6,A,y,Arnos Vale Ground,Kingstown,Arnos Vale Ground,Kingstown,2,2004,2004,Bangladesh,same name and city
+5,B,,"Antigua Recreation Ground, St John's",St John's,Antigua Recreation Ground,Antigua,3,2003,2005,West Indies,same name; city given as St John's
+6,A,y,Arnos Vale Ground,Kingstown,Arnos Vale Ground,Kingstown,0,2004,2004,Bangladesh,same name and city
+6,A,y,"Arnos Vale Ground, Kingstown",Kingstown,Arnos Vale Ground,Kingstown,12,2003,2026,West Indies,same name and city
 6,B,,"Arnos Vale Ground, Kingstown",St Vincent,Arnos Vale Ground,Kingstown,12,2005,2014,West Indies,same name; city given as St Vincent
-6,A,y,"Arnos Vale Ground, Kingstown, St Vincent",Kingstown,Arnos Vale Ground,Kingstown,10,2003,2026,West Indies,same name and city
-7,A,y,Arun Jaitley Stadium,Delhi,Arun Jaitley Stadium,Delhi,6,2005,2019,India,same name and city
-7,A,y,"Arun Jaitley Stadium, Delhi",Delhi,Arun Jaitley Stadium,Delhi,14,2022,2026,India,same name and city
-7,C,,Feroz Shah Kotla,Delhi,Arun Jaitley Stadium,Delhi,24,2006,2016,India,renamed 2019
-8,A,y,Asian Institute of Technology Ground,Bangkok,Asian Institute of Technology Ground,Bangkok,12,2016,2019,Kuwait,same name and city
-8,A,y,"Asian Institute of Technology Ground, Bangkok",Bangkok,Asian Institute of Technology Ground,Bangkok,16,2025,2025,Namibia,same name and city
-9,A,y,Bangabandhu National Stadium,Dhaka,Bangabandhu National Stadium,Dhaka,3,2004,2005,Bangladesh,same name and city
-9,A,y,"Bangabandhu National Stadium, Dhaka",Dhaka,Bangabandhu National Stadium,Dhaka,4,2003,2003,Bangladesh,same name and city
-10,A,y,Barabati Stadium,Cuttack,Barabati Stadium,Cuttack,8,2008,2019,India,same name and city
-10,A,y,"Barabati Stadium, Cuttack",Cuttack,Barabati Stadium,Cuttack,4,2003,2025,India,same name and city
-11,A,y,Barsapara Cricket Stadium,Guwahati,Barsapara Cricket Stadium,Guwahati,5,2017,2019,India,same name and city
-11,A,y,"Barsapara Cricket Stadium, Guwahati",Guwahati,Barsapara Cricket Stadium,Guwahati,10,2022,2026,India,same name and city
-12,A,y,Basin Reserve,Wellington,Basin Reserve,Wellington,28,2005,2021,New Zealand,same name and city
-12,A,y,"Basin Reserve, Wellington",Wellington,Basin Reserve,Wellington,23,2004,2026,New Zealand,same name and city
-13,A,y,Bay Oval,Mount Maunganui,Bay Oval,Mount Maunganui,30,2014,2021,New Zealand,same name and city
-13,A,y,"Bay Oval, Mount Maunganui",Mount Maunganui,Bay Oval,Mount Maunganui,28,2021,2026,New Zealand,same name and city
-14,A,y,Bellerive Oval,Hobart,Bellerive Oval,Hobart,29,2004,2018,Australia,same name and city
-14,A,y,"Bellerive Oval, Hobart",Hobart,Bellerive Oval,Hobart,19,2003,2026,Australia,same name and city
-15,C,,Bharat Ratna Shri Atal Bihari Vajpai Ekana Cricket Stadium,Lucknow,Bharat Ratna Shri Atal Bihari Vajpayee Ekana Cricket Stadium,Lucknow,2,2021,2021,India,spelling
-15,A,y,Bharat Ratna Shri Atal Bihari Vajpayee Ekana Cricket Stadium,Lucknow,Bharat Ratna Shri Atal Bihari Vajpayee Ekana Cricket Stadium,Lucknow,7,2018,2021,India,same name and city
-15,A,y,"Bharat Ratna Shri Atal Bihari Vajpayee Ekana Cricket Stadium, Lucknow",Lucknow,Bharat Ratna Shri Atal Bihari Vajpayee Ekana Cricket Stadium,Lucknow,7,2022,2023,India,same name and city
-16,C,,Boland Bank Park,Paarl,Boland Park,Paarl,2,2009,2009,South Africa,sponsor name
-16,C,,"Boland Bank Park, Paarl",Paarl,Boland Park,Paarl,3,2003,2003,Netherlands,sponsor name
-16,A,y,Boland Park,Paarl,Boland Park,Paarl,11,2012,2020,South Africa,same name and city
-16,A,y,"Boland Park, Paarl",Paarl,Boland Park,Paarl,12,2022,2026,South Africa,same name and city
-17,A,y,Botswana Cricket Association Oval 1,Gaborone,Botswana Cricket Association Oval 1,Gaborone,8,2018,2018,Botswana,same name and city
-17,A,y,"Botswana Cricket Association Oval 1, Gaborone",Gaborone,Botswana Cricket Association Oval 1,Gaborone,79,2018,2026,Botswana,same name and city
-18,A,y,Botswana Cricket Association Oval 2,Gaborone,Botswana Cricket Association Oval 2,Gaborone,4,2018,2018,Malawi,same name and city
-18,A,y,"Botswana Cricket Association Oval 2, Gaborone",Gaborone,Botswana Cricket Association Oval 2,Gaborone,53,2021,2026,Mozambique,same name and city
-19,A,y,Brabourne Stadium,Mumbai,Brabourne Stadium,Mumbai,25,2006,2018,Australia,same name and city
-19,A,y,"Brabourne Stadium, Mumbai",Mumbai,Brabourne Stadium,Mumbai,3,2022,2022,Australia,same name and city
-20,A,y,Bradman Oval,Bowral,Bradman Oval,Bowral,2,2014,2014,Australia,same name and city
-20,A,y,"Bradman Oval, Bowral",Bowral,Bradman Oval,Bowral,1,2008,2008,Australia,same name and city
-21,C,,Bready,Derry,Bready Cricket Club,Bready,1,2019,2019,Ireland,shortened name
-21,A,y,"Bready Cricket Club, Magheramason",Bready,Bready Cricket Club,Bready,2,2019,2019,Ireland,same name and city
-21,B,,"Bready Cricket Club, Magheramason",Londonderry,Bready Cricket Club,Bready,3,2015,2016,Ireland,same name; city given as Londonderry
-21,A,y,"Bready Cricket Club, Magheramason, Bready",Bready,Bready Cricket Club,Bready,12,2021,2026,Ireland,same name and city
-22,B,,"Brian Lara Stadium, Tarouba",Trinidad,Brian Lara Stadium,Tarouba,3,2018,2018,South Africa,same name; city given as Trinidad
-22,A,y,"Brian Lara Stadium, Tarouba, Trinidad",Tarouba,Brian Lara Stadium,Tarouba,15,2022,2026,West Indies,same name and city
-23,A,y,Brisbane Cricket Ground,Brisbane,Brisbane Cricket Ground,Brisbane,4,2004,2021,Australia,same name and city
-23,A,y,"Brisbane Cricket Ground, Woolloongabba",Brisbane,Brisbane Cricket Ground,Brisbane,45,2005,2019,Australia,same name and city
-23,A,y,"Brisbane Cricket Ground, Woolloongabba, Brisbane",Brisbane,Brisbane Cricket Ground,Brisbane,13,2003,2025,Australia,same name and city
-24,A,y,Buffalo Park,East London,Buffalo Park,East London,12,2005,2020,South Africa,same name and city
-24,A,y,"Buffalo Park, East London",East London,Buffalo Park,East London,17,2003,2025,South Africa,same name and city
-25,A,y,Bulawayo Athletic Club,,Bulawayo Athletic Club,Bulawayo,1,2018,2018,Hong Kong,no city given
-25,A,y,Bulawayo Athletic Club,Bulawayo,Bulawayo Athletic Club,Bulawayo,14,2022,2023,United States of America,same name and city
-26,A,y,Cambusdoon New Ground,Ayr,Cambusdoon New Ground,Ayr,1,2008,2008,Kenya,same name and city
-26,A,y,"Cambusdoon New Ground, Ayr",Ayr,Cambusdoon New Ground,Ayr,2,2022,2022,Namibia,same name and city
-27,A,y,Captain Roop Singh Stadium,Gwalior,Captain Roop Singh Stadium,Gwalior,2,2007,2010,India,same name and city
-27,A,y,"Captain Roop Singh Stadium, Gwalior",Gwalior,Captain Roop Singh Stadium,Gwalior,1,2003,2003,Australia,same name and city
-28,A,y,Carrara Oval,,Carrara Oval,Carrara,1,2018,2018,Australia,no city given
-28,A,y,Carrara Oval,Carrara,Carrara Oval,Carrara,6,2021,2025,Australia,same name and city
-29,A,y,Castle Avenue,Dublin,Castle Avenue,Dublin,3,2019,2019,Bangladesh,same name and city
-29,A,y,"Castle Avenue, Dublin",Dublin,Castle Avenue,Dublin,20,2021,2026,Ireland,same name and city
-29,C,,Clontarf Cricket Club Ground,Dublin,Castle Avenue,Dublin,12,2007,2017,Ireland,Clontarf's ground is Castle Avenue
-29,C,,"Clontarf Cricket Club Ground, Dublin",Dublin,Castle Avenue,Dublin,4,2014,2025,Ireland,Clontarf's ground is Castle Avenue
-30,C,,"Bundaberg Rum Stadium, Cairns",Cairns,Cazaly's Stadium,Cairns,2,2003,2003,Australia,former sponsor name
-30,A,y,"Cazaly's Stadium, Cairns",Cairns,Cazaly's Stadium,Cairns,5,2022,2025,Australia,same name and city
-31,A,y,Central Broward Regional Park Stadium Turf Ground,Lauderhill,Central Broward Regional Park Stadium Turf Ground,Lauderhill,17,2010,2019,West Indies,same name and city
-31,A,y,"Central Broward Regional Park Stadium Turf Ground, Lauderhill",Lauderhill,Central Broward Regional Park Stadium Turf Ground,Lauderhill,16,2021,2025,West Indies,same name and city
-32,A,y,City Oval,Pietermaritzburg,City Oval,Pietermaritzburg,2,2019,2019,Pakistan,same name and city
-32,A,y,"City Oval, Pietermaritzburg",Pietermaritzburg,City Oval,Pietermaritzburg,2,2003,2023,India,same name and city
-33,A,y,"Civil Service Cricket Club, Stormont",Belfast,Civil Service Cricket Club,Belfast,22,2006,2019,Ireland,same name and city
-33,A,y,"Civil Service Cricket Club, Stormont, Belfast",Belfast,Civil Service Cricket Club,Belfast,24,2021,2026,Ireland,same name and city
-34,A,y,College Field,St Peter Port,College Field,St Peter Port,5,2019,2020,Germany,same name and city
-34,A,y,"College Field, St Peter Port",St Peter Port,College Field,St Peter Port,1,2022,2022,Guernsey,same name and city
-35,B,,Coolidge Cricket Ground,Antigua,Coolidge Cricket Ground,Coolidge,1,2017,2017,Sri Lanka,same name; city given as Antigua
-35,A,y,"Coolidge Cricket Ground, Antigua",Coolidge,Coolidge Cricket Ground,Coolidge,19,2019,2021,West Indies,same name and city
-36,B,,County Ground,Hove,County Ground,Brighton,5,2012,2018,England,same name; city given as Hove
-36,A,y,"County Ground, Hove",Brighton,County Ground,Brighton,8,2019,2026,England,same name and city
-37,A,y,County Ground,Bristol,County Ground,Bristol,24,2006,2019,England,same name and city
-37,A,y,"County Ground, Bristol",Bristol,County Ground,Bristol,23,2021,2026,England,same name and city
-37,C,,"The Royal & Sun Alliance County Ground, Bristol",Bristol,County Ground,Bristol,1,2003,2003,England,sponsor name
-38,A,y,County Ground,Chelmsford,County Ground,Chelmsford,9,2009,2019,England,same name and city
-38,A,y,"County Ground, Chelmsford",Chelmsford,County Ground,Chelmsford,10,2021,2026,England,same name and city
-39,A,y,County Ground,Derby,County Ground,Derby,14,2009,2020,England,same name and city
-39,A,y,"County Ground, Derby",Derby,County Ground,Derby,7,2021,2026,England,same name and city
-40,A,y,County Ground,Northampton,County Ground,Northampton,3,2012,2019,England,same name and city
-40,A,y,"County Ground, Northampton",Northampton,County Ground,Northampton,4,2021,2024,England,same name and city
-41,A,y,County Ground,Taunton,County Ground,Taunton,13,2011,2017,England,same name and city
-41,C,,The Cooper Associates County Ground,Taunton,County Ground,Taunton,7,2018,2019,England,sponsor name
-41,C,,"The Cooper Associates County Ground, Taunton",Taunton,County Ground,Taunton,7,2021,2026,England,sponsor name
-42,A,y,"County Ground, New Road",Worcester,County Ground,Worcester,4,2015,2019,England,same name and city
-42,A,y,"County Ground, New Road, Worcester",Worcester,County Ground,Worcester,6,2005,2024,England,same name and city
-43,C,,"Beausejour Stadium, Gros Islet",St Lucia,Daren Sammy National Cricket Stadium,Gros Islet,34,2006,2014,West Indies,renamed 2016
-43,A,y,Daren Sammy National Cricket Stadium,Gros Islet,Daren Sammy National Cricket Stadium,Gros Islet,1,2004,2004,England,same name and city
-43,B,,"Daren Sammy National Cricket Stadium, Gros Islet",St Lucia,Daren Sammy National Cricket Stadium,Gros Islet,11,2005,2018,West Indies,same name; city given as St Lucia
-43,A,y,"Daren Sammy National Cricket Stadium, Gros Islet, St Lucia",Gros Islet,Daren Sammy National Cricket Stadium,Gros Islet,22,2021,2024,West Indies,same name and city
-43,A,y,"Daren Sammy National Cricket Stadium, St Lucia",Gros Islet,Daren Sammy National Cricket Stadium,Gros Islet,1,2019,2019,England,same name and city
-43,C,,"Darren Sammy National Cricket Stadium, Gros Islet",St Lucia,Daren Sammy National Cricket Stadium,Gros Islet,1,2016,2016,India,spelling
-43,C,,"Darren Sammy National Cricket Stadium, St Lucia",Gros Islet,Daren Sammy National Cricket Stadium,Gros Islet,4,2019,2019,West Indies,spelling
-44,A,y,Desert Springs Cricket Ground,Almeria,Desert Springs Cricket Ground,Almeria,2,2020,2020,Germany,same name and city
-44,A,y,"Desert Springs Cricket Ground, Almeria",Almeria,Desert Springs Cricket Ground,Almeria,44,2021,2023,Italy,same name and city
-45,C,,De Beers Diamond Oval,Kimberley,Diamond Oval,Kimberley,3,2010,2013,South Africa,sponsor name
-45,C,,"De Beers Diamond Oval, Kimberley",Kimberley,Diamond Oval,Kimberley,2,2003,2003,Bangladesh,sponsor name
-45,A,y,Diamond Oval,Kimberley,Diamond Oval,Kimberley,6,2016,2018,South Africa,same name and city
-45,A,y,"Diamond Oval, Kimberley",Kimberley,Diamond Oval,Kimberley,5,2023,2024,South Africa,same name and city
-46,A,y,"Dr DY Patil Sports Academy, Mumbai",Navi Mumbai,Dr DY Patil Sports Academy,Navi Mumbai,6,2022,2024,India,same name and city
-46,A,y,"Dr DY Patil Sports Academy, Navi Mumbai",Navi Mumbai,Dr DY Patil Sports Academy,Navi Mumbai,8,2024,2025,India,same name and city
-47,C,,Andhra Cricket Association-Visakhapatnam District Cricket Association Stadium,Visakhapatnam,Dr. Y.S. Rajasekhara Reddy ACA-VDCA Cricket Stadium,Visakhapatnam,1,2007,2007,India,earlier name
-47,A,y,Dr. Y.S. Rajasekhara Reddy ACA-VDCA Cricket Stadium,Visakhapatnam,Dr. Y.S. Rajasekhara Reddy ACA-VDCA Cricket Stadium,Visakhapatnam,12,2005,2019,India,same name and city
-47,A,y,"Dr. Y.S. Rajasekhara Reddy ACA-VDCA Cricket Stadium, Visakhapatnam",Visakhapatnam,Dr. Y.S. Rajasekhara Reddy ACA-VDCA Cricket Stadium,Visakhapatnam,13,2022,2026,India,same name and city
-48,A,y,Dubai International Cricket Stadium,,Dubai International Cricket Stadium,Dubai,77,2009,2018,Pakistan,no city given
-48,A,y,Dubai International Cricket Stadium,Dubai,Dubai International Cricket Stadium,Dubai,112,2019,2026,United Arab Emirates,same name and city
-48,C,,Dubai Sports City Cricket Stadium,,Dubai International Cricket Stadium,Dubai,2,2009,2009,Australia,alternative name
-49,A,y,Eden Gardens,Kolkata,Eden Gardens,Kolkata,26,2004,2019,India,same name and city
-49,A,y,"Eden Gardens, Kolkata",Kolkata,Eden Gardens,Kolkata,19,2021,2026,India,same name and city
-50,A,y,Eden Park,Auckland,Eden Park,Auckland,57,2004,2021,New Zealand,same name and city
-50,A,y,"Eden Park, Auckland",Auckland,Eden Park,Auckland,17,2008,2026,New Zealand,same name and city
-51,A,y,Edgbaston,Birmingham,Edgbaston,Birmingham,49,2004,2019,England,same name and city
-51,A,y,"Edgbaston, Birmingham",Birmingham,Edgbaston,Birmingham,36,2003,2026,England,same name and city
-52,A,y,Forthill,Dundee,Forthill,Dundee,10,2019,2019,Bangladesh,same name and city
-52,A,y,"Forthill, Dundee",Dundee,Forthill,Dundee,16,2024,2026,Scotland,same name and city
-53,A,y,Gaddafi Stadium,Lahore,Gaddafi Stadium,Lahore,36,2004,2021,Pakistan,same name and city
-53,A,y,"Gaddafi Stadium, Lahore",Lahore,Gaddafi Stadium,Lahore,51,2003,2026,Pakistan,same name and city
-54,A,y,"Gahanga International Cricket Stadium, Rwanda",Kigali City,Gahanga International Cricket Stadium,Kigali City,104,2022,2026,Rwanda,same name and city
-54,C,,Gahanga International Cricket Stadium. Rwanda,Kigali City,Gahanga International Cricket Stadium,Kigali City,77,2019,2024,Rwanda,punctuation
-55,A,y,Galle International Stadium,,Galle International Stadium,Galle,37,2007,2018,Sri Lanka,no city given
-55,A,y,Galle International Stadium,Galle,Galle International Stadium,Galle,22,2004,2026,Sri Lanka,same name and city
-56,A,y,"GMHBA Stadium, South Geelong, Victoria",Geelong,GMHBA Stadium,Geelong,6,2022,2022,Namibia,same name and city
-56,C,,"Simonds Stadium, South Geelong",Victoria,GMHBA Stadium,Geelong,2,2017,2017,Australia,sponsor rename
-57,A,y,Grace Road,Leicester,Grace Road,Leicester,12,2016,2019,England,same name and city
-57,A,y,"Grace Road, Leicester",Leicester,Grace Road,Leicester,6,2006,2026,England,same name and city
-58,A,y,"Grainville, St Saviour",St Saviour,Grainville,St Saviour,7,2022,2026,Guernsey,same name and city
-58,A,y,"Grainville, St Saviour, Jersey",St Saviour,Grainville,St Saviour,8,2023,2023,Germany,same name and city
-59,A,y,"Grange Cricket Club Ground, Raeburn Place",Edinburgh,Grange Cricket Club Ground,Edinburgh,10,2013,2017,Scotland,same name and city
-59,A,y,"Grange Cricket Club Ground, Raeburn Place, Edinburgh",Edinburgh,Grange Cricket Club Ground,Edinburgh,28,2021,2026,Scotland,same name and city
-59,C,,"Grange Cricket Club, Raeburn Place",Edinburgh,Grange Cricket Club Ground,Edinburgh,3,2018,2019,Scotland,shortened name
-60,A,y,Green Park,Kanpur,Green Park,Kanpur,11,2004,2017,India,same name and city
-60,A,y,"Green Park, Kanpur",Kanpur,Green Park,Kanpur,2,2021,2024,India,same name and city
-61,A,y,Greenfield International Stadium,Thiruvananthapuram,Greenfield International Stadium,Thiruvananthapuram,3,2017,2019,India,same name and city
-61,A,y,"Greenfield International Stadium, Thiruvananthapuram",Thiruvananthapuram,Greenfield International Stadium,Thiruvananthapuram,7,2022,2026,India,same name and city
-62,A,y,Gymkhana Club Ground,Nairobi,Gymkhana Club Ground,Nairobi,15,2006,2009,Kenya,same name and city
-62,A,y,"Gymkhana Club Ground, Nairobi",Nairobi,Gymkhana Club Ground,Nairobi,36,2003,2026,Kenya,same name and city
-63,A,y,Hagley Oval,Christchurch,Hagley Oval,Christchurch,27,2014,2021,New Zealand,same name and city
-63,A,y,"Hagley Oval, Christchurch",Christchurch,Hagley Oval,Christchurch,34,2022,2026,New Zealand,same name and city
-64,A,y,Harare Sports Club,,Harare Sports Club,Harare,93,2005,2018,Zimbabwe,no city given
-64,A,y,Harare Sports Club,Harare,Harare Sports Club,Harare,127,2003,2026,Zimbabwe,same name and city
-65,A,y,Hazelaarweg,Rotterdam,Hazelaarweg,Rotterdam,5,2015,2019,Netherlands,same name and city
-65,A,y,"Hazelaarweg, Rotterdam",Rotterdam,Hazelaarweg,Rotterdam,20,2021,2025,Netherlands,same name and city
-66,A,y,Headingley,Leeds,Headingley,Leeds,29,2004,2019,England,same name and city
-66,A,y,"Headingley, Leeds",Leeds,Headingley,Leeds,17,2003,2026,England,same name and city
-67,A,y,Himachal Pradesh Cricket Association Stadium,Dharamsala,Himachal Pradesh Cricket Association Stadium,Dharamsala,11,2013,2017,India,same name and city
-67,A,y,Himachal Pradesh Cricket Association Stadium,Dharmasala,Himachal Pradesh Cricket Association Stadium,Dharamsala,3,2014,2016,India,same name and city
-67,A,y,"Himachal Pradesh Cricket Association Stadium, Dharamsala",Dharamsala,Himachal Pradesh Cricket Association Stadium,Dharamsala,8,2022,2025,India,same name and city
-68,A,y,Holkar Cricket Stadium,Indore,Holkar Cricket Stadium,Indore,7,2011,2020,India,same name and city
-68,A,y,"Holkar Cricket Stadium, Indore",Indore,Holkar Cricket Stadium,Indore,10,2022,2026,India,same name and city
-68,C,,Maharani Usharaje Trust Cricket Ground,Indore,Holkar Cricket Stadium,Indore,2,2006,2008,England,renamed 2010
-69,A,y,ICC Academy,Dubai,ICC Academy,Dubai,35,2013,2019,United Arab Emirates,same name and city
-69,A,y,"ICC Academy, Dubai",Dubai,ICC Academy,Dubai,42,2021,2025,United Arab Emirates,same name and city
-69,C,,ICC Global Cricket Academy,Dubai,ICC Academy,Dubai,5,2013,2017,Canada,alternative name; please confirm
-70,A,y,ICC Academy Ground No 2,Dubai,ICC Academy Ground No 2,Dubai,5,2019,2019,Bermuda,same name and city
-70,A,y,"ICC Academy Ground No 2, Dubai",Dubai,ICC Academy Ground No 2,Dubai,5,2021,2021,United Arab Emirates,same name and city
-71,A,y,Indian Association Ground,Singapore,Indian Association Ground,Singapore,17,2019,2019,Singapore,same name and city
-71,A,y,"Indian Association Ground, Singapore",Singapore,Indian Association Ground,Singapore,10,2022,2023,Singapore,same name and city
-72,A,y,Iqbal Stadium,Faisalabad,Iqbal Stadium,Faisalabad,6,2005,2008,Pakistan,same name and city
-72,A,y,"Iqbal Stadium, Faisalabad",Faisalabad,Iqbal Stadium,Faisalabad,5,2003,2025,Pakistan,same name and city
-73,A,y,John Davies Oval,Queenstown,John Davies Oval,Queenstown,1,2005,2005,New Zealand,same name and city
-73,A,y,"John Davies Oval, Queenstown",Queenstown,John Davies Oval,Queenstown,10,2022,2023,New Zealand,same name and city
-74,A,y,JSCA International Stadium Complex,Ranchi,JSCA International Stadium Complex,Ranchi,9,2013,2019,India,same name and city
-74,A,y,"JSCA International Stadium Complex, Ranchi",Ranchi,JSCA International Stadium Complex,Ranchi,5,2021,2025,India,same name and city
-75,A,y,Junction Oval,Melbourne,Junction Oval,Melbourne,10,2019,2020,Australia,same name and city
-75,A,y,"Junction Oval, Melbourne",Melbourne,Junction Oval,Melbourne,5,2022,2025,Australia,same name and city
-76,A,y,Kennington Oval,London,Kennington Oval,London,74,2004,2019,England,same name and city
-76,A,y,"Kennington Oval, London",London,Kennington Oval,London,22,2003,2026,England,same name and city
-77,A,y,Kensington Oval,Bridgetown,Kensington Oval,Bridgetown,1,2005,2005,South Africa,same name and city
-77,A,y,"Kensington Oval, Barbados",Bridgetown,Kensington Oval,Bridgetown,8,2019,2020,West Indies,same name and city
-77,B,,"Kensington Oval, Bridgetown",Barbados,Kensington Oval,Bridgetown,45,2007,2018,West Indies,same name; city given as Barbados
-77,A,y,"Kensington Oval, Bridgetown, Barbados",Bridgetown,Kensington Oval,Bridgetown,36,2003,2026,West Indies,same name and city
-78,A,y,Khan Shaheb Osman Ali Stadium,Fatullah,Khan Shaheb Osman Ali Stadium,Fatullah,8,2006,2016,Bangladesh,same name and city
-78,C,,Narayanganj Osmani Stadium,Fatullah,Khan Shaheb Osman Ali Stadium,Fatullah,2,2006,2006,Australia,alternative name; please confirm
-79,A,y,King George V Sports Ground,Castel,King George V Sports Ground,Castel,9,2019,2019,Denmark,same name and city
-79,A,y,"King George V Sports Ground, Castel",Castel,King George V Sports Ground,Castel,19,2024,2026,Guernsey,same name and city
-80,A,y,Kingsmead,Durban,Kingsmead,Durban,56,2004,2021,South Africa,same name and city
-80,A,y,"Kingsmead, Durban",Durban,Kingsmead,Durban,18,2002,2026,South Africa,same name and city
-81,A,y,Kinrara Academy Oval,Kuala Lumpur,Kinrara Academy Oval,Kuala Lumpur,46,2006,2020,Malaysia,same name and city
-81,A,y,"Kinrara Academy Oval, Kuala Lumpur",Kuala Lumpur,Kinrara Academy Oval,Kuala Lumpur,24,2022,2022,Malaysia,same name and city
-82,A,y,Lord's,London,Lord's,London,73,2004,2019,England,same name and city
-82,A,y,"Lord's, London",London,Lord's,London,31,2002,2026,England,same name and city
-83,A,y,Lugogo Cricket Oval,Kampala,Lugogo Cricket Oval,Kampala,3,2019,2019,Botswana,same name and city
-83,A,y,"Lugogo Cricket Oval, Kampala",Kampala,Lugogo Cricket Oval,Kampala,5,2025,2025,Canada,same name and city
-84,A,y,M Chinnaswamy Stadium,Bangalore,M Chinnaswamy Stadium,Bengaluru,25,2007,2017,India,same name and city
-84,A,y,M Chinnaswamy Stadium,Bengaluru,M Chinnaswamy Stadium,Bengaluru,1,2017,2017,Australia,same name and city
-84,A,y,"M Chinnaswamy Stadium, Bangalore",Bengaluru,M Chinnaswamy Stadium,Bengaluru,2,2001,2022,India,same name and city
-84,A,y,"M Chinnaswamy Stadium, Bengaluru",Bengaluru,M Chinnaswamy Stadium,Bengaluru,11,2022,2024,India,same name and city
-84,A,y,M.Chinnaswamy Stadium,Bengaluru,M Chinnaswamy Stadium,Bengaluru,5,2007,2020,India,same name and city
-85,A,y,MA Aziz Stadium,Chattogram,MA Aziz Stadium,Chattogram,4,2004,2005,Bangladesh,same name and city
-85,A,y,"MA Aziz Stadium, Chittagong",Chattogram,MA Aziz Stadium,Chattogram,2,2003,2003,Bangladesh,same name and city
-86,A,y,MA Chidambaram Stadium,Chennai,MA Chidambaram Stadium,Chennai,3,2004,2021,India,same name and city
-86,A,y,"MA Chidambaram Stadium, Chepauk",Chennai,MA Chidambaram Stadium,Chennai,24,2007,2019,India,same name and city
-86,A,y,"MA Chidambaram Stadium, Chepauk, Chennai",Chennai,MA Chidambaram Stadium,Chennai,16,2003,2026,India,same name and city
-87,A,y,Maharashtra Cricket Association Stadium,Pune,Maharashtra Cricket Association Stadium,Pune,11,2013,2021,India,same name and city
-87,A,y,"Maharashtra Cricket Association Stadium, Pune",Pune,Maharashtra Cricket Association Stadium,Pune,7,2023,2025,India,same name and city
-87,C,,Subrata Roy Sahara Stadium,Pune,Maharashtra Cricket Association Stadium,Pune,1,2012,2012,England,former sponsor name
-88,A,y,"Mahinda Rajapaksa International Cricket Stadium, Sooriyawewa",Hambantota,Mahinda Rajapaksa International Cricket Stadium,Hambantota,30,2011,2020,Sri Lanka,same name and city
-88,A,y,"Mahinda Rajapaksa International Cricket Stadium, Sooriyawewa, Hambantota",Hambantota,Mahinda Rajapaksa International Cricket Stadium,Hambantota,9,2024,2026,Sri Lanka,same name and city
-89,C,,Chevrolet Park,Bloemfontein,Mangaung Oval,Bloemfontein,2,2012,2013,South Africa,Springbok Park under an earlier name
-89,C,,Goodyear Park,Bloemfontein,Mangaung Oval,Bloemfontein,1,2006,2006,South Africa,Springbok Park under an earlier name
-89,C,,"Goodyear Park, Bloemfontein",Bloemfontein,Mangaung Oval,Bloemfontein,5,2003,2003,New Zealand,Springbok Park under an earlier name
-89,A,y,Mangaung Oval,Bloemfontein,Mangaung Oval,Bloemfontein,9,2005,2020,South Africa,same name and city
-89,A,y,"Mangaung Oval, Bloemfontein",Bloemfontein,Mangaung Oval,Bloemfontein,6,2023,2026,South Africa,same name and city
-89,C,,OUTsurance Oval,Bloemfontein,Mangaung Oval,Bloemfontein,4,2008,2010,South Africa,Springbok Park under an earlier name
-90,A,y,Mannofield Park,Aberdeen,Mannofield Park,Aberdeen,8,2011,2019,Scotland,same name and city
-90,A,y,"Mannofield Park, Aberdeen",Aberdeen,Mannofield Park,Aberdeen,5,2022,2022,Scotland,same name and city
-91,A,y,Manuka Oval,Canberra,Manuka Oval,Canberra,23,2013,2020,Australia,same name and city
-91,A,y,"Manuka Oval, Canberra",Canberra,Manuka Oval,Canberra,11,2022,2026,Australia,same name and city
-92,A,y,Maple Leaf North-West Ground,King City,Maple Leaf North-West Ground,King City,5,2008,2013,Canada,same name and city
-92,B,,Maple Leaf North-West Ground,Toronto,Maple Leaf North-West Ground,King City,1,2009,2009,Canada,same name; city given as Toronto
-92,A,y,"Maple Leaf North-West Ground, King City",King City,Maple Leaf North-West Ground,King City,31,2024,2026,Canada,same name and city
-93,C,,Marrara Cricket Ground,Darwin,Marrara Stadium,Darwin,3,2008,2008,Australia,alternative name
-93,C,,"Marrara Cricket Ground, Darwin",Darwin,Marrara Stadium,Darwin,2,2003,2003,Australia,alternative name
-93,A,y,"Marrara Stadium, Darwin",Darwin,Marrara Stadium,Darwin,3,2025,2026,Australia,same name and city
-94,A,y,McLean Park,Napier,McLean Park,Napier,27,2006,2021,New Zealand,same name and city
-94,A,y,"McLean Park, Napier",Napier,McLean Park,Napier,8,2002,2025,New Zealand,same name and city
-95,A,y,Melbourne Cricket Ground,,Melbourne Cricket Ground,Melbourne,60,2005,2018,Australia,no city given
-95,A,y,Melbourne Cricket Ground,Melbourne,Melbourne Cricket Ground,Melbourne,28,2002,2025,Australia,same name and city
-96,B,,"Mission Road Ground, Mong Kok",Hong Kong,Mission Road Ground,Mong Kok,5,2016,2016,Hong Kong,same name; city given as Hong Kong
-96,A,y,"Mission Road Ground, Mong Kok, Hong Kong",Mong Kok,Mission Road Ground,Mong Kok,47,2023,2026,Hong Kong,same name and city
-97,A,y,Moara Vlasiei Cricket Ground,,Moara Vlasiei Cricket Ground,Ilfov County,3,2020,2020,Bulgaria,no city given
-97,A,y,"Moara Vlasiei Cricket Ground, Ilfov County",Ilfov County,Moara Vlasiei Cricket Ground,Ilfov County,90,2021,2026,Romania,same name and city
-98,C,,"Choice Moosa Stadium, Pearland",Pearland,Moosa Cricket Stadium,Pearland,2,2022,2022,Scotland,alternative name
-98,A,y,"Moosa Cricket Stadium, Pearland",Pearland,Moosa Cricket Stadium,Pearland,10,2022,2022,United States of America,same name and city
-99,A,y,Multan Cricket Stadium,,Multan Cricket Stadium,Multan,6,2006,2008,Pakistan,no city given
-99,A,y,Multan Cricket Stadium,Multan,Multan Cricket Stadium,Multan,16,2003,2025,Pakistan,same name and city
-100,A,y,Nahar Singh Stadium,Faridabad,Nahar Singh Stadium,Faridabad,1,2006,2006,England,same name and city
-100,A,y,"Nahar Singh Stadium, Faridabad",Faridabad,Nahar Singh Stadium,Faridabad,1,2003,2003,Australia,same name and city
-101,A,y,Narendra Modi Stadium,Ahmedabad,Narendra Modi Stadium,Ahmedabad,7,2021,2021,England,same name and city
-101,A,y,"Narendra Modi Stadium, Ahmedabad",Ahmedabad,Narendra Modi Stadium,Ahmedabad,21,2022,2026,India,same name and city
-101,C,,"Sardar Patel (Gujarat) Stadium, Motera",Ahmedabad,Narendra Modi Stadium,Ahmedabad,2,2005,2005,India,rebuilt on the same site and renamed
-101,C,,Sardar Patel Stadium,Ahmedabad,Narendra Modi Stadium,Ahmedabad,1,2005,2005,India,rebuilt on the same site and renamed
-101,C,,"Sardar Patel Stadium, Motera",Ahmedabad,Narendra Modi Stadium,Ahmedabad,16,2006,2014,India,rebuilt on the same site and renamed
-102,A,y,National Cricket Stadium,St George's,National Cricket Stadium,St George's,1,2004,2004,Bangladesh,same name and city
-102,A,y,"National Cricket Stadium, Grenada",St George's,National Cricket Stadium,St George's,3,2019,2020,West Indies,same name and city
-102,B,,"National Cricket Stadium, St George's",Grenada,National Cricket Stadium,St George's,15,2007,2015,West Indies,same name; city given as Grenada
-102,A,y,"National Cricket Stadium, St George's, Grenada",St George's,National Cricket Stadium,St George's,15,2021,2026,West Indies,same name and city
-102,C,,"Queen's Park (New), St George's, Grenada",St George's,National Cricket Stadium,St George's,2,2003,2003,Australia,earlier name of the Grenada stadium; please confirm
-103,C,,Bermuda National Stadium,Hamilton,National Stadium,Hamilton,1,2019,2019,Bermuda,alternative name
-103,A,y,National Stadium,Hamilton,National Stadium,Hamilton,2,2019,2019,Bermuda,same name and city
-103,A,y,"National Stadium, Hamilton",Hamilton,National Stadium,Hamilton,5,2023,2023,Bermuda,same name and city
-104,A,y,National Stadium,Karachi,National Stadium,Karachi,29,2004,2021,Pakistan,same name and city
-104,A,y,"National Stadium, Karachi",Karachi,National Stadium,Karachi,45,2003,2026,Pakistan,same name and city
-105,A,y,Nehru Stadium,Pune,Nehru Stadium,Pune,1,2005,2005,India,same name and city
-105,A,y,"Nehru Stadium, Poona",Pune,Nehru Stadium,Pune,1,2003,2003,Australia,same name and city
-106,A,y,Newlands,Cape Town,Newlands,Cape Town,65,2004,2020,South Africa,same name and city
-106,A,y,"Newlands, Cape Town",Cape Town,Newlands,Cape Town,24,2003,2025,South Africa,same name and city
-107,A,y,"Niranjan Shah Stadium, Rajkot",Rajkot,Niranjan Shah Stadium,Rajkot,1,2026,2026,India,same name and city
-107,C,,Saurashtra Cricket Association Stadium,Rajkot,Niranjan Shah Stadium,Rajkot,8,2013,2020,India,renamed 2024
-107,C,,"Saurashtra Cricket Association Stadium, Rajkot",Rajkot,Niranjan Shah Stadium,Rajkot,8,2022,2025,India,renamed 2024
-108,A,y,North Sydney Oval,Sydney,North Sydney Oval,Sydney,9,2009,2019,Australia,same name and city
-108,A,y,"North Sydney Oval, Sydney",Sydney,North Sydney Oval,Sydney,8,2017,2025,Australia,same name and city
-109,A,y,Old Hararians,Harare,Old Hararians,Harare,12,2018,2019,Mozambique,same name and city
-109,A,y,"Old Hararians, Harare",Harare,Old Hararians,Harare,1,2021,2021,Bangladesh,same name and city
-110,A,y,Old Trafford,Manchester,Old Trafford,Manchester,43,2005,2020,England,same name and city
-110,A,y,"Old Trafford, Manchester",Manchester,Old Trafford,Manchester,18,2003,2026,England,same name and city
-111,A,y,P Sara Oval,Colombo,P Sara Oval,Colombo,24,2005,2019,Sri Lanka,same name and city
-111,A,y,"P Sara Oval, Colombo",Colombo,P Sara Oval,Colombo,4,2023,2023,Sri Lanka,same name and city
-111,C,,P Saravanamuttu Stadium,Colombo,P Sara Oval,Colombo,2,2007,2008,Sri Lanka,full name
-112,A,y,Pallekele International Cricket Stadium,,Pallekele International Cricket Stadium,Kandy,48,2010,2018,Sri Lanka,no city given
-112,A,y,Pallekele International Cricket Stadium,Kandy,Pallekele International Cricket Stadium,Kandy,38,2019,2026,Sri Lanka,same name and city
-112,B,,Pallekele International Cricket Stadium,Pallekele,Pallekele International Cricket Stadium,Kandy,1,2021,2021,Bangladesh,same name; city given as Pallekele
-113,A,y,"Pembroke Cricket Club, Sandymount",Dublin,Pembroke Cricket Club,Dublin,1,2018,2018,Bangladesh,same name and city
-113,A,y,"Pembroke Cricket Club, Sandymount, Dublin",Dublin,Pembroke Cricket Club,Dublin,8,2022,2025,Ireland,same name and city
-114,A,y,Perth Stadium,,Perth Stadium,Perth,3,2018,2018,Australia,no city given
-114,A,y,Perth Stadium,Perth,Perth Stadium,Perth,14,2019,2025,Australia,same name and city
-115,B,,Providence Stadium,Guyana,Providence Stadium,Providence,40,2007,2018,West Indies,same name; city given as Guyana
-115,A,y,"Providence Stadium, Guyana",Providence,Providence Stadium,Providence,22,2019,2026,West Indies,same name and city
-116,A,y,"Punjab Cricket Association IS Bindra Stadium, Mohali",Chandigarh,Punjab Cricket Association IS Bindra Stadium,Chandigarh,11,2005,2019,India,same name and city
-116,B,,"Punjab Cricket Association IS Bindra Stadium, Mohali",Mohali,Punjab Cricket Association IS Bindra Stadium,Chandigarh,1,2016,2016,Ireland,same name; city given as Mohali
-116,A,y,"Punjab Cricket Association IS Bindra Stadium, Mohali, Chandigarh",Chandigarh,Punjab Cricket Association IS Bindra Stadium,Chandigarh,3,2022,2023,India,same name and city
-116,C,,"Punjab Cricket Association Stadium, Mohali",Chandigarh,Punjab Cricket Association IS Bindra Stadium,Chandigarh,20,2006,2016,India,renamed 2015
-116,C,,"Punjab Cricket Association Stadium, Mohali, Chandigarh",Chandigarh,Punjab Cricket Association IS Bindra Stadium,Chandigarh,1,2003,2003,India,renamed 2015
-117,A,y,Queen's Park Oval,Port of Spain,Queen's Park Oval,Port of Spain,1,2004,2004,England,same name and city
-117,B,,"Queen's Park Oval, Port of Spain",Trinidad,Queen's Park Oval,Port of Spain,35,2005,2018,West Indies,same name; city given as Trinidad
-117,A,y,"Queen's Park Oval, Port of Spain, Trinidad",Port of Spain,Queen's Park Oval,Port of Spain,6,2022,2026,West Indies,same name and city
-117,A,y,"Queen's Park Oval, Trinidad",Port of Spain,Queen's Park Oval,Port of Spain,2,2019,2019,India,same name and city
-118,A,y,Queens Sports Club,Bulawayo,Queens Sports Club,Bulawayo,47,2004,2018,Zimbabwe,same name and city
-118,A,y,"Queens Sports Club, Bulawayo",Bulawayo,Queens Sports Club,Bulawayo,56,2003,2026,Zimbabwe,same name and city
-119,C,,Khettarama Stadium,Colombo,R Premadasa Stadium,Colombo,1,2016,2016,Australia,local name
-119,A,y,R Premadasa Stadium,Colombo,R Premadasa Stadium,Colombo,84,2006,2017,Sri Lanka,same name and city
-119,A,y,"R Premadasa Stadium, Colombo",Colombo,R Premadasa Stadium,Colombo,64,2021,2026,Sri Lanka,same name and city
-119,A,y,R.Premadasa Stadium,Colombo,R Premadasa Stadium,Colombo,6,2004,2005,Sri Lanka,same name and city
-119,A,y,"R.Premadasa Stadium, Khettarama",Colombo,R Premadasa Stadium,Colombo,19,2005,2019,Sri Lanka,same name and city
-120,A,y,"Rajiv Gandhi International Stadium, Uppal",Hyderabad,Rajiv Gandhi International Stadium,Hyderabad,12,2005,2019,India,same name and city
-120,A,y,"Rajiv Gandhi International Stadium, Uppal, Hyderabad",Hyderabad,Rajiv Gandhi International Stadium,Hyderabad,7,2022,2024,India,same name and city
-121,A,y,Rangiri Dambulla International Stadium,,Rangiri Dambulla International Stadium,Dambulla,42,2005,2018,Sri Lanka,no city given
-121,A,y,Rangiri Dambulla International Stadium,Dambulla,Rangiri Dambulla International Stadium,Dambulla,38,2003,2026,Sri Lanka,same name and city
-122,A,y,Rawalpindi Cricket Stadium,,Rawalpindi Cricket Stadium,Rawalpindi,8,2005,2020,Pakistan,no city given
-122,A,y,Rawalpindi Cricket Stadium,Rawalpindi,Rawalpindi Cricket Stadium,Rawalpindi,36,2003,2026,Pakistan,same name and city
-123,C,,Indian Petrochemicals Corporation Limited Sports Complex Ground,Vadodara,Reliance Stadium,Vadodara,1,2007,2007,India,renamed after a change of owner
-123,A,y,Reliance Stadium,Vadodara,Reliance Stadium,Vadodara,9,2005,2019,India,same name and city
-124,A,y,Riverside Ground,Chester-le-Street,Riverside Ground,Chester-le-Street,24,2004,2019,England,same name and city
-124,A,y,"Riverside Ground, Chester-le-Street",Chester-le-Street,Riverside Ground,Chester-le-Street,11,2021,2026,England,same name and city
-125,A,y,Royal Selangor Club,Kuala Lumpur,Royal Selangor Club,Kuala Lumpur,6,2018,2018,Malaysia,same name and city
-125,A,y,"Royal Selangor Club, Kuala Lumpur",Kuala Lumpur,Royal Selangor Club,Kuala Lumpur,6,2024,2024,Bahrain,same name and city
-126,A,y,Ruaraka Sports Club Ground,Nairobi,Ruaraka Sports Club Ground,Nairobi,1,2007,2007,Bermuda,same name and city
-126,A,y,"Ruaraka Sports Club Ground, Nairobi",Nairobi,Ruaraka Sports Club Ground,Nairobi,6,2024,2024,Gambia,same name and city
-127,A,y,"Sabina Park, Jamaica",Kingston,Sabina Park,Kingston,1,2019,2019,India,same name and city
-127,B,,"Sabina Park, Kingston",Jamaica,Sabina Park,Kingston,32,2005,2018,West Indies,same name; city given as Jamaica
-127,A,y,"Sabina Park, Kingston, Jamaica",Kingston,Sabina Park,Kingston,20,2003,2026,West Indies,same name and city
-128,A,y,Sao Fernando Polo and Cricket Club,Seropedica,Sao Fernando Polo and Cricket Club,Seropedica,2,2024,2024,Mexico,same name and city
-128,A,y,"Sao Fernando Polo and Cricket Club, Campo Sede",Seropedica,Sao Fernando Polo and Cricket Club,Seropedica,1,2025,2025,Mexico,same name and city
-129,A,y,Sawai Mansingh Stadium,Jaipur,Sawai Mansingh Stadium,Jaipur,10,2006,2013,India,same name and city
-129,A,y,"Sawai Mansingh Stadium, Jaipur",Jaipur,Sawai Mansingh Stadium,Jaipur,1,2021,2021,India,same name and city
-130,A,y,Saxton Oval,Nelson,Saxton Oval,Nelson,16,2010,2019,New Zealand,same name and city
-130,A,y,"Saxton Oval, Nelson",Nelson,Saxton Oval,Nelson,8,2023,2025,New Zealand,same name and city
-131,A,y,Seddon Park,Hamilton,Seddon Park,Hamilton,55,2007,2021,New Zealand,same name and city
-131,A,y,"Seddon Park, Hamilton",Hamilton,Seddon Park,Hamilton,26,2022,2026,New Zealand,same name and city
-132,A,y,Seebarn Cricket Centre,Lower Austria,Seebarn Cricket Centre,Lower Austria,4,2020,2020,Austria,same name and city
-132,A,y,"Seebarn Cricket Centre, Lower Austria",Lower Austria,Seebarn Cricket Centre,Lower Austria,1,2020,2020,Austria,same name and city
-133,C,,"North West Cricket Stadium, Potchefstroom",Potchefstroom,Senwes Park,Potchefstroom,2,2003,2003,Australia,alternative name
-133,C,,Sedgars Park,Potchefstroom,Senwes Park,Potchefstroom,2,2006,2006,Bermuda,earlier name
-133,C,,"Sedgars Park, Potchefstroom",Potchefstroom,Senwes Park,Potchefstroom,1,2023,2023,Australia,earlier name
-133,A,y,Senwes Park,Potchefstroom,Senwes Park,Potchefstroom,31,2008,2020,South Africa,same name and city
-133,A,y,"Senwes Park, Potchefstroom",Potchefstroom,Senwes Park,Potchefstroom,7,2023,2026,South Africa,same name and city
-134,C,,Sharjah Cricket Association Stadium,Sharjah,Sharjah Cricket Stadium,Sharjah,7,2003,2003,Pakistan,alternative name
-134,A,y,Sharjah Cricket Stadium,,Sharjah Cricket Stadium,Sharjah,36,2011,2017,Pakistan,no city given
-134,A,y,Sharjah Cricket Stadium,Sharjah,Sharjah Cricket Stadium,Sharjah,41,2019,2025,United Arab Emirates,same name and city
-135,C,,Sher-e-Bangla National Cricket Stadium,Mirpur,Shere Bangla National Stadium,Dhaka,1,2021,2021,Bangladesh,spelling
-135,A,y,Shere Bangla National Stadium,Dhaka,Shere Bangla National Stadium,Dhaka,4,2016,2021,Bangladesh,same name and city
-135,B,,Shere Bangla National Stadium,Mirpur,Shere Bangla National Stadium,Dhaka,132,2006,2016,Bangladesh,same name; city given as Mirpur
-135,A,y,"Shere Bangla National Stadium, Mirpur",Dhaka,Shere Bangla National Stadium,Dhaka,89,2007,2026,Bangladesh,same name and city
-136,C,,Sinhalese Sports Club,Colombo,Sinhalese Sports Club Ground,Colombo,2,2004,2004,Bangladesh,shortened name
-136,A,y,Sinhalese Sports Club Ground,Colombo,Sinhalese Sports Club Ground,Colombo,30,2005,2020,Sri Lanka,same name and city
-136,A,y,"Sinhalese Sports Club Ground, Colombo",Colombo,Sinhalese Sports Club Ground,Colombo,13,2003,2026,Sri Lanka,same name and city
-137,A,y,Sir Vivian Richards Stadium,North Sound,Sir Vivian Richards Stadium,North Sound,6,2018,2021,West Indies,same name and city
-137,A,y,"Sir Vivian Richards Stadium, Antigua",North Sound,Sir Vivian Richards Stadium,North Sound,5,2019,2019,West Indies,same name and city
-137,A,y,"Sir Vivian Richards Stadium, North Sound",,Sir Vivian Richards Stadium,North Sound,1,2019,2019,India,no city given
-137,B,,"Sir Vivian Richards Stadium, North Sound",Antigua,Sir Vivian Richards Stadium,North Sound,29,2007,2018,West Indies,same name; city given as Antigua
-137,A,y,"Sir Vivian Richards Stadium, North Sound, Antigua",North Sound,Sir Vivian Richards Stadium,North Sound,44,2021,2026,West Indies,same name and city
-138,A,y,Sky Stadium,Wellington,Sky Stadium,Wellington,2,2021,2021,New Zealand,same name and city
-138,A,y,"Sky Stadium, Wellington",Wellington,Sky Stadium,Wellington,6,2024,2026,New Zealand,same name and city
-138,C,,Westpac Stadium,Wellington,Sky Stadium,Wellington,38,2006,2021,New Zealand,sponsor rename
-138,C,,"Westpac Stadium, Wellington",Wellington,Sky Stadium,Wellington,1,2003,2003,India,sponsor rename
-139,A,y,Sophia Gardens,Cardiff,Sophia Gardens,Cardiff,32,2005,2019,England,same name and city
-139,A,y,"Sophia Gardens, Cardiff",Cardiff,Sophia Gardens,Cardiff,10,2021,2026,England,same name and city
-140,A,y,Southend Club Cricket Stadium,Karachi,Southend Club Cricket Stadium,Karachi,6,2015,2019,Pakistan,same name and city
-140,A,y,"Southend Club Cricket Stadium, Karachi",Karachi,Southend Club Cricket Stadium,Karachi,6,2022,2022,Pakistan,same name and city
-141,A,y,Sportpark Het Schootsveld,Deventer,Sportpark Het Schootsveld,Deventer,14,2018,2019,Ireland,same name and city
-141,A,y,"Sportpark Het Schootsveld, Deventer",Deventer,Sportpark Het Schootsveld,Deventer,5,2023,2023,Germany,same name and city
-142,A,y,Sportpark Maarschalkerweerd,Utrecht,Sportpark Maarschalkerweerd,Utrecht,10,2018,2019,Bangladesh,same name and city
-142,A,y,"Sportpark Maarschalkerweerd, Utrecht",Utrecht,Sportpark Maarschalkerweerd,Utrecht,35,2021,2026,Netherlands,same name and city
-143,A,y,Sportpark Westvliet,The Hague,Sportpark Westvliet,The Hague,3,2012,2019,Netherlands,same name and city
-143,A,y,"Sportpark Westvliet, The Hague",The Hague,Sportpark Westvliet,The Hague,13,2022,2024,Netherlands,same name and city
-143,A,y,"Sportpark Westvliet, Voorburg",The Hague,Sportpark Westvliet,The Hague,11,2022,2025,Netherlands,same name and city
-144,A,y,St George's Park,Port Elizabeth,St George's Park,Gqeberha,32,2005,2020,South Africa,same name and city
-144,A,y,"St George's Park, Gqeberha",Gqeberha,St George's Park,Gqeberha,10,2023,2025,South Africa,same name and city
-144,A,y,"St George's Park, Port Elizabeth",Gqeberha,St George's Park,Gqeberha,6,2003,2022,Australia,same name and city
-144,A,y,"St George's Park, Port Elizabeth",Port Elizabeth,St George's Park,Gqeberha,1,2017,2017,South Africa,same name and city
-145,A,y,St Lawrence Ground,Canterbury,St Lawrence Ground,Canterbury,5,2005,2019,England,same name and city
-145,A,y,"St Lawrence Ground, Canterbury",Canterbury,St Lawrence Ground,Canterbury,6,2003,2026,England,same name and city
-146,A,y,SuperSport Park,Centurion,SuperSport Park,Centurion,62,2004,2020,South Africa,same name and city
-146,A,y,"SuperSport Park, Centurion",Centurion,SuperSport Park,Centurion,24,2003,2026,South Africa,same name and city
-147,A,y,Sydney Cricket Ground,,Sydney Cricket Ground,Sydney,56,2006,2020,Australia,no city given
-147,A,y,Sydney Cricket Ground,Sydney,Sydney Cricket Ground,Sydney,41,2003,2026,Australia,same name and city
-148,A,y,Sylhet International Cricket Stadium,,Sylhet International Cricket Stadium,Sylhet,2,2018,2018,Bangladesh,no city given
-148,A,y,Sylhet International Cricket Stadium,Sylhet,Sylhet International Cricket Stadium,Sylhet,41,2018,2026,Bangladesh,same name and city
-148,C,,Sylhet Stadium,,Sylhet International Cricket Stadium,Sylhet,26,2014,2014,Ireland,earlier name; please confirm
-148,C,,Sylhet Stadium,Sylhet,Sylhet International Cricket Stadium,Sylhet,3,2024,2024,Bangladesh,earlier name; please confirm
-149,C,,Tafawa Balewa Square (TBS) Cricket Oval,,Tafawa Balewa Square Cricket Oval,Lagos,1,2023,2023,Ghana,abbreviation
-149,A,y,"Tafawa Balewa Square Cricket Oval, Lagos",Lagos,Tafawa Balewa Square Cricket Oval,Lagos,26,2023,2026,Nigeria,same name and city
-150,A,y,Takashinga Sports Club,Harare,Takashinga Sports Club,Harare,3,2019,2019,Tanzania,same name and city
-150,A,y,"Takashinga Sports Club, Highfield, Harare",Harare,Takashinga Sports Club,Harare,22,2021,2025,United States of America,same name and city
-151,A,y,Terdthai Cricket Ground,Bangkok,Terdthai Cricket Ground,Bangkok,18,2015,2020,Malaysia,same name and city
-151,A,y,"Terdthai Cricket Ground, Bangkok",Bangkok,Terdthai Cricket Ground,Bangkok,99,2023,2026,Thailand,same name and city
-152,A,y,The Rose Bowl,Southampton,The Rose Bowl,Southampton,43,2004,2020,England,same name and city
-152,A,y,"The Rose Bowl, Southampton",Southampton,The Rose Bowl,Southampton,19,2003,2026,England,same name and city
-153,C,,Malahide,Dublin,The Village,Dublin,4,2017,2017,Ireland,The Village is the ground at Malahide
-153,C,,"Malahide, Dublin",Dublin,The Village,Dublin,2,2023,2023,India,The Village is the ground at Malahide
-153,A,y,"The Village, Malahide",Dublin,The Village,Dublin,22,2013,2019,Ireland,same name and city
-153,A,y,"The Village, Malahide, Dublin",Dublin,The Village,Dublin,15,2018,2025,Ireland,same name and city
-154,C,,New Wanderers Stadium,Johannesburg,The Wanderers Stadium,Johannesburg,51,2005,2017,South Africa,alternative name
-154,C,,"New Wanderers Stadium, Johannesburg",Johannesburg,The Wanderers Stadium,Johannesburg,6,2003,2003,Australia,alternative name
-154,A,y,The Wanderers Stadium,Johannesburg,The Wanderers Stadium,Johannesburg,21,2005,2021,South Africa,same name and city
-154,A,y,"The Wanderers Stadium, Johannesburg",Johannesburg,The Wanderers Stadium,Johannesburg,20,2021,2026,South Africa,same name and city
-155,A,y,Titwood,Glasgow,Titwood,Glasgow,1,2007,2007,India,same name and city
-155,A,y,"Titwood, Glasgow",Glasgow,Titwood,Glasgow,9,2022,2025,Scotland,same name and city
-156,A,y,Tolerance Oval,Abu Dhabi,Tolerance Oval,Abu Dhabi,9,2018,2019,Jersey,same name and city
-156,A,y,"Tolerance Oval, Abu Dhabi",Abu Dhabi,Tolerance Oval,Abu Dhabi,20,2022,2024,Scotland,same name and city
-157,A,y,Tony Ireland Stadium,Townsville,Tony Ireland Stadium,Townsville,2,2016,2016,Ireland,same name and city
-157,A,y,"Tony Ireland Stadium, Townsville",Townsville,Tony Ireland Stadium,Townsville,2,2022,2022,Australia,same name and city
-158,A,y,Trent Bridge,Nottingham,Trent Bridge,Nottingham,46,2004,2019,England,same name and city
-158,A,y,"Trent Bridge, Nottingham",Nottingham,Trent Bridge,Nottingham,17,2002,2026,England,same name and city
-159,A,y,Tribhuvan University International Cricket Ground,Kirtipur,Tribhuvan University International Cricket Ground,Kirtipur,10,2019,2020,Nepal,same name and city
-159,A,y,"Tribhuvan University International Cricket Ground, Kirtipur",Kirtipur,Tribhuvan University International Cricket Ground,Kirtipur,101,2021,2026,Nepal,same name and city
-160,A,y,"UKM-YSD Cricket Oval, Bangi",Bangi,UKM-YSD Cricket Oval,Bangi,40,2022,2023,Malaysia,same name and city
-160,C,,"YSD-UKM Cricket Oval, Bangi",Bangi,UKM-YSD Cricket Oval,Bangi,37,2023,2026,Malaysia,word order
-161,A,y,United Cricket Club Ground,Windhoek,United Cricket Club Ground,Windhoek,9,2019,2019,Botswana,same name and city
-161,A,y,"United Cricket Club Ground, Windhoek",Windhoek,United Cricket Club Ground,Windhoek,41,2022,2024,Namibia,same name and city
-162,A,y,University Oval,Dunedin,University Oval,Dunedin,19,2008,2021,New Zealand,same name and city
-162,A,y,"University Oval, Dunedin",Dunedin,University Oval,Dunedin,16,2022,2026,New Zealand,same name and city
-163,C,,"National Sports Academy, Sofia",Sofia,Vassil Levski National Sports Academy,Sofia,16,2021,2023,Serbia,shortened name
-163,A,y,"Vassil Levski National Sports Academy, Sofia",Sofia,Vassil Levski National Sports Academy,Sofia,19,2025,2026,Bulgaria,same name and city
-164,C,,Vidarbha C.A. Ground,Nagpur,Vidarbha Cricket Association Ground,Nagpur,2,2005,2006,India,shortened name
-164,A,y,Vidarbha Cricket Association Ground,Nagpur,Vidarbha Cricket Association Ground,Nagpur,1,2007,2007,Australia,same name and city
-165,A,y,"Vidarbha Cricket Association Stadium, Jamtha",Nagpur,Vidarbha Cricket Association Stadium,Nagpur,27,2008,2019,India,same name and city
-165,A,y,"Vidarbha Cricket Association Stadium, Jamtha, Nagpur",Nagpur,Vidarbha Cricket Association Stadium,Nagpur,4,2022,2026,India,same name and city
-166,C,,VRA Cricket Ground,Amstelveen,VRA Ground,Amstelveen,2,2004,2004,India,alternative name
-166,A,y,VRA Ground,Amstelveen,VRA Ground,Amstelveen,16,2010,2019,Netherlands,same name and city
-166,A,y,"VRA Ground, Amstelveen",Amstelveen,VRA Ground,Amstelveen,24,2022,2025,Netherlands,same name and city
-167,A,y,W.A.C.A. Ground,Perth,W.A.C.A. Ground,Perth,12,2004,2020,Australia,same name and city
-167,C,,Western Australia Cricket Association Ground,Perth,W.A.C.A. Ground,Perth,34,2006,2017,Australia,full name of the WACA
-167,C,,"Western Australia Cricket Association Ground, Perth",Perth,W.A.C.A. Ground,Perth,4,2003,2026,Australia,full name of the WACA
-168,C,,Wanderers,Windhoek,Wanderers Cricket Ground,Windhoek,1,2021,2021,Namibia,shortened name
-168,A,y,Wanderers Cricket Ground,Windhoek,Wanderers Cricket Ground,Windhoek,3,2013,2019,Kenya,same name and city
-168,A,y,"Wanderers Cricket Ground, Windhoek",Windhoek,Wanderers Cricket Ground,Windhoek,51,2021,2025,Namibia,same name and city
-169,A,y,Wankhede Stadium,Mumbai,Wankhede Stadium,Mumbai,24,2004,2020,India,same name and city
-169,A,y,"Wankhede Stadium, Mumbai",Mumbai,Wankhede Stadium,Mumbai,25,2003,2026,India,same name and city
-170,B,,"Warner Park, Basseterre",St Kitts,Warner Park,Basseterre,24,2006,2018,West Indies,same name; city given as St Kitts
-170,A,y,"Warner Park, Basseterre, St Kitts",Basseterre,Warner Park,Basseterre,17,2022,2026,West Indies,same name and city
-170,A,y,"Warner Park, St Kitts",Basseterre,Warner Park,Basseterre,4,2019,2020,West Indies,same name and city
-171,A,y,West End Park International Cricket Stadium,Doha,West End Park International Cricket Stadium,Doha,4,2014,2014,Pakistan,same name and city
-171,A,y,"West End Park International Cricket Stadium, Doha",Doha,West End Park International Cricket Stadium,Doha,60,2021,2026,Qatar,same name and city
-172,A,y,Willowmoore Park,Benoni,Willowmoore Park,Benoni,15,2006,2019,South Africa,same name and city
-172,A,y,"Willowmoore Park, Benoni",Benoni,Willowmoore Park,Benoni,24,2003,2026,South Africa,same name and city
-173,B,,"Windsor Park, Roseau",Dominica,Windsor Park,Roseau,11,2009,2017,West Indies,same name; city given as Dominica
-173,A,y,"Windsor Park, Roseau, Dominica",Roseau,Windsor Park,Roseau,3,2022,2023,West Indies,same name and city
-174,A,y,Yeonhui Cricket Ground,Incheon,Yeonhui Cricket Ground,Incheon,5,2019,2019,China,same name and city
-174,A,y,"Yeonhui Cricket Ground, Incheon",Incheon,Yeonhui Cricket Ground,Incheon,18,2024,2024,Japan,same name and city
-175,C,,"Bir Sreshtho Flight Lieutenant Matiur Rahman Stadium, Chattogram",Chattogram,Zahur Ahmed Chowdhury Stadium,Chattogram,11,2025,2026,Bangladesh,"recent rename; UNCERTAIN, please confirm"
-175,C,,Chittagong Divisional Stadium,,Zahur Ahmed Chowdhury Stadium,Chattogram,5,2006,2009,Bangladesh,earlier name; please confirm
-175,A,y,Zahur Ahmed Chowdhury Stadium,Chattogram,Zahur Ahmed Chowdhury Stadium,Chattogram,11,2006,2021,Bangladesh,same name and city
-175,A,y,Zahur Ahmed Chowdhury Stadium,Chittagong,Zahur Ahmed Chowdhury Stadium,Chattogram,31,2010,2016,Bangladesh,same name and city
-175,A,y,"Zahur Ahmed Chowdhury Stadium, Chattogram",Chattogram,Zahur Ahmed Chowdhury Stadium,Chattogram,21,2021,2025,Bangladesh,same name and city
-175,C,,Zohur Ahmed Chowdhury Stadium,Chittagong,Zahur Ahmed Chowdhury Stadium,Chattogram,4,2009,2010,Bangladesh,spelling
-176,C,,Sheikh Zayed Stadium,Abu Dhabi,Zayed Cricket Stadium,Abu Dhabi,87,2006,2021,Pakistan,alternative name
-176,C,,"Sheikh Zayed Stadium, Abu Dhabi",Abu Dhabi,Zayed Cricket Stadium,Abu Dhabi,9,2022,2022,Bangladesh,alternative name
-176,A,y,"Zayed Cricket Stadium, Abu Dhabi",Abu Dhabi,Zayed Cricket Stadium,Abu Dhabi,35,2021,2025,Ireland,same name and city
+6,A,y,"Arnos Vale Ground, Kingstown, St Vincent",Kingstown,Arnos Vale Ground,Kingstown,0,2003,2026,West Indies,same name and city
+7,A,y,Arun Jaitley Stadium,Delhi,Arun Jaitley Stadium,Delhi,15,2019,2026,India,same name and city
+7,A,y,"Arun Jaitley Stadium, Delhi",Delhi,Arun Jaitley Stadium,Delhi,0,2022,2026,India,same name and city
+7,C,,"Feroz Shah Kotla, Delhi",Delhi,Arun Jaitley Stadium,Delhi,29,2005,2019,India,renamed 2019
+8,A,y,Asian Institute of Technology Ground,Bangkok,Asian Institute of Technology Ground,Bangkok,0,2016,2019,Kuwait,same name and city
+8,A,y,"Asian Institute of Technology Ground, Bangkok",Bangkok,Asian Institute of Technology Ground,Bangkok,28,2025,2025,Namibia,same name and city
+9,A,y,Bangabandhu National Stadium,Dhaka,Bangabandhu National Stadium,Dhaka,0,2004,2005,Bangladesh,same name and city
+9,A,y,"Bangabandhu National Stadium, Dhaka",Dhaka,Bangabandhu National Stadium,Dhaka,7,2003,2003,Bangladesh,same name and city
+10,A,y,Barabati Stadium,Cuttack,Barabati Stadium,Cuttack,0,2008,2019,India,same name and city
+10,A,y,"Barabati Stadium, Cuttack",Cuttack,Barabati Stadium,Cuttack,12,2003,2025,India,same name and city
+11,A,y,Barsapara Cricket Stadium,Guwahati,Barsapara Cricket Stadium,Guwahati,0,2017,2019,India,same name and city
+11,A,y,"Barsapara Cricket Stadium, Guwahati",Guwahati,Barsapara Cricket Stadium,Guwahati,16,2022,2026,India,same name and city
+12,A,y,Basin Reserve,Wellington,Basin Reserve,Wellington,0,2005,2021,New Zealand,same name and city
+12,A,y,"Basin Reserve, Wellington",Wellington,Basin Reserve,Wellington,52,2004,2026,New Zealand,same name and city
+13,A,y,Bay Oval,Mount Maunganui,Bay Oval,Mount Maunganui,0,2014,2021,New Zealand,same name and city
+13,A,y,"Bay Oval, Mount Maunganui",Mount Maunganui,Bay Oval,Mount Maunganui,60,2021,2026,New Zealand,same name and city
+14,A,y,Bellerive Oval,Hobart,Bellerive Oval,Hobart,0,2004,2018,Australia,same name and city
+14,A,y,"Bellerive Oval, Hobart",Hobart,Bellerive Oval,Hobart,49,2003,2026,Australia,same name and city
+15,A,y,Bharat Ratna Shri Atal Bihari Vajpayee Ekana Cricket Stadium,Lucknow,Bharat Ratna Shri Atal Bihari Vajpayee Ekana Cricket Stadium,Lucknow,0,2018,2021,India,same name and city
+15,A,y,"Bharat Ratna Shri Atal Bihari Vajpayee Ekana Cricket Stadium, Lucknow",Lucknow,Bharat Ratna Shri Atal Bihari Vajpayee Ekana Cricket Stadium,Lucknow,17,2022,2023,India,same name and city
+16,A,y,"Bir Shrestha Shahid Ruhul Amin Stadium, Chittagong",,Bir Shrestha Shahid Ruhul Amin Stadium,Chattogram,5,2006,2009,Bangladesh,no city given
+16,A,y,"Bir Shrestha Shahid Ruhul Amin Stadium, Chittagong",Chattogram,Bir Shrestha Shahid Ruhul Amin Stadium,Chattogram,2,2006,2007,Bangladesh,same name and city
+17,A,y,Boland Park,Paarl,Boland Park,Paarl,0,2012,2020,South Africa,same name and city
+17,A,y,"Boland Park, Paarl",Paarl,Boland Park,Paarl,28,2022,2026,South Africa,same name and city
+18,A,y,Botswana Cricket Association Oval 1,Gaborone,Botswana Cricket Association Oval 1,Gaborone,0,2018,2018,Botswana,same name and city
+18,A,y,"Botswana Cricket Association Oval 1, Gaborone",Gaborone,Botswana Cricket Association Oval 1,Gaborone,87,2018,2026,Botswana,same name and city
+19,A,y,Botswana Cricket Association Oval 2,Gaborone,Botswana Cricket Association Oval 2,Gaborone,0,2018,2018,Malawi,same name and city
+19,A,y,"Botswana Cricket Association Oval 2, Gaborone",Gaborone,Botswana Cricket Association Oval 2,Gaborone,57,2021,2026,Mozambique,same name and city
+20,A,y,Brabourne Stadium,Mumbai,Brabourne Stadium,Mumbai,0,2006,2018,Australia,same name and city
+20,A,y,"Brabourne Stadium, Mumbai",Mumbai,Brabourne Stadium,Mumbai,28,2022,2022,Australia,same name and city
+21,A,y,Bradman Oval,Bowral,Bradman Oval,Bowral,0,2014,2014,Australia,same name and city
+21,A,y,"Bradman Oval, Bowral",Bowral,Bradman Oval,Bowral,3,2008,2008,Australia,same name and city
+22,A,y,"Bready Cricket Club, Magheramason",Bready,Bready Cricket Club,Bready,14,2019,2026,Ireland,same name and city
+22,B,,"Bready Cricket Club, Magheramason",Derry,Bready Cricket Club,Bready,1,2019,2019,Ireland,same name; city given as Derry
+22,B,,"Bready Cricket Club, Magheramason",Londonderry,Bready Cricket Club,Bready,3,2015,2016,Ireland,same name; city given as Londonderry
+22,A,y,"Bready Cricket Club, Magheramason, Bready",Bready,Bready Cricket Club,Bready,0,2021,2026,Ireland,same name and city
+23,A,y,"Brian Lara Stadium, Tarouba, Trinidad",Tarouba,Brian Lara Stadium,Tarouba,15,2022,2026,West Indies,same name and city
+23,B,,"Brian Lara Stadium, Tarouba, Trinidad",Trinidad,Brian Lara Stadium,Tarouba,3,2018,2018,South Africa,same name; city given as Trinidad
+24,A,y,Brisbane Cricket Ground,Brisbane,Brisbane Cricket Ground,Brisbane,62,2004,2021,Australia,same name and city
+24,A,y,"Brisbane Cricket Ground, Woolloongabba",Brisbane,Brisbane Cricket Ground,Brisbane,0,2005,2019,Australia,same name and city
+24,A,y,"Brisbane Cricket Ground, Woolloongabba, Brisbane",Brisbane,Brisbane Cricket Ground,Brisbane,0,2003,2025,Australia,same name and city
+25,A,y,Buffalo Park,East London,Buffalo Park,East London,0,2005,2020,South Africa,same name and city
+25,A,y,"Buffalo Park, East London",East London,Buffalo Park,East London,29,2003,2025,South Africa,same name and city
+26,A,y,Bulawayo Athletic Club,,Bulawayo Athletic Club,Bulawayo,1,2018,2018,Hong Kong,no city given
+26,A,y,Bulawayo Athletic Club,Bulawayo,Bulawayo Athletic Club,Bulawayo,14,2022,2023,United States of America,same name and city
+27,A,y,Cambusdoon New Ground,Ayr,Cambusdoon New Ground,Ayr,0,2008,2008,Kenya,same name and city
+27,A,y,"Cambusdoon New Ground, Ayr",Ayr,Cambusdoon New Ground,Ayr,3,2022,2022,Namibia,same name and city
+28,A,y,Captain Roop Singh Stadium,Gwalior,Captain Roop Singh Stadium,Gwalior,0,2007,2010,India,same name and city
+28,A,y,"Captain Roop Singh Stadium, Gwalior",Gwalior,Captain Roop Singh Stadium,Gwalior,3,2003,2003,Australia,same name and city
+29,A,y,Carrara Oval,,Carrara Oval,Carrara,0,2018,2018,Australia,no city given
+29,A,y,Carrara Oval,Carrara,Carrara Oval,Carrara,0,2021,2025,Australia,same name and city
+30,A,y,Castle Avenue,Dublin,Castle Avenue,Dublin,0,2019,2019,Bangladesh,same name and city
+30,A,y,"Castle Avenue, Dublin",Dublin,Castle Avenue,Dublin,0,2021,2026,Ireland,same name and city
+31,A,y,"Cazaly's Stadium, Cairns",Cairns,Cazaly's Stadium,Cairns,0,2022,2025,Australia,same name and city
+32,C,,"Bundaberg Rum Stadium, Cairns",Cairns,Cazalys Stadium,Cairns,2,2003,2003,Australia,former sponsor name
+32,A,y,"Cazalys Stadium, Cairns",Cairns,Cazalys Stadium,Cairns,5,2022,2025,Australia,same name and city
+33,A,y,Central Broward Regional Park Stadium Turf Ground,Lauderhill,Central Broward Regional Park Stadium Turf Ground,Lauderhill,0,2010,2019,West Indies,same name and city
+33,A,y,"Central Broward Regional Park Stadium Turf Ground, Lauderhill",Lauderhill,Central Broward Regional Park Stadium Turf Ground,Lauderhill,33,2021,2025,West Indies,same name and city
+34,B,,"Chilaw Marians Cricket Club Ground, Katunayake",FTZ Sports Complex,Chilaw Marians Cricket Club Ground,Katunayake,2,2018,2018,India,same name; city given as FTZ Sports Complex
+34,A,y,"Chilaw Marians Cricket Club Ground, Katunayake",Katunayake,Chilaw Marians Cricket Club Ground,Katunayake,1,2019,2019,England,same name and city
+35,A,y,City Oval,Pietermaritzburg,City Oval,Pietermaritzburg,0,2019,2019,Pakistan,same name and city
+35,A,y,"City Oval, Pietermaritzburg",Pietermaritzburg,City Oval,Pietermaritzburg,4,2003,2023,India,same name and city
+36,A,y,"Civil Service Cricket Club, Stormont",Belfast,Civil Service Cricket Club,Belfast,0,2006,2019,Ireland,same name and city
+36,A,y,"Civil Service Cricket Club, Stormont, Belfast",Belfast,Civil Service Cricket Club,Belfast,46,2021,2026,Ireland,same name and city
+37,A,y,College Field,St Peter Port,College Field,St Peter Port,0,2019,2020,Germany,same name and city
+37,A,y,"College Field, St Peter Port",St Peter Port,College Field,St Peter Port,6,2022,2022,Guernsey,same name and city
+38,B,,"Coolidge Cricket Ground, Antigua",Antigua,Coolidge Cricket Ground,Coolidge,1,2017,2017,Sri Lanka,same name; city given as Antigua
+38,A,y,"Coolidge Cricket Ground, Antigua",Coolidge,Coolidge Cricket Ground,Coolidge,19,2019,2021,West Indies,same name and city
+39,A,y,"County Ground, Hove",Brighton,County Ground,Brighton,0,2019,2026,England,same name and city
+40,A,y,County Ground,Bristol,County Ground,Bristol,0,2006,2019,England,same name and city
+40,A,y,"County Ground, Bristol",Bristol,County Ground,Bristol,48,2021,2026,England,same name and city
+41,A,y,County Ground,Chelmsford,County Ground,Chelmsford,0,2009,2019,England,same name and city
+41,A,y,"County Ground, Chelmsford",Chelmsford,County Ground,Chelmsford,0,2021,2026,England,same name and city
+42,A,y,County Ground,Derby,County Ground,Derby,0,2009,2020,England,same name and city
+42,A,y,"County Ground, Derby",Derby,County Ground,Derby,0,2021,2026,England,same name and city
+43,A,y,County Ground,Northampton,County Ground,Northampton,0,2012,2019,England,same name and city
+43,A,y,"County Ground, Northampton",Northampton,County Ground,Northampton,7,2021,2024,England,same name and city
+44,A,y,County Ground,Taunton,County Ground,Taunton,0,2011,2017,England,same name and city
+45,A,y,"County Ground, New Road",Worcester,County Ground,Worcester,0,2015,2019,England,same name and city
+45,A,y,"County Ground, New Road, Worcester",Worcester,County Ground,Worcester,0,2005,2024,England,same name and city
+46,A,y,Daren Sammy National Cricket Stadium,Gros Islet,Daren Sammy National Cricket Stadium,Gros Islet,0,2004,2004,England,same name and city
+46,A,y,"Daren Sammy National Cricket Stadium, Gros Islet, St Lucia",Gros Islet,Daren Sammy National Cricket Stadium,Gros Islet,0,2021,2024,West Indies,same name and city
+46,A,y,"Daren Sammy National Cricket Stadium, St Lucia",Gros Islet,Daren Sammy National Cricket Stadium,Gros Islet,0,2019,2019,England,same name and city
+47,C,,"Beausejour Stadium, Gros Islet, St Lucia",Gros Islet,Darren Sammy National Cricket Stadium,Gros Islet,1,2004,2004,England,renamed 2016
+47,C,,"Beausejour Stadium, Gros Islet, St Lucia",St Lucia,Darren Sammy National Cricket Stadium,Gros Islet,36,2005,2014,West Indies,renamed 2016
+47,A,y,"Darren Sammy National Cricket Stadium, Gros Islet, St Lucia",Gros Islet,Darren Sammy National Cricket Stadium,Gros Islet,27,2019,2024,West Indies,same name and city
+47,B,,"Darren Sammy National Cricket Stadium, Gros Islet, St Lucia",St Lucia,Darren Sammy National Cricket Stadium,Gros Islet,10,2016,2018,West Indies,same name; city given as St Lucia
+48,A,y,Desert Springs Cricket Ground,Almeria,Desert Springs Cricket Ground,Almeria,0,2020,2020,Germany,same name and city
+48,A,y,"Desert Springs Cricket Ground, Almeria",Almeria,Desert Springs Cricket Ground,Almeria,46,2021,2023,Italy,same name and city
+49,A,y,Diamond Oval,Kimberley,Diamond Oval,Kimberley,0,2016,2018,South Africa,same name and city
+49,A,y,"Diamond Oval, Kimberley",Kimberley,Diamond Oval,Kimberley,16,2023,2024,South Africa,same name and city
+50,A,y,"Dr DY Patil Sports Academy, Mumbai",Navi Mumbai,Dr DY Patil Sports Academy,Navi Mumbai,0,2022,2024,India,same name and city
+50,A,y,"Dr DY Patil Sports Academy, Navi Mumbai",Navi Mumbai,Dr DY Patil Sports Academy,Navi Mumbai,14,2024,2025,India,same name and city
+51,C,,"Andhra Cricket Association-Visakhapatnam District Cricket Association Stadium, Visakhapatnam",Visakhapatnam,Dr. Y.S. Rajasekhara Reddy ACA-VDCA Cricket Stadium,Visakhapatnam,24,2010,2026,India,earlier name
+51,A,y,Dr. Y.S. Rajasekhara Reddy ACA-VDCA Cricket Stadium,Visakhapatnam,Dr. Y.S. Rajasekhara Reddy ACA-VDCA Cricket Stadium,Visakhapatnam,0,2005,2019,India,same name and city
+51,A,y,"Dr. Y.S. Rajasekhara Reddy ACA-VDCA Cricket Stadium, Visakhapatnam",Visakhapatnam,Dr. Y.S. Rajasekhara Reddy ACA-VDCA Cricket Stadium,Visakhapatnam,2,2005,2007,India,same name and city
+52,A,y,Dubai International Cricket Stadium,,Dubai International Cricket Stadium,Dubai,79,2009,2018,Pakistan,no city given
+52,A,y,Dubai International Cricket Stadium,Dubai,Dubai International Cricket Stadium,Dubai,122,2019,2026,United Arab Emirates,same name and city
+53,A,y,Eden Gardens,Kolkata,Eden Gardens,Kolkata,0,2004,2019,India,same name and city
+53,A,y,"Eden Gardens, Kolkata",Kolkata,Eden Gardens,Kolkata,45,2021,2026,India,same name and city
+54,A,y,Eden Park,Auckland,Eden Park,Auckland,0,2004,2021,New Zealand,same name and city
+54,A,y,"Eden Park, Auckland",Auckland,Eden Park,Auckland,76,2008,2026,New Zealand,same name and city
+55,A,y,Edgbaston,Birmingham,Edgbaston,Birmingham,86,2004,2019,England,same name and city
+55,A,y,"Edgbaston, Birmingham",Birmingham,Edgbaston,Birmingham,0,2003,2026,England,same name and city
+56,A,y,Forthill,Dundee,Forthill,Dundee,0,2019,2019,Bangladesh,same name and city
+56,A,y,"Forthill, Dundee",Dundee,Forthill,Dundee,26,2024,2026,Scotland,same name and city
+57,A,y,Gaddafi Stadium,Lahore,Gaddafi Stadium,Lahore,0,2004,2021,Pakistan,same name and city
+57,A,y,"Gaddafi Stadium, Lahore",Lahore,Gaddafi Stadium,Lahore,91,2003,2026,Pakistan,same name and city
+58,A,y,"Gahanga International Cricket Stadium, Rwanda",Kigali City,Gahanga International Cricket Stadium,Kigali City,0,2022,2026,Rwanda,same name and city
+59,A,y,Galle International Stadium,,Galle International Stadium,Galle,37,2007,2018,Sri Lanka,no city given
+59,A,y,Galle International Stadium,Galle,Galle International Stadium,Galle,22,2004,2026,Sri Lanka,same name and city
+60,A,y,"GMHBA Stadium, South Geelong, Victoria",Geelong,GMHBA Stadium,Geelong,6,2022,2022,Namibia,same name and city
+60,C,,"Simonds Stadium, South Geelong, Victoria",Victoria,GMHBA Stadium,Geelong,2,2017,2017,Australia,sponsor rename
+61,A,y,Grace Road,Leicester,Grace Road,Leicester,0,2016,2019,England,same name and city
+61,A,y,"Grace Road, Leicester",Leicester,Grace Road,Leicester,18,2006,2026,England,same name and city
+62,A,y,"Grainville, St Saviour",St Saviour,Grainville,St Saviour,15,2022,2026,Guernsey,same name and city
+62,A,y,"Grainville, St Saviour, Jersey",St Saviour,Grainville,St Saviour,0,2023,2023,Germany,same name and city
+63,A,y,"Grange Cricket Club Ground, Raeburn Place",Edinburgh,Grange Cricket Club Ground,Edinburgh,0,2013,2017,Scotland,same name and city
+63,A,y,"Grange Cricket Club Ground, Raeburn Place, Edinburgh",Edinburgh,Grange Cricket Club Ground,Edinburgh,41,2021,2026,Scotland,same name and city
+64,A,y,Green Park,Kanpur,Green Park,Kanpur,0,2004,2017,India,same name and city
+64,A,y,"Green Park, Kanpur",Kanpur,Green Park,Kanpur,13,2021,2024,India,same name and city
+65,A,y,Greenfield International Stadium,Thiruvananthapuram,Greenfield International Stadium,Thiruvananthapuram,0,2017,2019,India,same name and city
+65,A,y,"Greenfield International Stadium, Thiruvananthapuram",Thiruvananthapuram,Greenfield International Stadium,Thiruvananthapuram,11,2022,2026,India,same name and city
+66,A,y,Gymkhana Club Ground,Nairobi,Gymkhana Club Ground,Nairobi,0,2006,2009,Kenya,same name and city
+66,A,y,"Gymkhana Club Ground, Nairobi",Nairobi,Gymkhana Club Ground,Nairobi,51,2003,2026,Kenya,same name and city
+67,A,y,Hagley Oval,Christchurch,Hagley Oval,Christchurch,0,2014,2021,New Zealand,same name and city
+67,A,y,"Hagley Oval, Christchurch",Christchurch,Hagley Oval,Christchurch,63,2022,2026,New Zealand,same name and city
+68,A,y,Harare Sports Club,,Harare Sports Club,Harare,93,2005,2018,Zimbabwe,no city given
+68,A,y,Harare Sports Club,Harare,Harare Sports Club,Harare,133,2003,2026,Zimbabwe,same name and city
+69,A,y,Hazelaarweg,Rotterdam,Hazelaarweg,Rotterdam,0,2015,2019,Netherlands,same name and city
+69,A,y,"Hazelaarweg, Rotterdam",Rotterdam,Hazelaarweg,Rotterdam,25,2021,2025,Netherlands,same name and city
+70,A,y,Headingley,Leeds,Headingley,Leeds,47,2004,2019,England,same name and city
+70,A,y,"Headingley, Leeds",Leeds,Headingley,Leeds,0,2003,2026,England,same name and city
+71,A,y,Himachal Pradesh Cricket Association Stadium,Dharamsala,Himachal Pradesh Cricket Association Stadium,Dharamsala,0,2013,2017,India,same name and city
+71,A,y,Himachal Pradesh Cricket Association Stadium,Dharmasala,Himachal Pradesh Cricket Association Stadium,Dharamsala,0,2014,2016,India,same name and city
+71,A,y,"Himachal Pradesh Cricket Association Stadium, Dharamsala",Dharamsala,Himachal Pradesh Cricket Association Stadium,Dharamsala,19,2013,2025,India,same name and city
+71,A,y,"Himachal Pradesh Cricket Association Stadium, Dharamsala",Dharmasala,Himachal Pradesh Cricket Association Stadium,Dharamsala,3,2014,2016,India,same name and city
+72,A,y,Holkar Cricket Stadium,Indore,Holkar Cricket Stadium,Indore,0,2011,2020,India,same name and city
+72,A,y,"Holkar Cricket Stadium, Indore",Indore,Holkar Cricket Stadium,Indore,18,2011,2026,India,same name and city
+72,C,,"Maharani Usharaje Trust Cricket Ground, Indore",Indore,Holkar Cricket Stadium,Indore,2,2006,2008,England,renamed 2010
+73,A,y,ICC Academy,Dubai,ICC Academy,Dubai,0,2013,2019,United Arab Emirates,same name and city
+73,A,y,"ICC Academy, Dubai",Dubai,ICC Academy,Dubai,88,2021,2025,United Arab Emirates,same name and city
+74,A,y,ICC Academy Ground No 2,Dubai,ICC Academy Ground No 2,Dubai,0,2019,2019,Bermuda,same name and city
+74,A,y,"ICC Academy Ground No 2, Dubai",Dubai,ICC Academy Ground No 2,Dubai,10,2021,2021,United Arab Emirates,same name and city
+75,A,y,Indian Association Ground,Singapore,Indian Association Ground,Singapore,0,2019,2019,Singapore,same name and city
+75,A,y,"Indian Association Ground, Singapore",Singapore,Indian Association Ground,Singapore,27,2022,2023,Singapore,same name and city
+76,A,y,Iqbal Stadium,Faisalabad,Iqbal Stadium,Faisalabad,0,2005,2008,Pakistan,same name and city
+76,A,y,"Iqbal Stadium, Faisalabad",Faisalabad,Iqbal Stadium,Faisalabad,11,2003,2025,Pakistan,same name and city
+77,A,y,John Davies Oval,Queenstown,John Davies Oval,Queenstown,0,2005,2005,New Zealand,same name and city
+77,A,y,"John Davies Oval, Queenstown",Queenstown,John Davies Oval,Queenstown,0,2022,2023,New Zealand,same name and city
+78,A,y,JSCA International Stadium Complex,Ranchi,JSCA International Stadium Complex,Ranchi,0,2013,2019,India,same name and city
+78,A,y,"JSCA International Stadium Complex, Ranchi",Ranchi,JSCA International Stadium Complex,Ranchi,15,2021,2025,India,same name and city
+79,A,y,Junction Oval,Melbourne,Junction Oval,Melbourne,0,2019,2020,Australia,same name and city
+79,A,y,"Junction Oval, Melbourne",Melbourne,Junction Oval,Melbourne,15,2022,2025,Australia,same name and city
+80,A,y,Kennington Oval,London,Kennington Oval,London,0,2004,2019,England,same name and city
+80,A,y,"Kennington Oval, London",London,Kennington Oval,London,0,2003,2026,England,same name and city
+81,A,y,Kensington Oval,Bridgetown,Kensington Oval,Bridgetown,45,2005,2005,South Africa,same name and city
+81,A,y,"Kensington Oval, Barbados",Bridgetown,Kensington Oval,Bridgetown,0,2019,2020,West Indies,same name and city
+81,A,y,"Kensington Oval, Bridgetown, Barbados",Bridgetown,Kensington Oval,Bridgetown,0,2003,2026,West Indies,same name and city
+82,A,y,Khan Shaheb Osman Ali Stadium,Fatullah,Khan Shaheb Osman Ali Stadium,Fatullah,0,2006,2016,Bangladesh,same name and city
+82,A,y,"Khan Shaheb Osman Ali Stadium, Fatullah",Fatullah,Khan Shaheb Osman Ali Stadium,Fatullah,7,2013,2016,Bangladesh,same name and city
+82,C,,"Narayanganj Osmani Stadium, Fatullah",Fatullah,Khan Shaheb Osman Ali Stadium,Fatullah,3,2006,2006,Australia,alternative name; please confirm
+83,A,y,King George V Sports Ground,Castel,King George V Sports Ground,Castel,0,2019,2019,Denmark,same name and city
+83,A,y,"King George V Sports Ground, Castel",Castel,King George V Sports Ground,Castel,28,2024,2026,Guernsey,same name and city
+84,A,y,Kingsmead,Durban,Kingsmead,Durban,0,2004,2021,South Africa,same name and city
+84,A,y,"Kingsmead, Durban",Durban,Kingsmead,Durban,76,2002,2026,South Africa,same name and city
+85,A,y,Kinrara Academy Oval,Kuala Lumpur,Kinrara Academy Oval,Kuala Lumpur,0,2006,2020,Malaysia,same name and city
+85,A,y,"Kinrara Academy Oval, Kuala Lumpur",Kuala Lumpur,Kinrara Academy Oval,Kuala Lumpur,70,2022,2022,Malaysia,same name and city
+86,A,y,Lord's,London,Lord's,London,104,2004,2019,England,same name and city
+86,A,y,"Lord's, London",London,Lord's,London,0,2002,2026,England,same name and city
+87,A,y,Lugogo Cricket Oval,Kampala,Lugogo Cricket Oval,Kampala,0,2019,2019,Botswana,same name and city
+87,A,y,"Lugogo Cricket Oval, Kampala",Kampala,Lugogo Cricket Oval,Kampala,8,2025,2025,Canada,same name and city
+88,A,y,M Chinnaswamy Stadium,Bangalore,M Chinnaswamy Stadium,Bengaluru,0,2007,2017,India,same name and city
+88,A,y,M Chinnaswamy Stadium,Bengaluru,M Chinnaswamy Stadium,Bengaluru,0,2017,2017,Australia,same name and city
+88,A,y,"M Chinnaswamy Stadium, Bangalore",Bangalore,M Chinnaswamy Stadium,Bengaluru,14,2007,2013,India,same name and city
+88,A,y,"M Chinnaswamy Stadium, Bangalore",Bengaluru,M Chinnaswamy Stadium,Bengaluru,2,2001,2007,India,same name and city
+88,A,y,"M Chinnaswamy Stadium, Bengaluru",Bangalore,M Chinnaswamy Stadium,Bengaluru,11,2015,2017,India,same name and city
+88,A,y,"M Chinnaswamy Stadium, Bengaluru",Bengaluru,M Chinnaswamy Stadium,Bengaluru,18,2017,2026,India,same name and city
+88,A,y,M.Chinnaswamy Stadium,Bengaluru,M Chinnaswamy Stadium,Bengaluru,0,2007,2020,India,same name and city
+89,A,y,MA Aziz Stadium,Chattogram,MA Aziz Stadium,Chattogram,0,2004,2005,Bangladesh,same name and city
+89,A,y,"MA Aziz Stadium, Chittagong",Chattogram,MA Aziz Stadium,Chattogram,0,2003,2003,Bangladesh,same name and city
+90,A,y,MA Chidambaram Stadium,Chennai,MA Chidambaram Stadium,Chennai,43,2004,2021,India,same name and city
+90,A,y,"MA Chidambaram Stadium, Chepauk",Chennai,MA Chidambaram Stadium,Chennai,0,2007,2019,India,same name and city
+90,A,y,"MA Chidambaram Stadium, Chepauk, Chennai",Chennai,MA Chidambaram Stadium,Chennai,0,2003,2026,India,same name and city
+91,A,y,Maharashtra Cricket Association Stadium,Pune,Maharashtra Cricket Association Stadium,Pune,0,2013,2021,India,same name and city
+91,A,y,"Maharashtra Cricket Association Stadium, Pune",Pune,Maharashtra Cricket Association Stadium,Pune,18,2013,2025,India,same name and city
+91,C,,"Subrata Roy Sahara Stadium, Pune",Pune,Maharashtra Cricket Association Stadium,Pune,1,2012,2012,England,former sponsor name
+92,A,y,"Mahinda Rajapaksa International Cricket Stadium, Sooriyawewa",Hambantota,Mahinda Rajapaksa International Cricket Stadium,Hambantota,0,2011,2020,Sri Lanka,same name and city
+92,A,y,"Mahinda Rajapaksa International Cricket Stadium, Sooriyawewa, Hambantota",Hambantota,Mahinda Rajapaksa International Cricket Stadium,Hambantota,39,2024,2026,Sri Lanka,same name and city
+93,A,y,Mangaung Oval,Bloemfontein,Mangaung Oval,Bloemfontein,0,2005,2020,South Africa,same name and city
+93,A,y,"Mangaung Oval, Bloemfontein",Bloemfontein,Mangaung Oval,Bloemfontein,27,2023,2026,South Africa,same name and city
+94,A,y,Mannofield Park,Aberdeen,Mannofield Park,Aberdeen,0,2011,2019,Scotland,same name and city
+94,A,y,"Mannofield Park, Aberdeen",Aberdeen,Mannofield Park,Aberdeen,13,2022,2022,Scotland,same name and city
+95,A,y,Manuka Oval,Canberra,Manuka Oval,Canberra,0,2013,2020,Australia,same name and city
+95,A,y,"Manuka Oval, Canberra",Canberra,Manuka Oval,Canberra,34,2022,2026,Australia,same name and city
+96,A,y,Maple Leaf North-West Ground,King City,Maple Leaf North-West Ground,King City,0,2008,2013,Canada,same name and city
+96,A,y,"Maple Leaf North-West Ground, King City",King City,Maple Leaf North-West Ground,King City,36,2008,2026,Canada,same name and city
+96,B,,"Maple Leaf North-West Ground, King City",Toronto,Maple Leaf North-West Ground,King City,1,2009,2009,Canada,same name; city given as Toronto
+97,A,y,"Marrara Stadium, Darwin",Darwin,Marrara Stadium,Darwin,0,2025,2026,Australia,same name and city
+98,A,y,McLean Park,Napier,McLean Park,Napier,0,2006,2021,New Zealand,same name and city
+98,A,y,"McLean Park, Napier",Napier,McLean Park,Napier,35,2002,2025,New Zealand,same name and city
+99,A,y,Melbourne Cricket Ground,,Melbourne Cricket Ground,Melbourne,60,2005,2018,Australia,no city given
+99,A,y,Melbourne Cricket Ground,Melbourne,Melbourne Cricket Ground,Melbourne,29,2002,2026,Australia,same name and city
+100,A,y,"Metricon Stadium, Carrara",,Metricon Stadium,Carrara,1,2018,2018,Australia,no city given
+100,A,y,"Metricon Stadium, Carrara",Carrara,Metricon Stadium,Carrara,5,2021,2022,Australia,same name and city
+101,B,,"Mission Road Ground, Mong Kok, Hong Kong",Hong Kong,Mission Road Ground,Mong Kok,5,2016,2016,Hong Kong,same name; city given as Hong Kong
+101,A,y,"Mission Road Ground, Mong Kok, Hong Kong",Mong Kok,Mission Road Ground,Mong Kok,47,2023,2026,Hong Kong,same name and city
+102,A,y,Moara Vlasiei Cricket Ground,,Moara Vlasiei Cricket Ground,Ilfov County,0,2020,2020,Bulgaria,no city given
+102,A,y,"Moara Vlasiei Cricket Ground, Ilfov County",,Moara Vlasiei Cricket Ground,Ilfov County,3,2020,2020,Bulgaria,no city given
+102,A,y,"Moara Vlasiei Cricket Ground, Ilfov County",Ilfov County,Moara Vlasiei Cricket Ground,Ilfov County,98,2021,2026,Romania,same name and city
+103,A,y,"Moosa Cricket Stadium, Pearland",Pearland,Moosa Cricket Stadium,Pearland,12,2022,2022,United States of America,same name and city
+104,A,y,Multan Cricket Stadium,,Multan Cricket Stadium,Multan,6,2006,2008,Pakistan,no city given
+104,A,y,Multan Cricket Stadium,Multan,Multan Cricket Stadium,Multan,16,2003,2025,Pakistan,same name and city
+105,A,y,Nahar Singh Stadium,Faridabad,Nahar Singh Stadium,Faridabad,0,2006,2006,England,same name and city
+105,A,y,"Nahar Singh Stadium, Faridabad",Faridabad,Nahar Singh Stadium,Faridabad,2,2003,2003,Australia,same name and city
+106,A,y,Narendra Modi Stadium,Ahmedabad,Narendra Modi Stadium,Ahmedabad,0,2021,2021,England,same name and city
+106,A,y,"Narendra Modi Stadium, Ahmedabad",Ahmedabad,Narendra Modi Stadium,Ahmedabad,28,2021,2026,India,same name and city
+106,C,,"Sardar Patel Stadium, Motera, Ahmedabad",Ahmedabad,Narendra Modi Stadium,Ahmedabad,19,2005,2014,India,rebuilt on the same site and renamed
+107,A,y,National Cricket Stadium,St George's,National Cricket Stadium,St George's,0,2004,2004,Bangladesh,same name and city
+107,A,y,"National Cricket Stadium, Grenada",St George's,National Cricket Stadium,St George's,0,2019,2020,West Indies,same name and city
+107,B,,"National Cricket Stadium, St George's, Grenada",Grenada,National Cricket Stadium,St George's,15,2007,2015,West Indies,same name; city given as Grenada
+107,A,y,"National Cricket Stadium, St George's, Grenada",St George's,National Cricket Stadium,St George's,21,2003,2026,West Indies,same name and city
+108,A,y,National Stadium,Hamilton,National Stadium,Hamilton,0,2019,2019,Bermuda,same name and city
+108,A,y,"National Stadium, Hamilton",Hamilton,National Stadium,Hamilton,7,2023,2023,Bermuda,same name and city
+109,A,y,National Stadium,Karachi,National Stadium,Karachi,0,2004,2021,Pakistan,same name and city
+109,A,y,"National Stadium, Karachi",Karachi,National Stadium,Karachi,41,2003,2026,Pakistan,same name and city
+110,A,y,Nehru Stadium,Pune,Nehru Stadium,Pune,0,2005,2005,India,same name and city
+110,A,y,"Nehru Stadium, Poona",Pune,Nehru Stadium,Pune,0,2003,2003,Australia,same name and city
+111,A,y,Newlands,Cape Town,Newlands,Cape Town,0,2004,2020,South Africa,same name and city
+111,A,y,"Newlands, Cape Town",Cape Town,Newlands,Cape Town,90,2003,2025,South Africa,same name and city
+112,A,y,"Nigeria Cricket Federation Oval 2, Abuja",Abuja,Nigeria Cricket Federation Oval 2,Abuja,12,2024,2026,Nigeria,same name and city
+112,B,,"Nigeria Cricket Federation Oval 2, Abuja",Lagos,Nigeria Cricket Federation Oval 2,Abuja,3,2024,2024,St Helena,same name; city given as Lagos
+113,A,y,"Niranjan Shah Stadium, Rajkot",Rajkot,Niranjan Shah Stadium,Rajkot,6,2024,2026,India,same name and city
+113,C,,"Saurashtra Cricket Association Stadium, Rajkot",Rajkot,Niranjan Shah Stadium,Rajkot,11,2013,2023,India,renamed 2024
+114,A,y,North Sydney Oval,Sydney,North Sydney Oval,Sydney,20,2009,2019,Australia,same name and city
+114,A,y,"North Sydney Oval, Sydney",Sydney,North Sydney Oval,Sydney,0,2017,2025,Australia,same name and city
+115,A,y,Old Hararians,Harare,Old Hararians,Harare,0,2018,2019,Mozambique,same name and city
+115,A,y,"Old Hararians, Harare",Harare,Old Hararians,Harare,13,2021,2021,Bangladesh,same name and city
+116,A,y,Old Trafford,Manchester,Old Trafford,Manchester,62,2005,2020,England,same name and city
+116,A,y,"Old Trafford, Manchester",Manchester,Old Trafford,Manchester,0,2003,2026,England,same name and city
+117,A,y,P Sara Oval,Colombo,P Sara Oval,Colombo,0,2005,2019,Sri Lanka,same name and city
+117,A,y,"P Sara Oval, Colombo",Colombo,P Sara Oval,Colombo,0,2023,2023,Sri Lanka,same name and city
+118,A,y,Pallekele International Cricket Stadium,,Pallekele International Cricket Stadium,Kandy,48,2010,2018,Sri Lanka,no city given
+118,A,y,Pallekele International Cricket Stadium,Kandy,Pallekele International Cricket Stadium,Kandy,38,2019,2026,Sri Lanka,same name and city
+118,B,,Pallekele International Cricket Stadium,Pallekele,Pallekele International Cricket Stadium,Kandy,1,2021,2021,Bangladesh,same name; city given as Pallekele
+119,A,y,"Pembroke Cricket Club, Sandymount",Dublin,Pembroke Cricket Club,Dublin,0,2018,2018,Bangladesh,same name and city
+119,A,y,"Pembroke Cricket Club, Sandymount, Dublin",Dublin,Pembroke Cricket Club,Dublin,9,2022,2025,Ireland,same name and city
+120,A,y,Perth Stadium,,Perth Stadium,Perth,3,2018,2018,Australia,no city given
+120,A,y,Perth Stadium,Perth,Perth Stadium,Perth,15,2019,2026,Australia,same name and city
+121,B,,"Providence Stadium, Guyana",Guyana,Providence Stadium,Providence,40,2007,2018,West Indies,same name; city given as Guyana
+121,A,y,"Providence Stadium, Guyana",Providence,Providence Stadium,Providence,22,2019,2026,West Indies,same name and city
+122,A,y,"Punjab Cricket Association IS Bindra Stadium, Mohali",Chandigarh,Punjab Cricket Association IS Bindra Stadium,Chandigarh,0,2005,2019,India,same name and city
+122,A,y,"Punjab Cricket Association IS Bindra Stadium, Mohali, Chandigarh",Chandigarh,Punjab Cricket Association IS Bindra Stadium,Chandigarh,14,2015,2023,India,same name and city
+122,B,,"Punjab Cricket Association IS Bindra Stadium, Mohali, Chandigarh",Mohali,Punjab Cricket Association IS Bindra Stadium,Chandigarh,1,2016,2016,Ireland,same name; city given as Mohali
+122,C,,"Punjab Cricket Association Stadium, Mohali, Chandigarh",Chandigarh,Punjab Cricket Association IS Bindra Stadium,Chandigarh,21,2003,2013,India,renamed 2015
+123,A,y,Queen's Park Oval,Port of Spain,Queen's Park Oval,Port of Spain,0,2004,2004,England,same name and city
+123,A,y,"Queen's Park Oval, Port of Spain, Trinidad",Port of Spain,Queen's Park Oval,Port of Spain,9,2004,2026,West Indies,same name and city
+123,B,,"Queen's Park Oval, Port of Spain, Trinidad",Trinidad,Queen's Park Oval,Port of Spain,35,2005,2018,West Indies,same name; city given as Trinidad
+123,A,y,"Queen's Park Oval, Trinidad",Port of Spain,Queen's Park Oval,Port of Spain,0,2019,2019,India,same name and city
+124,A,y,Queens Sports Club,Bulawayo,Queens Sports Club,Bulawayo,0,2004,2018,Zimbabwe,same name and city
+124,A,y,"Queens Sports Club, Bulawayo",Bulawayo,Queens Sports Club,Bulawayo,108,2003,2026,Zimbabwe,same name and city
+125,A,y,Queenstown Events Centre,,Queenstown Events Centre,Queenstown,5,2006,2014,New Zealand,no city given
+125,A,y,Queenstown Events Centre,Queenstown,Queenstown Events Centre,Queenstown,12,2003,2023,New Zealand,same name and city
+126,A,y,R Premadasa Stadium,Colombo,R Premadasa Stadium,Colombo,0,2006,2017,Sri Lanka,same name and city
+126,A,y,"R Premadasa Stadium, Colombo",Colombo,R Premadasa Stadium,Colombo,174,2021,2026,Sri Lanka,same name and city
+126,A,y,R.Premadasa Stadium,Colombo,R Premadasa Stadium,Colombo,0,2004,2005,Sri Lanka,same name and city
+126,A,y,"R.Premadasa Stadium, Khettarama",Colombo,R Premadasa Stadium,Colombo,0,2005,2019,Sri Lanka,same name and city
+127,A,y,"Rajiv Gandhi International Stadium, Uppal",Hyderabad,Rajiv Gandhi International Stadium,Hyderabad,20,2005,2019,India,same name and city
+127,A,y,"Rajiv Gandhi International Stadium, Uppal, Hyderabad",Hyderabad,Rajiv Gandhi International Stadium,Hyderabad,0,2022,2024,India,same name and city
+128,A,y,Rangiri Dambulla International Stadium,,Rangiri Dambulla International Stadium,Dambulla,42,2005,2018,Sri Lanka,no city given
+128,A,y,Rangiri Dambulla International Stadium,Dambulla,Rangiri Dambulla International Stadium,Dambulla,38,2003,2026,Sri Lanka,same name and city
+129,A,y,Rawalpindi Cricket Stadium,,Rawalpindi Cricket Stadium,Rawalpindi,8,2005,2020,Pakistan,no city given
+129,A,y,Rawalpindi Cricket Stadium,Rawalpindi,Rawalpindi Cricket Stadium,Rawalpindi,44,2003,2026,Pakistan,same name and city
+130,A,y,Reliance Stadium,Vadodara,Reliance Stadium,Vadodara,0,2005,2019,India,same name and city
+131,A,y,Riverside Ground,Chester-le-Street,Riverside Ground,Chester-le-Street,0,2004,2019,England,same name and city
+131,A,y,"Riverside Ground, Chester-le-Street",Chester-le-Street,Riverside Ground,Chester-le-Street,36,2021,2026,England,same name and city
+132,A,y,Royal Selangor Club,Kuala Lumpur,Royal Selangor Club,Kuala Lumpur,0,2018,2018,Malaysia,same name and city
+132,A,y,"Royal Selangor Club, Kuala Lumpur",Kuala Lumpur,Royal Selangor Club,Kuala Lumpur,12,2024,2024,Bahrain,same name and city
+133,A,y,Ruaraka Sports Club Ground,Nairobi,Ruaraka Sports Club Ground,Nairobi,0,2007,2007,Bermuda,same name and city
+133,A,y,"Ruaraka Sports Club Ground, Nairobi",Nairobi,Ruaraka Sports Club Ground,Nairobi,7,2024,2024,Gambia,same name and city
+134,A,y,"Sabina Park, Jamaica",Kingston,Sabina Park,Kingston,0,2019,2019,India,same name and city
+134,A,y,"Sabina Park, Kingston, Jamaica",Kingston,Sabina Park,Kingston,0,2003,2026,West Indies,same name and city
+135,A,y,Sao Fernando Polo and Cricket Club,Seropedica,Sao Fernando Polo and Cricket Club,Seropedica,2,2024,2024,Mexico,same name and city
+135,A,y,"Sao Fernando Polo and Cricket Club, Campo Sede",Seropedica,Sao Fernando Polo and Cricket Club,Seropedica,1,2025,2025,Mexico,same name and city
+136,A,y,Sawai Mansingh Stadium,Jaipur,Sawai Mansingh Stadium,Jaipur,0,2006,2013,India,same name and city
+136,A,y,"Sawai Mansingh Stadium, Jaipur",Jaipur,Sawai Mansingh Stadium,Jaipur,11,2021,2021,India,same name and city
+137,A,y,Saxton Oval,Nelson,Saxton Oval,Nelson,0,2010,2019,New Zealand,same name and city
+137,A,y,"Saxton Oval, Nelson",Nelson,Saxton Oval,Nelson,24,2023,2025,New Zealand,same name and city
+138,A,y,Seddon Park,Hamilton,Seddon Park,Hamilton,0,2007,2021,New Zealand,same name and city
+138,A,y,"Seddon Park, Hamilton",Hamilton,Seddon Park,Hamilton,83,2022,2026,New Zealand,same name and city
+139,A,y,Seebarn Cricket Centre,Lower Austria,Seebarn Cricket Centre,Lower Austria,0,2020,2020,Austria,same name and city
+139,A,y,"Seebarn Cricket Centre, Lower Austria",Lower Austria,Seebarn Cricket Centre,Lower Austria,5,2020,2020,Austria,same name and city
+140,C,,"North West Cricket Stadium, Potchefstroom",Potchefstroom,Senwes Park,Potchefstroom,4,2003,2006,South Africa,alternative name
+140,A,y,Senwes Park,Potchefstroom,Senwes Park,Potchefstroom,0,2008,2020,South Africa,same name and city
+140,A,y,"Senwes Park, Potchefstroom",Potchefstroom,Senwes Park,Potchefstroom,32,2008,2026,South Africa,same name and city
+141,A,y,Sharjah Cricket Stadium,,Sharjah Cricket Stadium,Sharjah,36,2011,2017,Pakistan,no city given
+141,A,y,Sharjah Cricket Stadium,Sharjah,Sharjah Cricket Stadium,Sharjah,48,2003,2025,Pakistan,same name and city
+142,A,y,Shere Bangla National Stadium,Dhaka,Shere Bangla National Stadium,Dhaka,0,2016,2021,Bangladesh,same name and city
+142,A,y,"Shere Bangla National Stadium, Mirpur",Dhaka,Shere Bangla National Stadium,Dhaka,94,2007,2026,Bangladesh,same name and city
+142,B,,"Shere Bangla National Stadium, Mirpur",Mirpur,Shere Bangla National Stadium,Dhaka,133,2006,2021,Bangladesh,same name; city given as Mirpur
+143,A,y,Sinhalese Sports Club Ground,Colombo,Sinhalese Sports Club Ground,Colombo,45,2005,2020,Sri Lanka,same name and city
+143,A,y,"Sinhalese Sports Club Ground, Colombo",Colombo,Sinhalese Sports Club Ground,Colombo,0,2003,2026,Sri Lanka,same name and city
+144,A,y,Sir Vivian Richards Stadium,North Sound,Sir Vivian Richards Stadium,North Sound,0,2018,2021,West Indies,same name and city
+144,A,y,"Sir Vivian Richards Stadium, Antigua",North Sound,Sir Vivian Richards Stadium,North Sound,0,2019,2019,West Indies,same name and city
+144,A,y,"Sir Vivian Richards Stadium, North Sound",,Sir Vivian Richards Stadium,North Sound,0,2019,2019,India,no city given
+144,A,y,"Sir Vivian Richards Stadium, North Sound, Antigua",,Sir Vivian Richards Stadium,North Sound,1,2019,2019,India,no city given
+144,B,,"Sir Vivian Richards Stadium, North Sound, Antigua",Antigua,Sir Vivian Richards Stadium,North Sound,29,2007,2018,West Indies,same name; city given as Antigua
+144,A,y,"Sir Vivian Richards Stadium, North Sound, Antigua",North Sound,Sir Vivian Richards Stadium,North Sound,55,2018,2026,West Indies,same name and city
+145,A,y,Sky Stadium,Wellington,Sky Stadium,Wellington,0,2021,2021,New Zealand,same name and city
+145,A,y,"Sky Stadium, Wellington",Wellington,Sky Stadium,Wellington,11,2020,2025,New Zealand,same name and city
+145,C,,"Westpac Stadium, Wellington",Wellington,Sky Stadium,Wellington,34,2003,2019,New Zealand,sponsor rename
+146,A,y,Sophia Gardens,Cardiff,Sophia Gardens,Cardiff,0,2005,2019,England,same name and city
+146,A,y,"Sophia Gardens, Cardiff",Cardiff,Sophia Gardens,Cardiff,43,2021,2026,England,same name and city
+147,A,y,Southend Club Cricket Stadium,Karachi,Southend Club Cricket Stadium,Karachi,0,2015,2019,Pakistan,same name and city
+147,A,y,"Southend Club Cricket Stadium, Karachi",Karachi,Southend Club Cricket Stadium,Karachi,0,2022,2022,Pakistan,same name and city
+148,A,y,Sportpark Het Schootsveld,Deventer,Sportpark Het Schootsveld,Deventer,0,2018,2019,Ireland,same name and city
+148,A,y,"Sportpark Het Schootsveld, Deventer",Deventer,Sportpark Het Schootsveld,Deventer,19,2023,2023,Germany,same name and city
+149,A,y,Sportpark Maarschalkerweerd,Utrecht,Sportpark Maarschalkerweerd,Utrecht,0,2018,2019,Bangladesh,same name and city
+149,A,y,"Sportpark Maarschalkerweerd, Utrecht",Utrecht,Sportpark Maarschalkerweerd,Utrecht,45,2021,2026,Netherlands,same name and city
+150,A,y,Sportpark Westvliet,The Hague,Sportpark Westvliet,The Hague,0,2012,2019,Netherlands,same name and city
+150,A,y,"Sportpark Westvliet, The Hague",The Hague,Sportpark Westvliet,The Hague,27,2022,2024,Netherlands,same name and city
+150,A,y,"Sportpark Westvliet, Voorburg",The Hague,Sportpark Westvliet,The Hague,0,2022,2025,Netherlands,same name and city
+151,A,y,"St Albans Club, Buenos Aires",,St Albans Club,Buenos Aires,2,2023,2023,Argentina,no city given
+151,A,y,"St Albans Club, Buenos Aires",Buenos Aires,St Albans Club,Buenos Aires,28,2023,2025,Argentina,same name and city
+152,A,y,"St George's College Ground, Buenos Aires",,St George's College Ground,Buenos Aires,3,2023,2023,Argentina,no city given
+152,A,y,"St George's College Ground, Buenos Aires",Buenos Aires,St George's College Ground,Buenos Aires,16,2024,2026,Argentina,same name and city
+153,A,y,St George's Park,Port Elizabeth,St George's Park,Gqeberha,0,2005,2020,South Africa,same name and city
+153,A,y,"St George's Park, Gqeberha",Gqeberha,St George's Park,Gqeberha,12,2022,2026,South Africa,same name and city
+153,A,y,"St George's Park, Port Elizabeth",Gqeberha,St George's Park,Gqeberha,5,2003,2003,Australia,same name and city
+153,A,y,"St George's Park, Port Elizabeth",Port Elizabeth,St George's Park,Gqeberha,33,2005,2020,South Africa,same name and city
+154,A,y,St Lawrence Ground,Canterbury,St Lawrence Ground,Canterbury,0,2005,2019,England,same name and city
+154,A,y,"St Lawrence Ground, Canterbury",Canterbury,St Lawrence Ground,Canterbury,11,2003,2026,England,same name and city
+155,A,y,SuperSport Park,Centurion,SuperSport Park,Centurion,0,2004,2020,South Africa,same name and city
+155,A,y,"SuperSport Park, Centurion",Centurion,SuperSport Park,Centurion,87,2003,2026,South Africa,same name and city
+156,A,y,Sydney Cricket Ground,,Sydney Cricket Ground,Sydney,56,2006,2020,Australia,no city given
+156,A,y,Sydney Cricket Ground,Sydney,Sydney Cricket Ground,Sydney,41,2003,2026,Australia,same name and city
+157,A,y,Sylhet International Cricket Stadium,,Sylhet International Cricket Stadium,Sylhet,28,2014,2018,Ireland,no city given
+157,A,y,Sylhet International Cricket Stadium,Sylhet,Sylhet International Cricket Stadium,Sylhet,45,2018,2026,Bangladesh,same name and city
+158,A,y,"Tafawa Balewa Square Cricket Oval, Lagos",,Tafawa Balewa Square Cricket Oval,Lagos,1,2023,2023,Ghana,no city given
+158,A,y,"Tafawa Balewa Square Cricket Oval, Lagos",Lagos,Tafawa Balewa Square Cricket Oval,Lagos,31,2023,2026,Nigeria,same name and city
+159,A,y,Takashinga Sports Club,Harare,Takashinga Sports Club,Harare,0,2019,2019,Tanzania,same name and city
+159,A,y,"Takashinga Sports Club, Highfield, Harare",Harare,Takashinga Sports Club,Harare,28,2021,2025,United States of America,same name and city
+160,A,y,Terdthai Cricket Ground,Bangkok,Terdthai Cricket Ground,Bangkok,0,2015,2020,Malaysia,same name and city
+160,A,y,"Terdthai Cricket Ground, Bangkok",Bangkok,Terdthai Cricket Ground,Bangkok,117,2023,2026,Thailand,same name and city
+161,A,y,"The County Ground, Hove",Brighton,The County Ground,Brighton,8,2019,2026,England,same name and city
+161,B,,"The County Ground, Hove",Hove,The County Ground,Brighton,5,2012,2018,England,same name; city given as Hove
+162,A,y,The Rose Bowl,Southampton,The Rose Bowl,Southampton,0,2004,2020,England,same name and city
+162,A,y,"The Rose Bowl, Southampton",Southampton,The Rose Bowl,Southampton,63,2003,2026,England,same name and city
+163,A,y,"The Village, Malahide",Dublin,The Village,Dublin,0,2013,2019,Ireland,same name and city
+163,A,y,"The Village, Malahide, Dublin",Dublin,The Village,Dublin,0,2018,2025,Ireland,same name and city
+164,A,y,The Wanderers Stadium,Johannesburg,The Wanderers Stadium,Johannesburg,0,2005,2021,South Africa,same name and city
+164,A,y,"The Wanderers Stadium, Johannesburg",Johannesburg,The Wanderers Stadium,Johannesburg,0,2021,2026,South Africa,same name and city
+165,A,y,Titwood,Glasgow,Titwood,Glasgow,0,2007,2007,India,same name and city
+165,A,y,"Titwood, Glasgow",Glasgow,Titwood,Glasgow,10,2022,2025,Scotland,same name and city
+166,A,y,Tolerance Oval,Abu Dhabi,Tolerance Oval,Abu Dhabi,0,2018,2019,Jersey,same name and city
+166,A,y,"Tolerance Oval, Abu Dhabi",Abu Dhabi,Tolerance Oval,Abu Dhabi,0,2022,2024,Scotland,same name and city
+167,A,y,Tony Ireland Stadium,Townsville,Tony Ireland Stadium,Townsville,0,2016,2016,Ireland,same name and city
+167,A,y,"Tony Ireland Stadium, Townsville",Townsville,Tony Ireland Stadium,Townsville,2,2022,2022,Australia,same name and city
+168,A,y,Trent Bridge,Nottingham,Trent Bridge,Nottingham,63,2004,2019,England,same name and city
+168,A,y,"Trent Bridge, Nottingham",Nottingham,Trent Bridge,Nottingham,0,2002,2026,England,same name and city
+169,A,y,Tribhuvan University International Cricket Ground,Kirtipur,Tribhuvan University International Cricket Ground,Kirtipur,0,2019,2020,Nepal,same name and city
+169,A,y,"Tribhuvan University International Cricket Ground, Kirtipur",Kirtipur,Tribhuvan University International Cricket Ground,Kirtipur,111,2021,2026,Nepal,same name and city
+170,A,y,"UKM-YSD Cricket Oval, Bangi",Bangi,UKM-YSD Cricket Oval,Bangi,0,2022,2023,Malaysia,same name and city
+171,A,y,United Cricket Club Ground,Windhoek,United Cricket Club Ground,Windhoek,0,2019,2019,Botswana,same name and city
+171,A,y,"United Cricket Club Ground, Windhoek",Windhoek,United Cricket Club Ground,Windhoek,51,2022,2024,Namibia,same name and city
+172,A,y,University Oval,Dunedin,University Oval,Dunedin,0,2008,2021,New Zealand,same name and city
+172,A,y,"University Oval, Dunedin",Dunedin,University Oval,Dunedin,35,2022,2026,New Zealand,same name and city
+173,A,y,"Vassil Levski National Sports Academy, Sofia",Sofia,Vassil Levski National Sports Academy,Sofia,35,2025,2026,Bulgaria,same name and city
+174,A,y,Vidarbha Cricket Association Ground,Nagpur,Vidarbha Cricket Association Ground,Nagpur,0,2007,2007,Australia,same name and city
+175,A,y,"Vidarbha Cricket Association Stadium, Jamtha",Nagpur,Vidarbha Cricket Association Stadium,Nagpur,0,2008,2019,India,same name and city
+175,A,y,"Vidarbha Cricket Association Stadium, Jamtha, Nagpur",Nagpur,Vidarbha Cricket Association Stadium,Nagpur,31,2022,2026,India,same name and city
+176,A,y,VRA Ground,Amstelveen,VRA Ground,Amstelveen,0,2010,2019,Netherlands,same name and city
+176,A,y,"VRA Ground, Amstelveen",Amstelveen,VRA Ground,Amstelveen,42,2022,2025,Netherlands,same name and city
+177,A,y,W.A.C.A. Ground,Perth,W.A.C.A. Ground,Perth,0,2004,2020,Australia,same name and city
+178,A,y,Wanderers Cricket Ground,Windhoek,Wanderers Cricket Ground,Windhoek,0,2013,2019,Kenya,same name and city
+178,A,y,"Wanderers Cricket Ground, Windhoek",Windhoek,Wanderers Cricket Ground,Windhoek,54,2021,2025,Namibia,same name and city
+179,A,y,Wankhede Stadium,Mumbai,Wankhede Stadium,Mumbai,0,2004,2020,India,same name and city
+179,A,y,"Wankhede Stadium, Mumbai",Mumbai,Wankhede Stadium,Mumbai,49,2003,2026,India,same name and city
+180,A,y,"Warner Park, Basseterre, St Kitts",Basseterre,Warner Park,Basseterre,0,2022,2026,West Indies,same name and city
+180,A,y,"Warner Park, St Kitts",Basseterre,Warner Park,Basseterre,21,2019,2026,West Indies,same name and city
+180,B,,"Warner Park, St Kitts",St Kitts,Warner Park,Basseterre,24,2006,2018,West Indies,same name; city given as St Kitts
+181,A,y,West End Park International Cricket Stadium,Doha,West End Park International Cricket Stadium,Doha,0,2014,2014,Pakistan,same name and city
+181,A,y,"West End Park International Cricket Stadium, Doha",Doha,West End Park International Cricket Stadium,Doha,65,2021,2026,Qatar,same name and city
+182,A,y,Willowmoore Park,Benoni,Willowmoore Park,Benoni,0,2006,2019,South Africa,same name and city
+182,A,y,"Willowmoore Park, Benoni",Benoni,Willowmoore Park,Benoni,39,2003,2026,South Africa,same name and city
+183,B,,"Windsor Park, Roseau",Dominica,Windsor Park,Roseau,11,2009,2017,West Indies,same name; city given as Dominica
+183,A,y,"Windsor Park, Roseau",Roseau,Windsor Park,Roseau,3,2022,2023,West Indies,same name and city
+183,A,y,"Windsor Park, Roseau, Dominica",Roseau,Windsor Park,Roseau,0,2022,2023,West Indies,same name and city
+184,A,y,Yeonhui Cricket Ground,Incheon,Yeonhui Cricket Ground,Incheon,0,2019,2019,China,same name and city
+184,A,y,"Yeonhui Cricket Ground, Incheon",Incheon,Yeonhui Cricket Ground,Incheon,27,2024,2024,Japan,same name and city
+185,C,,"Bir Sreshtho Flight Lieutenant Matiur Rahman Stadium, Chattogram",Chattogram,Zahur Ahmed Chowdhury Stadium,Chattogram,12,2025,2026,Bangladesh,"recent rename; UNCERTAIN, please confirm"
+185,A,y,Zahur Ahmed Chowdhury Stadium,Chattogram,Zahur Ahmed Chowdhury Stadium,Chattogram,0,2006,2021,Bangladesh,same name and city
+185,A,y,Zahur Ahmed Chowdhury Stadium,Chittagong,Zahur Ahmed Chowdhury Stadium,Chattogram,0,2010,2016,Bangladesh,same name and city
+185,A,y,"Zahur Ahmed Chowdhury Stadium, Chattogram",Chattogram,Zahur Ahmed Chowdhury Stadium,Chattogram,26,2018,2024,Bangladesh,same name and city
+185,A,y,"Zahur Ahmed Chowdhury Stadium, Chittagong",Chattogram,Zahur Ahmed Chowdhury Stadium,Chattogram,3,2014,2018,Bangladesh,same name and city
+185,A,y,"Zahur Ahmed Chowdhury Stadium, Chittagong",Chittagong,Zahur Ahmed Chowdhury Stadium,Chattogram,35,2009,2016,Bangladesh,same name and city
+186,A,y,"Zayed Cricket Stadium, Abu Dhabi",Abu Dhabi,Zayed Cricket Stadium,Abu Dhabi,0,2021,2025,Ireland,same name and city

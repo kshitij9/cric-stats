@@ -7,7 +7,9 @@ db/venues/venue_merges.csv, one row per spelling that might belong with others.
 Nothing is merged until a row's "approve" column says y; the next load applies
 only those rows. Rerunning keeps the answers already given, and a group with answers
 keeps the canonical name it was answered under, even if newer matches would now
-suggest another.
+suggest another. An answered row stays in the file when the source stops using that
+spelling (its match count becomes 0), because older files still use it. Groups are
+numbered afresh on each run, so look up numbers in the latest file.
 
     python3 db/venues/propose_merges.py                    # from cricket_next
     python3 db/venues/propose_merges.py --approve A        # mark every tier A row y
@@ -29,7 +31,7 @@ import re
 import subprocess
 import sys
 import unicodedata
-from collections import defaultdict
+from collections import Counter, defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
@@ -264,6 +266,24 @@ def carry_forward(rows, previous):
     return list(answered.values())
 
 
+def keep_answers(rows, left_over, matches):
+    """Rows to write: the proposals, plus every earlier answer none of them took.
+
+    An answer left over replaces any new proposal for the same spelling. One group
+    is the rows that share a canonical ground.
+    """
+    spellings = {(r["venue"], r["city"]) for r in left_over}
+    kept = [r for r in rows if (r["venue"], r["city"]) not in spellings]
+    kept += [{**r, "matches": matches.get((r["venue"], r["city"]), 0)} for r in left_over]
+
+    def target(row):
+        return (row["canonical_venue"].lower(), row["canonical_city"], row["canonical_venue"])
+
+    kept.sort(key=lambda r: (*target(r), r["venue"], r["city"]))
+    numbers = {t: n for n, t in enumerate(sorted({target(r) for r in kept}), 1)}
+    return [{**r, "group": numbers[target(r)]} for r in kept]
+
+
 def main():
     ap = argparse.ArgumentParser(description="propose venue merges for review")
     ap.add_argument("--db", default="cricket_next")
@@ -277,8 +297,13 @@ def main():
         with open(args.out, newline="", encoding="utf-8-sig") as f:
             previous = list(csv.DictReader(f))
 
-    rows = propose(read_pairs(args.db))
-    dropped = carry_forward(rows, previous)
+    pairs = read_pairs(args.db)
+    matches = Counter()
+    for venue, city, n, *_ in pairs:
+        matches[(venue, city)] += int(n)
+    proposed = propose(pairs)
+    left_over = carry_forward(proposed, previous)
+    rows = keep_answers(proposed, left_over, matches)
     tiers = set(args.approve.upper().split(",")) if args.approve else set()
     groups = {int(g) for g in args.groups.split(",")} if args.groups else None
     for row in rows:
@@ -286,10 +311,14 @@ def main():
         if wanted and not row["approve"]:
             row["approve"] = "y"
     # never lose an answer silently: stop before overwriting the file
-    if dropped:
-        sys.exit("these answered rows no longer match a proposal; nothing was written:\n" +
-                 "\n".join(f"  {r['approve']}: {r['venue']!r} ({r['city']}) -> "
-                           f"{r['canonical_venue']!r}" for r in dropped))
+    def answers(table):
+        return {(r["venue"], r["city"], r["canonical_venue"], r["canonical_city"],
+                 r["approve"].strip()) for r in table if r["approve"].strip()}
+
+    lost = answers(previous) - answers(rows)
+    if lost:
+        sys.exit("these answers would be lost; nothing was written:\n" +
+                 "\n".join(f"  {a}: {v!r} ({c}) -> {t!r}" for v, c, t, _, a in sorted(lost)))
 
     tmp = args.out + ".part"
     with open(tmp, "w", newline="", encoding="utf-8") as f:
@@ -302,7 +331,10 @@ def main():
     for tier in "ABC":
         chosen = [r for r in rows if r["tier"] == tier]
         approved = sum(r["approve"].strip().lower() in ("y", "yes") for r in chosen)
-        print(f"  tier {tier}: {len(chosen):4} rows, {approved} approved")
+        waiting = sum(not r["approve"].strip() for r in chosen)
+        print(f"  tier {tier}: {len(chosen):4} rows, {approved} approved, {waiting} unanswered")
+    unused = sum((r["venue"], r["city"]) not in matches for r in rows)
+    print(f"  {unused} answered rows are for spellings these matches no longer use")
 
 
 if __name__ == "__main__":

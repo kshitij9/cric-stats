@@ -11,8 +11,32 @@ Written 26 November 2026.
 | 2. Store the data correctly | Done 26 November 2026; tier A venue merges approved, B and C not yet reviewed |
 | 3. Define each stat once | Done 26 November 2026 |
 | 4. Update the screens | Done 26 November 2026 |
-| 5. Verify | In progress |
+| 5. Verify | Done 26 November 2026; new tier A venue rows approved 27 November, B and C not yet reviewed |
 | 6. Switch over | Not started |
+
+Notes from step 5:
+
+- [changed-figures.md](changed-figures.md) lists the largest changes from the old
+  figures, by the row of "What gets fixed" that caused them. Each old figure was
+  rebuilt from the new tables, and nothing was left unexplained. It was made on
+  the September data; to reproduce it, reload the snapshot first. The script is
+  not in the repository.
+- `cricket_next` now holds fresh data: 10,082 matches to 25 November 2026. All
+  the September matches are still there. `verify.py` found no differences in
+  21,587 innings, and `verify_stats.py` none in 24,896 values.
+- **Cricsheet has respelled many grounds**: 4,274 of the September matches carry
+  a different venue name or city. On first loading the fresh data, 29 of the 460
+  September grounds were under more than one ID, and there were 418 grounds in
+  all, as the source has also joined many spellings itself.
+- `propose_merges.py` would not run, because 183 approved spellings are no longer
+  used. It now keeps those answers (older files still need them). Unanswered rows
+  for unused spellings were dropped. The approved merges are unchanged.
+- The 27 new tier A rows in `venue_merges.csv` were approved on 27 November.
+  After reloading, `cricket_next` has 405 grounds, and `verify.py` and
+  `verify_stats.py` again found no differences. 25 September grounds remain split;
+  approving the 21 B and 16 C rows as well would give 368 grounds and 14 split.
+  The rest have no proposal: some look like renames, others like the source now
+  separating neighbouring pitches.
 
 Notes from step 4:
 
