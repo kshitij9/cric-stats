@@ -57,6 +57,7 @@ const FEATURES = [
       'Build IPL teams of your own',
       'Or start from a franchise\u2019s line-up',
       'Set the batting order and check the bowling',
+      'Match two of them up at a ground',
     ],
     action: 'Build a team',
   },

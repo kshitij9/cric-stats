@@ -1,6 +1,6 @@
 'use client';
 
-import { Copy, Pencil, Trash2, Users } from 'lucide-react';
+import { Copy, Pencil, Swords, Trash2, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
@@ -23,8 +23,8 @@ export default function TeamsPage() {
     <>
       <PageHeader icon={Users} title="Teams">
         Put together IPL sides of your own, from scratch or starting from a franchise. They are saved
-        on the server, so every device sees them. Matching teams up on different grounds is not built
-        yet.
+        on the server, so every device sees them. With two of them, see how they match up at a
+        ground.
       </PageHeader>
       <IplOnly>
         <Teams />
@@ -77,7 +77,16 @@ function Teams() {
     <>
       {error && <ErrorNote>{error}</ErrorNote>}
       <NewTeam teams={teams} busy={busy} change={change} />
-      <Card title="Your teams">
+      <Card
+        title="Your teams"
+        actions={
+          teams.length >= 2 && (
+            <Link className={PRIMARY} href="/matchup">
+              <Swords size={14} aria-hidden /> Match two teams
+            </Link>
+          )
+        }
+      >
         {teams.length === 0 ? (
           <Empty>No teams yet. Make one above.</Empty>
         ) : (

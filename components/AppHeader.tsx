@@ -13,7 +13,7 @@ export const SCREENS = [
   { href: '/player', label: 'Player', icon: UserRound },
   { href: '/compare', label: 'Compare', icon: Scale },
   { href: '/recommend', label: 'Picks', icon: ListOrdered },
-  { href: '/teams', label: 'Teams', icon: Users },
+  { href: '/teams', label: 'Teams', icon: Users, also: '/matchup' },
 ];
 
 const COMPETITIONS: { value: Competition; label: string }[] = [
@@ -35,9 +35,12 @@ export default function AppHeader() {
 
         <nav aria-label="Screens" className="order-3 w-full md:order-none md:w-auto">
           <ul className="grid grid-cols-5 gap-1 md:flex">
-            {SCREENS.map(({ href, label, icon: Icon }) => {
+            {SCREENS.map(({ href, label, icon: Icon, also }) => {
               // a screen's own pages count as it: /teams/3 is Teams
-              const active = pathname === href || (href !== '/' && pathname.startsWith(`${href}/`));
+              const active =
+                pathname === href ||
+                pathname === also ||
+                (href !== '/' && pathname.startsWith(`${href}/`));
               return (
                 <li key={href}>
                   <Link

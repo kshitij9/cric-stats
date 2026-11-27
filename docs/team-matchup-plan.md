@@ -5,8 +5,8 @@ same day.
 
 | Stage | State |
 |---|---|
-| 1. Team builder | Built 27 November 2026; on the preview, not live |
-| 2. Matchup facts | Not started |
+| 1. Team builder | Live since 27 November 2026 |
+| 2. Matchup facts | Live since 27 November 2026 |
 | 3. Simulator and its test | Not started |
 | 4. Matchup results | Not started |
 
@@ -25,9 +25,23 @@ Notes from stage 1:
   loaded yet.
 - `db/app/backup.sh` saves a copy; its nightly cron entry is not installed.
 
-Going live needs, in order: `./db/app/setup.sh --db cricintell_app` in the live
-checkout, a rebuild of the app with the new `docker-compose.yml`, then the
-backup cron entry.
+Stage 1 went live with `db/app/setup.sh --db cricintell_app`, an app rebuild
+and the nightly backup entry.
+
+Notes from stage 2:
+
+- The Matchup screen is reached from Teams (`/matchup`); the choices are in its
+  address.
+- A first innings counts if it had 120 legal balls or ten wickets. "Elsewhere"
+  weights each season by the innings played at the ground that season.
+- Seasons: the last four (default) or all. Player records at the ground and
+  head-to-heads always cover every season.
+- Faint rows: under 60 balls at the ground, or under 12 in a head-to-head.
+- Added to the plan: matches won by the side batting first, and buttons for the
+  latest season's grounds.
+- `db/etl/verify_matchup.py` found no differences in 258,777 values. It saves
+  and removes temporary teams, so it needs an app with a scratch team database.
+- No loader change. Released with only an app rebuild.
 
 ## Goal
 
