@@ -12,7 +12,23 @@ Written 26 November 2026.
 | 3. Define each stat once | Done 26 November 2026 |
 | 4. Update the screens | Done 26 November 2026 |
 | 5. Verify | Done 26 November 2026; new tier A venue rows approved 27 November, B and C not yet reviewed |
-| 6. Switch over | Not started |
+| 6. Switch over | Done 27 November 2026; `cricket_old` to be kept until 4 December |
+
+Notes from step 6:
+
+- The live app (port 3001) now runs this branch on the new database, still named
+  `cricket`. The old one is `cricket_old`. The outage was about 4 seconds.
+- On the live app, `verify.py` found no differences in 21,587 innings,
+  `verify_stats.py` none in 24,932 values, and the 38 browser checks passed.
+- A cron job runs `run.sh --db cricket --live` daily at 03:30 UTC and appends to
+  `db/etl/_etl.log`. A one-off scheduled run succeeded; the source was unchanged,
+  so it loaded nothing.
+- `run.sh`, `verify.py` and `propose_merges.py` still default to `cricket_next`,
+  which no longer exists. Pass `--db cricket` (and `--live` to `run.sh`).
+- To roll back, **remove the cron job first**, or it will load the new tables into
+  the old database. Then stop the app, rename `cricket` to `cricket_next` and
+  `cricket_old` to `cricket`, tag `cric-stats-app:pre-fixes` as
+  `cric-stats-app:latest`, and run `docker compose up -d --no-build app`.
 
 Notes from step 5:
 
