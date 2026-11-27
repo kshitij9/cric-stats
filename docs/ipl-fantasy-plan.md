@@ -7,7 +7,7 @@ Written 27 November 2026.
 | 0. Keep development apart | Done 27 November 2026 |
 | 1. Load the IPL, kept separate | Done 27 November 2026 |
 | 2. Fantasy data and points | Not started |
-| 3. Screens | Redesign and competition switch done 27 November; bowling and combined T20 view not started |
+| 3. Screens | Redesign, competition switch and bowling done 27 November; combined T20 view not started |
 | 4. Picks | Not started |
 
 Notes from steps 0 and 1:
@@ -46,8 +46,14 @@ Notes from step 3 (brought ahead of step 2):
   84 simultaneous searches failed, the database container having only 64 MB of
   shared memory. With them none failed.
 - 63 browser checks passed (script outside the repository, `ui.mjs`).
-- Still to do here: bowling figures on Player and Compare, the combined T20
-  view, and an option to leave out retired players from Picks.
+- Player and Compare have a Batting / Bowling choice. Bowling figures are
+  worked out from the balls when asked for, so no reload is needed; they are
+  defined in `lib/stats.ts`. There is no bowling era index.
+- `verify_stats.py` now checks bowling too: none of 62,188 values differed. A
+  one-off run over every player who has bowled (8,689 player-and-format pairs,
+  615,047 values) found no differences either. 85 browser checks passed.
+- Still to do here: the combined T20 view, and an option to leave out retired
+  players from Picks.
 
 ## Goal
 

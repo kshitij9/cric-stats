@@ -1,15 +1,14 @@
 import type { Factor } from '@/lib/factors';
-import type { Career } from '@/lib/types';
 
-export type BarPlayer = { id: string; name: string; color: string; career: Career };
+export type BarPlayer<T> = { id: string; name: string; color: string; career: T };
 
 /** A small bar chart for each figure, one bar per player, each on its own scale. */
-export default function MetricBars({
+export default function MetricBars<T>({
   players,
   factors,
 }: {
-  players: BarPlayer[];
-  factors: Factor[];
+  players: BarPlayer<T>[];
+  factors: Factor<T>[];
 }) {
   return (
     <div className="grid gap-x-8 gap-y-6 md:grid-cols-2">

@@ -7,7 +7,7 @@ import PlayerSearch from '@/components/PlayerSearch';
 import { Card, SECONDARY } from '@/components/ui';
 import { useApp } from '@/hooks/useApp';
 import { useJson } from '@/hooks/useJson';
-import { KOHLI, SHARMA } from '@/lib/defaults';
+import { BUMRAH, KOHLI, SHARMA } from '@/lib/defaults';
 import { scopeName } from '@/lib/scope';
 import type { Coverage } from '@/lib/types';
 
@@ -16,11 +16,11 @@ const FEATURES = [
     href: '/player',
     icon: UserRound,
     title: 'Player profile',
-    question: 'How good is a batter?',
+    question: 'How good is a batter or bowler?',
     points: [
-      'Runs, average, strike rate and more',
-      'Season by season, against the average batter',
-      'The bowlers who get them out most',
+      'Batting and bowling figures',
+      'Season by season',
+      'The head-to-heads that end in wickets',
     ],
     action: 'Open a profile',
   },
@@ -28,7 +28,7 @@ const FEATURES = [
     href: '/compare',
     icon: Scale,
     title: 'Compare',
-    question: 'Who is the better batter?',
+    question: 'Who is the better batter or bowler?',
     points: [
       'Up to six players side by side',
       'Choose which figures to show',
@@ -52,7 +52,7 @@ const FEATURES = [
 
 export default function Home() {
   const router = useRouter();
-  const { competition, scope, setPlayer, replaceCompared } = useApp();
+  const { competition, scope, setDiscipline, setPlayer, replaceCompared } = useApp();
   const coverage = useJson<Coverage>(`/api/coverage?competition=${competition}`);
   const matches = coverage.data?.formats
     .filter((f) => f.format === scope.format)
@@ -114,6 +114,7 @@ export default function Home() {
             type="button"
             className={SECONDARY}
             onClick={() => {
+              setDiscipline('batting');
               replaceCompared([KOHLI, SHARMA]);
               router.push('/compare');
             }}
@@ -124,11 +125,23 @@ export default function Home() {
             type="button"
             className={SECONDARY}
             onClick={() => {
+              setDiscipline('batting');
               setPlayer(KOHLI);
               router.push('/player#matchups');
             }}
           >
             Who gets Kohli out?
+          </button>
+          <button
+            type="button"
+            className={SECONDARY}
+            onClick={() => {
+              setDiscipline('bowling');
+              setPlayer(BUMRAH);
+              router.push('/player#matchups');
+            }}
+          >
+            Who does Bumrah get out?
           </button>
           {scope.format !== 'Test' && (
             <>

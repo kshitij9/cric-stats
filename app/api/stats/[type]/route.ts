@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import {
+  bowlingByYear,
+  bowlingCareer,
+  bowlingMatchups,
   career,
   eraByYear,
   findPlayers,
@@ -18,6 +21,9 @@ import type { Scope } from '@/lib/types';
  *   career, player_full_profile   [career batting figures] (empty if none)
  *   era                           era index for each year
  *   matchup                       the bowlers who have dismissed the batter most
+ *   bowling                       [career bowling figures] (empty if none)
+ *   bowling_seasons               bowling figures for each year
+ *   bowling_matchup               the batters the bowler has dismissed most
  *
  * What each figure means is defined in lib/stats.ts.
  */
@@ -27,11 +33,19 @@ const careerRows = async (player: Player, scope: Scope) => {
   return row ? [row] : [];
 };
 
+const bowlingRows = async (player: Player, scope: Scope) => {
+  const row = await bowlingCareer(player, scope);
+  return row ? [row] : [];
+};
+
 const QUERIES: Record<string, (player: Player, scope: Scope) => Promise<unknown[]>> = {
   career: careerRows,
   player_full_profile: careerRows,
   era: eraByYear,
   matchup: matchups,
+  bowling: bowlingRows,
+  bowling_seasons: bowlingByYear,
+  bowling_matchup: bowlingMatchups,
 };
 
 const fail = (status: number, error: string) => NextResponse.json({ error }, { status });

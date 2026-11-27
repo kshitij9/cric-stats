@@ -3,6 +3,9 @@
 export type Format = 'Test' | 'ODI' | 'T20';
 export type Competition = 'international' | 'ipl';
 
+/** Which side of a player's game the Player and Compare screens show. */
+export type Discipline = 'batting' | 'bowling';
+
 /** What a figure is counted over: the IPL is T20 and never mixed with T20Is. */
 export type Scope = { format: Format; competition: Competition };
 
@@ -59,6 +62,48 @@ export type Matchup = {
   runs: number;
   dismissals: number;
   strike_rate: number | null;
+};
+
+export type BowlingFigures = {
+  innings: number; // bowled in
+  balls: number; // legal balls
+  runs_conceded: number;
+  wickets: number;
+  economy: number | null; // runs per six legal balls
+  average: number | null; // runs per wicket
+  strike_rate: number | null; // balls per wicket
+  dots: number;
+  fours: number; // conceded, boundaries only
+  sixes: number;
+  dot_percent: number | null;
+  balls_per_boundary: number | null;
+  wickets_per_innings: number | null;
+  three_wicket_innings: number; // three or more
+  five_wicket_innings: number; // five or more
+  best_wickets: number | null; // best innings
+  best_runs: number | null;
+};
+
+export type BowlingCareer = PlayerRef &
+  BowlingFigures & {
+    player_name: string;
+    format: Format;
+    first_match: string | null; // YYYY-MM-DD, first in the data
+    last_match: string | null;
+    may_be_incomplete: boolean;
+  };
+
+export type BowlingYear = BowlingFigures & { year: number; format: Format };
+
+export type BowlingMatchup = {
+  batter_id: string;
+  batter: string;
+  unique_name: string;
+  format: Format;
+  balls: number; // legal balls
+  runs: number; // conceded, wides and no-balls included
+  dismissals: number;
+  economy: number | null;
 };
 
 export type Coverage = {

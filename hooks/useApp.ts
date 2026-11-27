@@ -4,11 +4,11 @@ import { useMemo, useSyncExternalStore } from 'react';
 import { MAX_COMPARE } from '@/lib/colors';
 import { KOHLI, SHARMA } from '@/lib/defaults';
 import { isCompetition, isFormat } from '@/lib/scope';
-import type { Competition, Format, PlayerRef, Scope } from '@/lib/types';
+import type { Competition, Discipline, Format, PlayerRef, Scope } from '@/lib/types';
 
 /**
- * What the whole app is looking at: the competition and format, the player being
- * viewed and the players being compared. Kept in the browser, so it carries over
+ * What the whole app is looking at: the competition and format, batting or
+ * bowling, the player being viewed and the players being compared. Kept in the browser, so it carries over
  * between screens and visits.
  */
 
@@ -18,6 +18,7 @@ export type Compared = PlayerRef & { slot: number };
 type State = {
   competition: Competition;
   intlFormat: Format; // remembered while the IPL is shown
+  discipline: Discipline;
   player: PlayerRef;
   compared: Compared[];
 };
@@ -25,6 +26,7 @@ type State = {
 const DEFAULT: State = {
   competition: 'ipl',
   intlFormat: 'T20',
+  discipline: 'batting',
   player: KOHLI,
   compared: [
     { ...KOHLI, slot: 0 },
@@ -56,6 +58,7 @@ function restore(saved: Partial<State>): State {
       ? saved.competition!
       : DEFAULT.competition,
     intlFormat: isFormat(String(saved.intlFormat)) ? saved.intlFormat! : DEFAULT.intlFormat,
+    discipline: saved.discipline === 'bowling' ? 'bowling' : DEFAULT.discipline,
     player: isPlayer(saved.player) ? saved.player : DEFAULT.player,
     compared,
   };
@@ -94,6 +97,7 @@ const ref = ({ player_id, name, unique_name }: PlayerRef) => ({ player_id, name,
 const actions = {
   setCompetition: (competition: Competition) => write(() => ({ competition })),
   setFormat: (intlFormat: Format) => write(() => ({ intlFormat })),
+  setDiscipline: (discipline: Discipline) => write(() => ({ discipline })),
   setPlayer: (player: PlayerRef) => write(() => ({ player: ref(player) })),
   /** Adds to the comparison, if there is room and the player is not in it. */
   addCompared: (player: PlayerRef) =>

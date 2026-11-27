@@ -12,17 +12,19 @@ import {
   YAxis,
 } from 'recharts';
 import { AXIS, GRID, TOOLTIP } from '@/components/charts/theme';
-import type { EraYear } from '@/lib/types';
 
-export type Series = { id: string; name: string; color: string; years: EraYear[] };
+export type Series<T> = { id: string; name: string; color: string; years: T[] };
+
+/** The figures that can be drawn by season. */
+export type Metric = 'era_index' | 'runs' | 'wickets' | 'economy';
 
 /** One figure by year, a line per player. A year a player missed is a gap. */
-export default function SeasonLines({
+export default function SeasonLines<K extends Metric>({
   series,
   metric,
 }: {
-  series: Series[];
-  metric: 'era_index' | 'runs';
+  series: Series<{ year: number } & Record<K, number | null>>[];
+  metric: K;
 }) {
   const years = [...new Set(series.flatMap((s) => s.years.map((y) => y.year)))].sort();
   const first = years[0];
@@ -36,8 +38,9 @@ export default function SeasonLines({
     return row;
   });
   const era = metric === 'era_index';
+  const economy = metric === 'economy';
   // the era index axis steps in halves and always shows 0.5 to 1.5
-  const values = series.flatMap((s) => s.years.flatMap((y) => y.era_index ?? []));
+  const values = series.flatMap((s) => s.years.flatMap((y) => y[metric] ?? []));
   const low = Math.floor(Math.min(0.5, ...values) * 2) / 2;
   const high = Math.ceil(Math.max(1.5, ...values) * 2) / 2;
   const halves = Array.from({ length: Math.round((high - low) * 2) + 1 }, (_, i) => low + i / 2);
@@ -50,14 +53,15 @@ export default function SeasonLines({
           <XAxis dataKey="year" {...AXIS} />
           <YAxis
             {...AXIS}
-            allowDecimals={era}
-            domain={era ? [low, high] : [0, 'auto']}
+            allowDecimals={era || economy}
+            // totals start at zero; an economy rate is read against the other lines
+            domain={era ? [low, high] : economy ? ['auto', 'auto'] : [0, 'auto']}
             ticks={era ? halves : undefined}
           />
           <Tooltip
             {...TOOLTIP}
             formatter={(value, name) => [
-              era ? `${Number(value).toFixed(2)}×` : String(value),
+              era ? `${Number(value).toFixed(2)}×` : economy ? Number(value).toFixed(2) : String(value),
               name,
             ]}
           />
@@ -69,7 +73,8 @@ export default function SeasonLines({
           )}
           {/* 1.0 is the average batter that year; the card explains the line */}
           {era && <ReferenceLine y={1} stroke="#a1a1aa" />}
-          {series.map((s) => (
+          {/* a player with no seasons has no line, and no place in the legend */}
+          {series.filter((s) => s.years.length > 0).map((s) => (
             <Line
               key={s.id}
               dataKey={s.id}

@@ -3,19 +3,18 @@ import type { Compared } from '@/hooks/useApp';
 import type { Loaded } from '@/hooks/useJson';
 import { PLAYER_COLORS } from '@/lib/colors';
 import type { Factor } from '@/lib/factors';
-import type { Career } from '@/lib/types';
 
 /** One row per player, one column per figure; the best in each column is marked. */
-export default function ComparisonTable({
+export default function ComparisonTable<T extends { may_be_incomplete: boolean }>({
   players,
   careers,
   factors,
-  scopeLabel,
+  noData,
 }: {
   players: Compared[];
-  careers: Loaded<Career[]>[];
-  factors: Factor[];
-  scopeLabel: string;
+  careers: Loaded<T[]>[];
+  factors: Factor<T>[];
+  noData: string; // shown for a player with nothing in the scope
 }) {
   const best = new Map(
     factors.map((f) => {
@@ -24,7 +23,8 @@ export default function ComparisonTable({
         return value == null ? [] : [value];
       });
       // nothing to single out with only one figure
-      return [f.key, f.higherIsBetter && values.length > 1 ? Math.max(...values) : null];
+      if (!f.better || values.length < 2) return [f.key, null];
+      return [f.key, f.better === 'higher' ? Math.max(...values) : Math.min(...values)];
     }),
   );
 
@@ -63,7 +63,7 @@ export default function ComparisonTable({
                     colSpan={Math.max(factors.length, 1)}
                     className="px-3 py-2.5 text-right text-xs italic text-zinc-500"
                   >
-                    {career?.loading ? 'Loading…' : (career?.error ?? `No ${scopeLabel} batting data`)}
+                    {career?.loading ? 'Loading…' : (career?.error ?? noData)}
                   </td>
                 ) : (
                   factors.map((f) => {

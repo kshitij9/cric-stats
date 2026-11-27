@@ -20,6 +20,11 @@ import type { Scope } from '@/lib/types';
  * This file turns counts of those into rates. A rate with nothing to divide by
  * is null.
  *
+ * Bowling innings: an innings in which the player bowled any delivery. A dot
+ * ball is a legal ball with nothing off the bat (byes and leg byes may have been
+ * run). Boundaries conceded are the batter's boundaries, no-balls included. Best
+ * figures are the most wickets in an innings, then the fewest runs.
+ *
  * Every figure is for one scope: a format in one competition (internationals, or
  * the IPL). Years are calendar years.
  *
@@ -77,6 +82,32 @@ export function bowlingFigures(c: BowlingCounts) {
     economy: per(c.runs, c.balls, 2, 6),
     strike_rate: per(c.balls, c.wickets, 1),
     average: per(c.runs, c.wickets, 2),
+  };
+}
+
+/** One innings bowled, or several added together. */
+export type SpellCounts = BowlingCounts & { dots: number; fours: number; sixes: number };
+
+export function spellFigures(spells: SpellCounts[]) {
+  const sum = (key: keyof SpellCounts) => spells.reduce((total, s) => total + s[key], 0);
+  const c = { runs: sum('runs'), balls: sum('balls'), wickets: sum('wickets') };
+  const dots = sum('dots');
+  const fours = sum('fours');
+  const sixes = sum('sixes');
+  const [best] = [...spells].sort((a, b) => b.wickets - a.wickets || a.runs - b.runs);
+  return {
+    innings: spells.length,
+    ...bowlingFigures(c),
+    dots,
+    fours,
+    sixes,
+    dot_percent: per(dots, c.balls, 1, 100),
+    balls_per_boundary: per(c.balls, fours + sixes, 1),
+    wickets_per_innings: per(c.wickets, spells.length, 2),
+    three_wicket_innings: spells.filter((s) => s.wickets >= 3).length,
+    five_wicket_innings: spells.filter((s) => s.wickets >= 5).length,
+    best_wickets: best?.wickets ?? null,
+    best_runs: best?.runs ?? null,
   };
 }
 
@@ -207,4 +238,100 @@ export async function matchups(player: Player, scope: Scope) {
     [player.player_id, format, competition],
   );
   return rows.map((r) => ({ ...r, format, strike_rate: per(r.runs, r.balls, 2, 100) }));
+}
+
+// ---------------------------------------------------------------------------
+// one player's bowling in one scope
+// ---------------------------------------------------------------------------
+
+type Spell = SpellCounts & { year: number };
+
+/** Every innings the player bowled in, oldest first. */
+const spells = (playerId: string, { format, competition }: Scope) =>
+  query<Spell>(
+    `SELECT extract(year FROM d.date)::int AS year,
+            count(*) FILTER (WHERE d.legal_ball)                       AS balls,
+            sum(d.bowler_runs)                                         AS runs,
+            sum(w.taken)::int                                          AS wickets,
+            count(*) FILTER (WHERE d.legal_ball AND d.runs_batter = 0) AS dots,
+            count(*) FILTER (WHERE d.boundary AND d.runs_batter = 4)   AS fours,
+            count(*) FILTER (WHERE d.boundary AND d.runs_batter = 6)   AS sixes
+       FROM deliveries d
+      CROSS JOIN LATERAL (SELECT count(*) AS taken FROM wickets w
+                           WHERE w.delivery_id = d.id AND w.bowlers_wicket) w
+      WHERE d.bowler_id = $1 AND d.format = $2 AND d.competition = $3
+      GROUP BY d.match_id, d.innings, 1
+      ORDER BY min(d.date), d.match_id, d.innings`,
+    [playerId, format, competition],
+  );
+
+/** Career bowling; null if the player has not bowled in the scope. */
+export async function bowlingCareer(player: Player, scope: Scope) {
+  const [rows, spans] = await Promise.all([
+    spells(player.player_id, scope),
+    careerSpans([player.player_id], scope),
+  ]);
+  if (rows.length === 0) return null;
+  const span = spans.get(player.player_id);
+  return {
+    player_id: player.player_id,
+    name: player.name,
+    player_name: player.name,
+    unique_name: player.unique_name,
+    format: scope.format,
+    ...spellFigures(rows),
+    first_match: span?.first_match ?? null,
+    last_match: span?.last_match ?? null,
+    may_be_incomplete: span?.may_be_incomplete ?? false,
+  };
+}
+
+/** Bowling figures for each year the player bowled. */
+export async function bowlingByYear(player: Player, scope: Scope) {
+  const rows = await spells(player.player_id, scope);
+  const years = [...new Set(rows.map((r) => r.year))].sort((a, b) => a - b);
+  return years.map((year) => ({
+    year,
+    format: scope.format,
+    ...spellFigures(rows.filter((r) => r.year === year)),
+  }));
+}
+
+/** The batters this bowler has dismissed most, in one scope. */
+export async function bowlingMatchups(player: Player, scope: Scope) {
+  const { format, competition } = scope;
+  const rows = await query<{
+    batter_id: string;
+    batter: string;
+    unique_name: string;
+    balls: number;
+    runs: number;
+    dismissals: number;
+  }>(
+    `WITH bowled AS (
+       SELECT batter_id,
+              count(*) FILTER (WHERE legal_ball) AS balls,
+              sum(bowler_runs)                   AS runs
+         FROM deliveries
+        WHERE bowler_id = $1 AND format = $2 AND competition = $3
+        GROUP BY 1
+     ),
+     taken AS (
+       SELECT w.player_out_id AS batter_id, count(*) AS dismissals
+         FROM wickets w JOIN deliveries d ON d.id = w.delivery_id
+        WHERE d.bowler_id = $1 AND w.bowlers_wicket
+          AND d.format = $2 AND d.competition = $3
+        GROUP BY 1
+     )
+     SELECT b.batter_id, p.name AS batter, p.unique_name, b.balls, b.runs,
+            coalesce(t.dismissals, 0) AS dismissals
+       FROM bowled b
+       JOIN players p ON p.player_id = b.batter_id
+       LEFT JOIN taken t ON t.batter_id = b.batter_id
+      WHERE b.balls > 15
+      ORDER BY dismissals DESC, b.runs::numeric / b.balls, b.batter_id
+      LIMIT 5`,
+    [player.player_id, format, competition],
+  );
+  return rows.map((r) => ({ ...r, format, economy: per(r.runs, r.balls, 2, 6) }));
 }

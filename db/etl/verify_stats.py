@@ -6,8 +6,9 @@ The rules are written out again here, from the source JSON, deliberately without
 using the loader, the SQL or lib/stats.ts:
 
   database  every player's career row set, and every era baseline
-  stats API for a sample of players: career figures, era index by year and over
-            the career, and the top bowler matchups
+  stats API for a sample of players: batting career figures, era index by year
+            and over the career, and the top bowler matchups; bowling career
+            figures, figures by year, and the top batter matchups
   recommender  for the same players: batting and bowling baselines, that the
             batting baseline equals the career figures, and the sample counts
             behind each context factor
@@ -105,6 +106,9 @@ class Source:
         self.bowl = defaultdict(Counter)                 # (player, scope)
         self.era = defaultdict(Counter)                  # (year, scope, gender)
         self.pairs = defaultdict(lambda: defaultdict(Counter))  # (batter, scope)[bowler]
+        # (bowler, scope)[(match, innings, year)] -> figures for that innings
+        self.spells = defaultdict(lambda: defaultdict(Counter))
+        self.bowled_at = defaultdict(lambda: defaultdict(Counter))  # (bowler, scope)[batter]
         # (role, player, scope)[(phase, innings, team faced, opponent)] -> counts
         self.slices = defaultdict(lambda: defaultdict(lambda: [0, 0, 0]))
         self.gender = {}
@@ -158,6 +162,10 @@ class Source:
                     self.bowl[(bowler, scope)].update(runs=conceded, balls=legal)
                     pair = self.pairs[(striker, scope)][bowler]
                     pair.update(runs=runs, balls=faced)
+                    spell = self.spells[(bowler, scope)][(mid, number, year)]
+                    spell.update(runs=conceded, balls=legal, dots=legal and runs == 0,
+                                 fours=hit == 4, sixes=hit == 6)
+                    self.bowled_at[(bowler, scope)][striker].update(runs=conceded, balls=legal)
 
                     where = (phase(fmt, o["over"]), number)
                     self.count("batter", striker, scope, where, bowling, bowler, balls=faced)
@@ -175,6 +183,8 @@ class Source:
                         if credit:
                             self.bowl[(bowler, scope)]["wickets"] += 1
                             self.pairs[(out, scope)][bowler]["dismissals"] += 1
+                            spell["wickets"] += 1
+                            self.bowled_at[(bowler, scope)][out]["dismissals"] += 1
                             self.count("bowler", bowler, scope, where, batting, out,
                                        dismissal=1, credit=1)
 
@@ -223,6 +233,29 @@ class Report:
 
 def ratio(a, b, scale=1):
     return a * scale / b if b else None
+
+
+def bowling_figures(spells):
+    """[(field, expected, tolerance)] for innings added together."""
+    total = Counter()
+    for s in spells:
+        total.update(s)
+    n, balls, runs, wickets = len(spells), total["balls"], total["runs"], total["wickets"]
+    best = min(spells, key=lambda s: (-s["wickets"], s["runs"]))
+    return [
+        ("innings", n, 0), ("balls", balls, 0), ("runs_conceded", runs, 0),
+        ("wickets", wickets, 0), ("dots", total["dots"], 0),
+        ("fours", total["fours"], 0), ("sixes", total["sixes"], 0),
+        ("three_wicket_innings", sum(s["wickets"] >= 3 for s in spells), 0),
+        ("five_wicket_innings", sum(s["wickets"] >= 5 for s in spells), 0),
+        ("best_wickets", best["wickets"], 0), ("best_runs", best["runs"], 0),
+        ("economy", ratio(runs, balls, 6), 0.0051),
+        ("average", ratio(runs, wickets), 0.0051),
+        ("strike_rate", ratio(balls, wickets), 0.051),
+        ("dot_percent", ratio(total["dots"], balls, 100), 0.051),
+        ("balls_per_boundary", ratio(balls, total["fours"] + total["sixes"]), 0.051),
+        ("wickets_per_innings", ratio(wickets, n), 0.0051),
+    ]
 
 
 def main():
@@ -321,6 +354,37 @@ def main():
         got_top = [(r["bowler_id"], r["balls"], r["runs"], r["dismissals"])
                    for r in get("/api/stats/matchup", **which)]
         report.same("top matchups (API)", (pid, scope), str(want_top), str(got_top))
+
+    # ---- bowling API --------------------------------------------------------
+    for pid, scope in sample:
+        fmt, competition = scope
+        which = {"id": pid, "format": fmt, "competition": competition}
+        spells = src.spells.get((pid, scope), {})
+        rows = get("/api/stats/bowling", **which)
+        years = get("/api/stats/bowling_seasons", **which)
+        report.same("bowling: who has bowled (API)", (pid, scope),
+                    str((int(bool(spells)), sorted({k[2] for k in spells}))),
+                    str((len(rows), [r["year"] for r in years])))
+        if spells and rows:
+            for f, v, tol in bowling_figures(list(spells.values())):
+                report.same("bowling career (API)", (pid, scope, f), v, rows[0].get(f), tol)
+        for row in years:
+            chosen = [s for k, s in spells.items() if k[2] == row["year"]]
+            if chosen:
+                for f, v, tol in bowling_figures(chosen):
+                    report.same("bowling by year (API)", (pid, scope, row["year"], f),
+                                v, row.get(f), tol)
+
+        pairs = [(b, c) for b, c in src.bowled_at.get((pid, scope), {}).items()
+                 if c["balls"] > 15]
+        pairs.sort(key=lambda p: (-p[1]["dismissals"], p[1]["runs"] / p[1]["balls"], p[0]))
+        want_top = [(b, c["balls"], c["runs"], c["dismissals"]) for b, c in pairs[:5]]
+        got = get("/api/stats/bowling_matchup", **which)
+        report.same("top batter matchups (API)", (pid, scope), str(want_top),
+                    str([(r["batter_id"], r["balls"], r["runs"], r["dismissals"]) for r in got]))
+        for r in got:
+            report.same("batter matchup economy (API)", (pid, scope, r["batter_id"]),
+                        ratio(r["runs"], r["balls"], 6), r["economy"], 0.0051)
 
     # ---- recommender --------------------------------------------------------
     for scope in SCOPES:

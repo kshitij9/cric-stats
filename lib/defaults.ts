@@ -12,4 +12,12 @@ export const SHARMA = player('740742ef', 'RG Sharma');
 export const WILLIAMSON = player('d027ba9f', 'KS Williamson');
 export const SMITH = player('30a45b23', 'SPD Smith');
 
-export const QUICK_PICKS = [KOHLI, SHARMA, WILLIAMSON, SMITH];
+export const BUMRAH = player('462411b3', 'JJ Bumrah');
+export const NARINE = player('9d430b40', 'SP Narine');
+export const ASHWIN = player('495d42a5', 'R Ashwin');
+export const STARC = player('3fb19989', 'MA Starc');
+
+export const QUICK_PICKS = {
+  batting: [KOHLI, SHARMA, WILLIAMSON, SMITH],
+  bowling: [BUMRAH, NARINE, ASHWIN, STARC],
+};
