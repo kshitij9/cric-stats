@@ -16,6 +16,7 @@ actual AS (
     UNION ALL SELECT 'player_aliases', count(*) FROM player_aliases
     UNION ALL SELECT 'venues',         count(*) FROM venues
     UNION ALL SELECT 'venue_aliases',  count(*) FROM venue_aliases
+    UNION ALL SELECT 'team_aliases',   count(*) FROM team_aliases
     UNION ALL SELECT '_player_splits', count(*) FROM _player_splits
 )
 SELECT format('%s: %s rows loaded, %s expected from the source files',
@@ -70,6 +71,22 @@ WHERE d.venue_id IS DISTINCT FROM m.venue_id
 HAVING count(*) > 0
 
 UNION ALL
+SELECT format('%s deliveries differ from their match in format or competition', count(*))
+FROM deliveries d JOIN matches m USING (match_id)
+WHERE d.format <> m.format OR d.competition <> m.competition
+HAVING count(*) > 0
+
+UNION ALL
+SELECT format('%s sides have no row in team_aliases', count(*))
+FROM (SELECT DISTINCT m.competition, t.team
+        FROM matches m CROSS JOIN LATERAL (VALUES (m.team1), (m.team2)) t(team)) used
+WHERE NOT EXISTS (SELECT 1 FROM team_aliases a
+                   WHERE a.competition = used.competition
+                     AND a.team_name = coalesce(used.team, ''))
+  AND coalesce(used.team, '') <> ''
+HAVING count(*) > 0
+
+UNION ALL
 SELECT format('%s deliveries have extras that do not add up', count(*))
 FROM deliveries
 WHERE extras <> wides + noballs + byes + legbyes + penalty
@@ -88,12 +105,12 @@ FROM (SELECT coalesce(sum(outs), 0) AS n FROM player_career_stats) c,
 WHERE c.n <> w.n
 
 UNION ALL
-SELECT format('no era average for %s %s %s', d.gender, d.format, d.year)
-FROM (SELECT DISTINCT extract(year FROM date)::int AS year, format, gender
+SELECT format('no era average for %s %s %s %s', d.gender, d.competition, d.format, d.year)
+FROM (SELECT DISTINCT extract(year FROM date)::int AS year, format, competition, gender
       FROM deliveries WHERE ball_faced) d
 WHERE NOT EXISTS (SELECT 1 FROM era_averages e
                   WHERE e.year = d.year AND e.format = d.format
-                    AND e.gender = d.gender)
+                    AND e.competition = d.competition AND e.gender = d.gender)
 
 UNION ALL
 SELECT format('latest match is dated in the future: %s', max(date))

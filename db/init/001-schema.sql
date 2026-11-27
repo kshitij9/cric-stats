@@ -46,12 +46,25 @@ CREATE TABLE IF NOT EXISTS player_aliases (
 );
 
 -- ---------------------------------------------------------------------------
+-- teams: every side seen in each competition, and the franchise it now plays as.
+-- Renames come from db/teams/franchises.csv; any other team is its own franchise.
+-- Matches and balls keep the names the source gives.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS team_aliases (
+    competition TEXT NOT NULL,
+    team_name   TEXT NOT NULL,
+    franchise   TEXT NOT NULL,
+    PRIMARY KEY (competition, team_name)
+);
+
+-- ---------------------------------------------------------------------------
 -- matches: one row per match, the context the ball-by-ball feed hangs off.
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS matches (
     match_id        TEXT PRIMARY KEY,
     date            DATE NOT NULL,
     format          TEXT NOT NULL,
+    competition     TEXT NOT NULL, -- 'international' | 'ipl'
     venue           TEXT,          -- as spelled in the source
     city            TEXT,
     venue_id        TEXT,
@@ -95,6 +108,7 @@ CREATE TABLE IF NOT EXISTS deliveries (
     match_id       TEXT      NOT NULL,
     date           DATE      NOT NULL,
     format         TEXT      NOT NULL,
+    competition    TEXT      NOT NULL,             -- from matches
     innings        SMALLINT  NOT NULL,
     over           SMALLINT  NOT NULL,            -- 0-based
     ball           SMALLINT  NOT NULL,            -- 1-based, counting wides and no-balls
@@ -150,6 +164,7 @@ CREATE TABLE IF NOT EXISTS player_career_stats (
     player_id       TEXT    NOT NULL,
     player_name     TEXT    NOT NULL,
     format          TEXT    NOT NULL,
+    competition     TEXT    NOT NULL,
     season          INTEGER NOT NULL,  -- calendar year the match started
     innings_played  INTEGER NOT NULL DEFAULT 0,
     runs_scored     INTEGER NOT NULL DEFAULT 0,
@@ -157,16 +172,17 @@ CREATE TABLE IF NOT EXISTS player_career_stats (
     balls_faced     INTEGER NOT NULL DEFAULT 0,
     fours           INTEGER NOT NULL DEFAULT 0,
     sixes           INTEGER NOT NULL DEFAULT 0,
-    PRIMARY KEY (player_id, format, season)
+    PRIMARY KEY (player_id, format, competition, season)
 );
 
 -- the scoring rate of an average batter, for the era index
 CREATE TABLE IF NOT EXISTS era_averages (
     year            INTEGER      NOT NULL,
     format          TEXT         NOT NULL,
+    competition     TEXT         NOT NULL,
     gender          TEXT         NOT NULL,
     runs            INTEGER      NOT NULL,  -- off the bat
     balls           INTEGER      NOT NULL,  -- faced
     avg_strike_rate NUMERIC(6,2) NOT NULL,  -- runs per 100 balls faced
-    PRIMARY KEY (year, format, gender)
+    PRIMARY KEY (year, format, competition, gender)
 );

@@ -1,10 +1,12 @@
 import { query } from '@/lib/db';
-import type { PlayerSummary, VenueSummary } from '@/lib/types';
+import type { Competition, PlayerSummary, VenueSummary } from '@/lib/types';
 
 /**
  * Finding players and grounds by name. Every word typed must begin some word of
  * one of the names on record, so "virat k", "kohli" and "V Kohli" all find the
- * same player, and punctuation does not matter.
+ * same player, and punctuation does not matter. Only players and grounds with a
+ * match in the competition are found, and their teams, years and match counts
+ * are for that competition.
  */
 
 // become spaces; the apostrophe, having no counterpart, is removed
@@ -30,7 +32,11 @@ const allWordsMatch = (column: string) => `
   NOT EXISTS (SELECT 1 FROM unnest($1::text[]) w(pattern)
                WHERE ' ' || ${KEY(column)} NOT LIKE w.pattern)`;
 
-export async function searchPlayers(text: string, gender = ''): Promise<PlayerSummary[]> {
+export async function searchPlayers(
+  text: string,
+  competition: Competition,
+  gender = '',
+): Promise<PlayerSummary[]> {
   const like = patterns(text);
   if (!like) return [];
   return query<PlayerSummary>(
@@ -46,10 +52,12 @@ export async function searchPlayers(text: string, gender = ''): Promise<PlayerSu
         GROUP BY player_id
      ),
      sides AS (
-       SELECT mp.player_id, mp.team, count(*) AS n,
+       SELECT mp.player_id, a.franchise AS team, count(*) AS n,
               min(m.date) AS first, max(m.date) AS last
-         FROM match_players mp JOIN matches m ON m.match_id = mp.match_id
-        WHERE mp.player_id IN (SELECT player_id FROM hits)
+         FROM match_players mp
+         JOIN matches m ON m.match_id = mp.match_id
+         JOIN team_aliases a ON a.competition = m.competition AND a.team_name = mp.team
+        WHERE mp.player_id IN (SELECT player_id FROM hits) AND m.competition = $5
         GROUP BY 1, 2
      ),
      records AS (
@@ -72,11 +80,14 @@ export async function searchPlayers(text: string, gender = ''): Promise<PlayerSu
       WHERE $4 = '' OR p.gender = $4
       ORDER BY h.exact DESC, r.matches DESC, p.unique_name
       LIMIT 12`,
-    [like, PUNCTUATION, words(text).join(' '), gender],
+    [like, PUNCTUATION, words(text).join(' '), gender, competition],
   );
 }
 
-export async function searchVenues(text: string): Promise<VenueSummary[]> {
+export async function searchVenues(
+  text: string,
+  competition: Competition,
+): Promise<VenueSummary[]> {
   const like = patterns(text);
   if (!like) return [];
   return query<VenueSummary>(
@@ -90,11 +101,11 @@ export async function searchVenues(text: string): Promise<VenueSummary[]> {
      SELECT v.venue_id, v.name, v.city, count(m.match_id)::int AS matches
        FROM hits h
        JOIN venues v ON v.venue_id = h.venue_id
-       LEFT JOIN matches m ON m.venue_id = v.venue_id
+       JOIN matches m ON m.venue_id = v.venue_id AND m.competition = $3
       GROUP BY v.venue_id, v.name, v.city
       -- grounds whose own name matches come before those matching through the city
       ORDER BY (${allWordsMatch('v.name')}) DESC, matches DESC, v.name, v.city
       LIMIT 12`,
-    [like, PUNCTUATION],
+    [like, PUNCTUATION, competition],
   );
 }

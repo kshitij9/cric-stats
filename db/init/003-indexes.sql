@@ -8,8 +8,8 @@ CREATE INDEX IF NOT EXISTS idx_players_name       ON players (name);
 CREATE INDEX IF NOT EXISTS idx_player_aliases_low ON player_aliases (lower(alias));
 CREATE INDEX IF NOT EXISTS idx_match_players_player ON match_players (player_id);
 
--- recommender discovery mode scans a whole (format, gender) slice
-CREATE INDEX IF NOT EXISTS idx_deliveries_fmt_gender    ON deliveries (format, gender);
+-- recommender discovery mode scans a whole (format, competition, gender) slice
+CREATE INDEX IF NOT EXISTS idx_deliveries_fmt_comp      ON deliveries (format, competition, gender);
 -- one player's record
 CREATE INDEX IF NOT EXISTS idx_deliveries_batter_id ON deliveries (batter_id, format);
 CREATE INDEX IF NOT EXISTS idx_deliveries_bowler_id ON deliveries (bowler_id, format);

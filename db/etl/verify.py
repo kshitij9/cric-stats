@@ -6,7 +6,8 @@ The figures are counted here directly from the source JSON, deliberately without
 using load_cricsheet.py, so a mistake in the loader shows up as a difference.
 For every match and innings it compares: deliveries, runs off the bat, total
 runs, each kind of extra, boundary fours and sixes, and every wicket (ball, kind
-and player out). It also compares the set of matches and the line-up sizes.
+and player out). It also compares the set of matches, each match's competition
+and the line-up sizes.
 
     python3 db/etl/verify.py                       # cricket_next vs the cache
     python3 db/etl/verify.py --db NAME a.zip b.zip
@@ -28,15 +29,23 @@ from collections import Counter
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DEFAULT_ZIPS = [os.path.join(REPO, "db/etl/_etl/cache", f"{n}_json.zip")
-                for n in ("tests", "odis", "t20s")]
+                for n in ("tests", "odis", "t20s", "ipl")]
 FORMATS = {"Test", "MDM", "ODI", "ODM", "T20", "IT20", "T20I"}
 FIGURES = ["deliveries", "batter runs", "total runs", "wides", "no-balls",
            "byes", "leg byes", "penalty", "fours", "sixes"]
 
 
+def competition_of(info):
+    """'international', 'ipl', or None for anything the app does not cover."""
+    if info.get("team_type") == "international":
+        return "international"
+    event = info.get("event") or {}
+    return "ipl" if event.get("name") == "Indian Premier League" else None
+
+
 def from_source(paths):
-    """(innings figures, wickets, line-up sizes, match ids) counted from the zips."""
-    innings, wickets, lineups, matches = {}, Counter(), {}, set()
+    """(innings figures, wickets, line-up sizes, {match id: competition}) from the zips."""
+    innings, wickets, lineups, matches = {}, Counter(), {}, {}
     for path in paths:
         with zipfile.ZipFile(path) as zf:
             for name in zf.namelist():
@@ -47,7 +56,7 @@ def from_source(paths):
                 if info.get("match_type") not in FORMATS or not info.get("dates"):
                     continue
                 mid = os.path.basename(name)[:-5]
-                matches.add(mid)
+                matches[mid] = competition_of(info)
                 for team, squad in info.get("players", {}).items():
                     lineups[(mid, team)] = len(set(squad))
                 for number, inn in enumerate(match.get("innings", []), 1):
@@ -95,7 +104,10 @@ def from_database(db):
           FROM wickets w JOIN deliveries d ON d.id = w.delivery_id"""))
     lineups = {(r[0], r[1]): int(r[2]) for r in query(db, """
         SELECT match_id, team, count(*) FROM match_players GROUP BY 1, 2""")}
-    matches = {r[0] for r in query(db, "SELECT match_id FROM matches")}
+    # data loaded before matches had a competition held internationals only
+    matches = dict(query(db, """
+        SELECT match_id, coalesce(to_jsonb(m)->>'competition', 'international')
+          FROM matches m"""))
     return innings, wickets, lineups, matches
 
 
@@ -131,7 +143,14 @@ def main():
 
     total = report(f"{len(src_matches)} matches present", [
         f"match {m} only in {'source' if m in src_matches else 'database'}"
-        for m in sorted(src_matches ^ db_matches)])
+        for m in sorted(src_matches.keys() ^ db_matches.keys())])
+    split = Counter(src_matches.values())
+    total += report(
+        "competition of each match (" +
+        ", ".join(f"{n:,} {c}" for c, n in sorted(split.items(), key=str)) + ")",
+        [f"match {m}: source {src_matches[m]}, database {db_matches[m]}"
+         for m in sorted(src_matches.keys() & db_matches.keys())
+         if src_matches[m] != db_matches[m]])
 
     zero = [0] * len(FIGURES)
     for i, figure in enumerate(FIGURES):

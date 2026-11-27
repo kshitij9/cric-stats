@@ -1,17 +1,14 @@
 import { careerSpans } from '@/lib/coverage';
 import { query } from '@/lib/db';
-import {
-  battingFigures,
-  bowlingFigures,
-  round,
-  type Format,
-  type Player,
-} from '@/lib/stats';
+import { scopeName } from '@/lib/scope';
+import { battingFigures, bowlingFigures, round, type Player } from '@/lib/stats';
+import type { Scope } from '@/lib/types';
 
 /**
  * Matchup recommender — batting and bowling, shortlist and discovery.
  *
- * Model (mirrored for both roles): take a player's format-long baseline and
+ * Model (mirrored for both roles): take a player's baseline over the whole scope
+ * (a format in one competition) and
  * multiply it by one factor per requested context slice (venue / opposition /
  * phase / innings / the specific opponent). Each factor is the player's ratio
  * in that slice vs their own baseline, shrunk toward "no effect":
@@ -30,6 +27,8 @@ import {
  * figures. A dismissal counts for the player out, at either end. Against a named
  * opponent only the bowler's own wickets count, and they are compared with the
  * rate of bowler's wickets in the baseline.
+ *
+ * An opposition is a franchise: in the IPL it takes in the side's earlier names.
  *
  * Batters rank by expected runs per dismissal (higher = better).
  * Bowlers rank by expected runs per wicket i.e. average (lower = better).
@@ -93,21 +92,38 @@ function sliceFloor(key: SliceKey, minSample: number) {
 // wickets table, each totalled overall and per requested slice. They are
 // totalled apart because one delivery can carry two wickets, and a batter can be
 // out on a ball someone else faced. The two queries run side by side, as each
-// reads the whole format. $2 NULL => every player (discovery).
+// reads the whole scope. $2 NULL => every player (discovery).
 //
-// $1 format  $2 player IDs  $3 venue  $4 opponent  $5 opposition  $6 phase
-// $7 innings  $8 gender  $9 minimum career balls (first query only)
+// $1 format  $2 player IDs  $3 venue  $4 opponent  $5 opposing team's names,
+// lower case (empty => any)  $6 phase  $7 innings  $8 gender  $9 competition
+// $10 minimum career balls (first query only)
 // ---------------------------------------------------------------------------
 
 const slicePredicates = (role: Role): Record<SliceKey, string> => ({
   venue: `$3 <> '' AND d.venue_id = $3`,
   matchup: `$4 <> '' AND d.${role === 'batter' ? 'bowler_id' : 'batter_id'} = $4`,
-  opposition: `$5 <> '' AND lower(d.${role === 'batter' ? 'bowling_team' : 'batting_team'}) = lower($5)`,
+  opposition: `lower(d.${role === 'batter' ? 'bowling_team' : 'batting_team'}) = ANY($5::text[])`,
   phase: `$6 <> '' AND d.phase = $6`,
   innings: `$7 > 0 AND d.innings = $7`,
 });
 
-const MATCHES = `d.format = $1 AND ($8 = '' OR d.gender = $8)`;
+const MATCHES = `d.format = $1 AND d.competition = $9 AND ($8 = '' OR d.gender = $8)`;
+
+/** Every name the opposing side has played under, lower case. */
+async function teamNames(team: string, { competition }: Scope): Promise<string[]> {
+  if (!team) return [];
+  const rows = await query<{ name: string }>(
+    `SELECT lower(team_name) AS name
+       FROM team_aliases
+      WHERE competition = $2
+        AND franchise IN (SELECT franchise FROM team_aliases
+                           WHERE competition = $2
+                             AND (lower(team_name) = lower($1) OR lower(franchise) = lower($1)))`,
+    [team, competition],
+  );
+  // an unknown team matches no balls
+  return rows.length ? rows.map((r) => r.name) : [team.toLowerCase()];
+}
 
 function sliceSql(role: Role) {
   const batting = role === 'batter';
@@ -138,7 +154,7 @@ function sliceSql(role: Role) {
       FROM deliveries d
       WHERE ${MATCHES} AND ($2::text[] IS NULL OR ${self} = ANY($2::text[]))
       GROUP BY 1
-      HAVING COUNT(*) FILTER (WHERE ${counted}) >= $9
+      HAVING COUNT(*) FILTER (WHERE ${counted}) >= $10
     )
     SELECT * FROM balls JOIN players USING (player_id)
   `;
@@ -311,13 +327,14 @@ function scoreBowler(r: Row, keys: SliceKey[]) {
 
 export async function recommend(opts: {
   role: Role;
-  format: Format;
+  scope: Scope;
   players: Player[] | null; // null => discovery
   ctx: Ctx;
   limit: number;
   minSample: number;
 }) {
-  const { role, format, players, ctx, limit, minSample } = opts;
+  const { role, scope, players, ctx, limit, minSample } = opts;
+  const { format, competition } = scope;
   const keys = activeSlices(ctx);
   const discovery = players === null;
 
@@ -328,10 +345,11 @@ export async function recommend(opts: {
     players?.map((p) => p.player_id) ?? null,
     ctx.venue,
     ctx.opponent,
-    ctx.opposition,
+    await teamNames(ctx.opposition, scope),
     ctx.phase,
     ctx.innings,
     ctx.gender,
+    competition,
   ];
   const [ballRows, eventRows] = await Promise.all([
     query(sql.balls, [...params, baselineFloor]),
@@ -378,7 +396,7 @@ export async function recommend(opts: {
   const shown = discovery ? ranked.slice(0, limit) : ranked;
   const spans = await careerSpans(
     shown.map((p) => p.player_id),
-    format,
+    scope,
   );
   shown.forEach((p, i) =>
     Object.assign(p, {
@@ -409,7 +427,7 @@ export async function recommend(opts: {
     );
   }
   if (!discovery && unavailable.length) {
-    caveats.push(`no ${format} data for: ${unavailable.join(', ')}`);
+    caveats.push(`no ${scopeName(scope)} data for: ${unavailable.join(', ')}`);
   }
 
   // strip internal score before returning
@@ -422,6 +440,7 @@ export async function recommend(opts: {
   return {
     role,
     format,
+    competition,
     mode: discovery ? 'discovery' : 'shortlist',
     context: ctx,
     recommendation: top?.player ?? null,

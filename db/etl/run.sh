@@ -3,8 +3,8 @@
 #
 #   ./db/etl/run.sh [options] [source ...]
 #
-#   source          Cricsheet download URL or local .zip. Default: Tests, ODIs and
-#                   T20Is. The sources given replace the whole data set.
+#   source          Cricsheet download URL or local .zip. Default: Tests, ODIs,
+#                   T20Is and the IPL. The sources given replace the whole data set.
 #   --db NAME       target database, created if missing (default: cricket_next)
 #   --live          required when the target is the database the app reads
 #   --offline       use cached downloads; do not contact cricsheet.org
@@ -14,6 +14,7 @@
 #   --register DIR  use people.csv and names.csv from DIR instead of downloading
 #
 # Venue spellings are merged only where db/venues/venue_merges.csv approves it.
+# Renamed teams are listed in db/teams/franchises.csv.
 #
 # New data is built in a staging schema, checked, and then published in a single
 # statement. A run that fails or is stopped leaves the existing data as it was.
@@ -108,7 +109,7 @@ psql < db/init/002-data-loads.sql
 # everything besides the source files that decides what gets loaded
 CODE_FILES=(db/etl/run.sh db/etl/load_cricsheet.py db/etl/derive.sql db/etl/checks.sql
   db/etl/checks-against-current.sql db/etl/publish.sql
-  db/init/001-schema.sql db/init/003-indexes.sql)
+  db/init/001-schema.sql db/init/003-indexes.sql db/teams/franchises.csv)
 [ ! -f db/venues/venue_merges.csv ] || CODE_FILES+=(db/venues/venue_merges.csv)
 CODE_VERSION="$(cat "${CODE_FILES[@]}" | sha256sum | cut -d' ' -f1)"
 
@@ -149,10 +150,11 @@ declare -A KEEP_EMPTY=(
   [player_aliases]=''
   [venues]='city'
   [venue_aliases]='city'
+  [team_aliases]=''
   [_player_splits]=''
 )
 for table in matches deliveries wickets match_players players player_aliases \
-             venues venue_aliases _player_splits; do
+             venues venue_aliases team_aliases _player_splits; do
   columns="$(head -n 1 "$OUT/$table.csv" | tr -d '\r')"
   options="FORMAT csv, HEADER match"
   [ -z "${KEEP_EMPTY[$table]}" ] || options+=", FORCE_NOT_NULL (${KEEP_EMPTY[$table]})"

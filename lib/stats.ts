@@ -1,6 +1,6 @@
 import { careerSpans } from '@/lib/coverage';
 import { query } from '@/lib/db';
-import type { Format } from '@/lib/types';
+import type { Scope } from '@/lib/types';
 
 /**
  * What each statistic means. Every screen and the recommender use these.
@@ -20,17 +20,15 @@ import type { Format } from '@/lib/types';
  * This file turns counts of those into rates. A rate with nothing to divide by
  * is null.
  *
+ * Every figure is for one scope: a format in one competition (internationals, or
+ * the IPL). Years are calendar years.
+ *
  * Era index: a batter's runs divided by the runs an average batter of the same
  * gender would have scored from the same balls, year by year (era_averages is
- * runs per 100 balls faced for a year, format and gender). Over several years it
- * is total runs over total expected runs, so each year weighs by its balls.
+ * runs per 100 balls faced for a year, format, competition and gender). Over
+ * several years it is total runs over total expected runs, so each year weighs
+ * by its balls.
  */
-
-export type { Format };
-export const FORMATS: readonly Format[] = ['Test', 'ODI', 'T20'];
-
-export const isFormat = (value: string): value is Format =>
-  (FORMATS as readonly string[]).includes(value);
 
 /** A Cricsheet ID, with a suffix where one ID had to be split by gender. */
 export const isPlayerId = (value: string) => /^[0-9a-f]{8}(-[mf])?$/.test(value);
@@ -83,7 +81,7 @@ export function bowlingFigures(c: BowlingCounts) {
 }
 
 // ---------------------------------------------------------------------------
-// one player in one format
+// one player in one scope
 // ---------------------------------------------------------------------------
 
 export type Player = {
@@ -103,35 +101,36 @@ export async function findPlayers(ids: string[]): Promise<Map<string, Player>> {
 
 type EraYear = { year: number; runs: number; balls: number; expected_runs: number };
 
-const eraYears = (playerId: string, format: Format) =>
+const eraYears = (playerId: string, { format, competition }: Scope) =>
   query<EraYear>(
     `WITH years AS (
        SELECT extract(year FROM date)::int AS year, gender,
               sum(runs_batter)                   AS runs,
               count(*) FILTER (WHERE ball_faced) AS balls
          FROM deliveries
-        WHERE batter_id = $1 AND format = $2
+        WHERE batter_id = $1 AND format = $2 AND competition = $3
         GROUP BY 1, 2
      )
      SELECT y.year, y.runs, y.balls,
             y.balls * e.runs::numeric / e.balls AS expected_runs
        FROM years y
        JOIN era_averages e
-         ON e.year = y.year AND e.format = $2 AND e.gender = y.gender
+         ON e.year = y.year AND e.format = $2 AND e.competition = $3
+        AND e.gender = y.gender
       WHERE y.balls > 0
       ORDER BY y.year`,
-    [playerId, format],
+    [playerId, format, competition],
   );
 
 const total = (rows: EraYear[], key: 'runs' | 'expected_runs') =>
   rows.reduce((sum, r) => sum + r[key], 0);
 
 /** Era index for each year the player faced a ball. */
-export async function eraByYear(player: Player, format: Format) {
-  const rows = await eraYears(player.player_id, format);
+export async function eraByYear(player: Player, scope: Scope) {
+  const rows = await eraYears(player.player_id, scope);
   return rows.map((r) => ({
     year: r.year,
-    format,
+    format: scope.format,
     era_index: eraIndex(r.runs, r.expected_runs),
     runs: r.runs,
     balls: r.balls,
@@ -139,21 +138,22 @@ export async function eraByYear(player: Player, format: Format) {
   }));
 }
 
-/** Career batting; null if the player has no innings in the format. */
-export async function career(player: Player, format: Format) {
+/** Career batting; null if the player has no innings in the scope. */
+export async function career(player: Player, scope: Scope) {
+  const { format, competition } = scope;
   const [counts] = await query<BattingCounts>(
     `SELECT sum(innings_played) AS innings, sum(runs_scored) AS runs,
             sum(balls_faced) AS balls, sum(outs) AS outs,
             sum(fours) AS fours, sum(sixes) AS sixes
        FROM player_career_stats
-      WHERE player_id = $1 AND format = $2
+      WHERE player_id = $1 AND format = $2 AND competition = $3
      HAVING count(*) > 0`,
-    [player.player_id, format],
+    [player.player_id, format, competition],
   );
   if (!counts) return null;
   const [years, spans] = await Promise.all([
-    eraYears(player.player_id, format),
-    careerSpans([player.player_id], format),
+    eraYears(player.player_id, scope),
+    careerSpans([player.player_id], scope),
   ]);
   const span = spans.get(player.player_id);
   return {
@@ -170,8 +170,9 @@ export async function career(player: Player, format: Format) {
   };
 }
 
-/** The bowlers who have dismissed this batter most, in one format. */
-export async function matchups(player: Player, format: Format) {
+/** The bowlers who have dismissed this batter most, in one scope. */
+export async function matchups(player: Player, scope: Scope) {
+  const { format, competition } = scope;
   const rows = await query<{
     bowler_id: string;
     bowler: string;
@@ -185,13 +186,14 @@ export async function matchups(player: Player, format: Format) {
               count(*) FILTER (WHERE ball_faced) AS balls,
               sum(runs_batter)                   AS runs
          FROM deliveries
-        WHERE batter_id = $1 AND format = $2
+        WHERE batter_id = $1 AND format = $2 AND competition = $3
         GROUP BY 1
      ),
      taken AS (
        SELECT d.bowler_id, count(*) AS dismissals
          FROM wickets w JOIN deliveries d ON d.id = w.delivery_id
-        WHERE w.player_out_id = $1 AND w.bowlers_wicket AND d.format = $2
+        WHERE w.player_out_id = $1 AND w.bowlers_wicket
+          AND d.format = $2 AND d.competition = $3
         GROUP BY 1
      )
      SELECT f.bowler_id, p.name AS bowler, p.unique_name, f.balls, f.runs,
@@ -202,7 +204,7 @@ export async function matchups(player: Player, format: Format) {
       WHERE f.balls > 15
       ORDER BY dismissals DESC, f.runs::numeric / f.balls, f.bowler_id
       LIMIT 5`,
-    [player.player_id, format],
+    [player.player_id, format, competition],
   );
   return rows.map((r) => ({ ...r, format, strike_rate: per(r.runs, r.balls, 2, 100) }));
 }

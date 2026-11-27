@@ -11,12 +11,13 @@ player_career_stats and era_averages are not written here: db/etl/derive.sql
 builds them from the loaded tables, so each counting rule exists only once.
 
 Sources may be Cricsheet download URLs or local .zip paths. Default is the
-three international bundles (Tests, ODIs, T20Is; men's and women's). Downloads
-are cached under <out>/cache/. A cached file is replaced only when the server
+three international bundles (Tests, ODIs, T20Is; men's and women's) and the
+IPL. A club match from any other competition stops the load, so leagues are
+never mixed by accident (see CLUB_COMPETITIONS). Downloads are cached under <out>/cache/. A cached file is replaced only when the server
 has a newer one and the new download is complete and readable.
 
     python3 load_cricsheet.py --out ./_etl
-    python3 load_cricsheet.py --out ./_etl https://cricsheet.org/downloads/ipl_json.zip
+    python3 load_cricsheet.py --out ./_etl https://cricsheet.org/downloads/ipl_json.zip  # IPL only
     python3 load_cricsheet.py --out ./_etl --offline      # cached files only
     python3 load_cricsheet.py --out ./_etl --fetch-only   # refresh the cache
     python3 load_cricsheet.py --out ./_etl --register DIR # people.csv, names.csv from DIR
@@ -42,6 +43,7 @@ DEFAULT_SOURCES = [
     "https://cricsheet.org/downloads/tests_json.zip",
     "https://cricsheet.org/downloads/odis_json.zip",
     "https://cricsheet.org/downloads/t20s_json.zip",
+    "https://cricsheet.org/downloads/ipl_json.zip",
 ]
 
 REGISTER_URL = "https://cricsheet.org/register/"
@@ -54,6 +56,12 @@ REGISTER_FILES = {
 DEFAULT_VENUE_MERGES = os.path.normpath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)),
                  "..", "venues", "venue_merges.csv"))
+DEFAULT_FRANCHISES = os.path.normpath(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                 "..", "teams", "franchises.csv"))
+
+# event name of a club match -> competition. Internationals need no entry.
+CLUB_COMPETITIONS = {"Indian Premier League": "ipl"}
 
 # Cricsheet match_type -> the format strings the frontend filters on.
 FORMAT_MAP = {
@@ -66,12 +74,12 @@ FORMAT_MAP = {
 # name, matching columns by these headers.
 TABLES = {
     "matches": [
-        "match_id", "date", "format", "venue", "city", "venue_id", "event",
+        "match_id", "date", "format", "competition", "venue", "city", "venue_id", "event",
         "season", "team_type", "gender", "team1", "team2", "toss_winner",
         "toss_decision", "winner", "result_margin", "result_method",
         "eliminator", "bowl_out", "player_of_match"],
     "deliveries": [
-        "id", "match_id", "date", "format", "innings", "over", "ball",
+        "id", "match_id", "date", "format", "competition", "innings", "over", "ball",
         "batter", "batter_id", "non_striker", "non_striker_id", "bowler",
         "bowler_id", "runs_batter", "boundary", "extras", "wides", "noballs",
         "byes", "legbyes", "penalty", "venue", "venue_id", "batting_team",
@@ -83,6 +91,7 @@ TABLES = {
     "player_aliases": ["player_id", "alias"],
     "venues": ["venue_id", "name", "city"],
     "venue_aliases": ["venue_name", "city", "venue_id"],
+    "team_aliases": ["competition", "team_name", "franchise"],
     # the loader's own: IDs that derive.sql must split by gender
     "_player_splits": ["player_id", "gender", "new_player_id"],
 }
@@ -320,6 +329,38 @@ def read_venue_merges(path):
 
 
 # ---------------------------------------------------------------------------
+# competitions and teams
+# ---------------------------------------------------------------------------
+
+def competition_of(match_id, team_type, event_name):
+    if team_type == "international":
+        return "international"
+    if team_type == "club" and event_name in CLUB_COMPETITIONS:
+        return CLUB_COMPETITIONS[event_name]
+    sys.exit(f"match {match_id}: no competition for {team_type!r} event {event_name!r}; "
+             "add it to CLUB_COMPETITIONS")
+
+
+def read_franchises(path):
+    """{(competition, team name): franchise} for the renamed teams listed."""
+    franchises = {}
+    if not os.path.exists(path):
+        return franchises
+    with open(path, newline="", encoding="utf-8-sig") as f:
+        for line, row in enumerate(csv.DictReader(f), start=2):
+            try:
+                key = (row["competition"], row["team"])
+                franchise = row["franchise"]
+            except KeyError as e:
+                sys.exit(f"{path}: missing column {e}")
+            if not all(key) or not franchise:
+                sys.exit(f"{path} line {line}: every column is needed")
+            if franchises.setdefault(key, franchise) != franchise:
+                sys.exit(f"{path} line {line}: {key} is listed under two franchises")
+    return franchises
+
+
+# ---------------------------------------------------------------------------
 # players
 # ---------------------------------------------------------------------------
 
@@ -391,6 +432,8 @@ def main():
                     help="folder holding people.csv and names.csv (default: download)")
     ap.add_argument("--venue-merges", default=DEFAULT_VENUE_MERGES,
                     help="CSV of venue spellings; only rows marked approved are merged")
+    ap.add_argument("--franchises", default=DEFAULT_FRANCHISES,
+                    help="CSV of renamed teams and the franchise each now plays as")
     args = ap.parse_args()
     sources = args.sources or DEFAULT_SOURCES
 
@@ -427,6 +470,8 @@ def main():
 
     people, aliases = read_register(register["people.csv"], register["names.csv"])
     merges = read_venue_merges(args.venue_merges)
+    franchises = read_franchises(args.franchises)
+    seen_teams = set()   # (competition, team name)
     players = Players()
     venues = {}          # venue_id -> (name, city)
     venue_aliases = {}   # (venue, city) -> venue_id
@@ -462,6 +507,9 @@ def main():
             gender = info.get("gender", "") or ""
             team_type = info.get("team_type", "") or ""
             event = info.get("event")
+            event_name = event.get("name", "") if isinstance(event, dict) else ""
+            competition = competition_of(match_id, team_type, event_name)
+            seen_teams.update((competition, t) for t in teams)
             outcome = info.get("outcome") or {}
             registry = (info.get("registry") or {}).get("people") or {}
 
@@ -484,8 +532,7 @@ def main():
                     venue_aliases[(venue, city)] = vid
 
             write("matches", [
-                match_id, date, fmt, venue, city, vid,
-                event.get("name", "") if isinstance(event, dict) else "",
+                match_id, date, fmt, competition, venue, city, vid, event_name,
                 info.get("season", ""), team_type, gender,
                 teams[0] if len(teams) > 0 else "",
                 teams[1] if len(teams) > 1 else "",
@@ -535,7 +582,7 @@ def main():
                         powerplay = next((kind for lo, hi, kind in spans
                                           if lo <= (over_no, b) <= hi), "")
                         write("deliveries", [
-                            delivery_id, match_id, date, fmt, i, over_no, b,
+                            delivery_id, match_id, date, fmt, competition, i, over_no, b,
                             batter, person(batter),
                             non_striker, person(non_striker),
                             bowler, person(bowler),
@@ -568,6 +615,9 @@ def main():
         write("venues", [vid, name, city])
     for (name, city), vid in sorted(venue_aliases.items()):
         write("venue_aliases", [name, city, vid])
+    for competition, team in sorted(seen_teams):
+        write("team_aliases",
+              [competition, team, franchises.get((competition, team), team)])
     for h in handles.values():
         h.close()
 

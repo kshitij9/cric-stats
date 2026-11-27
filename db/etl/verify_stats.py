@@ -12,6 +12,9 @@ using the loader, the SQL or lib/stats.ts:
             batting baseline equals the career figures, and the sample counts
             behind each context factor
 
+A "scope" is a (format, competition) pair: the three international formats, and
+the IPL. Opposition teams in the IPL are franchises (db/teams/franchises.csv).
+
 Needs a candidate app serving the database being checked:
 
     python3 db/etl/verify_stats.py --app http://127.0.0.1:3002
@@ -21,6 +24,7 @@ Exit status 0 means no differences. Standard library only.
 """
 
 import argparse
+import csv
 import json
 import os
 import random
@@ -33,12 +37,23 @@ from collections import Counter, defaultdict
 
 sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from verify import DEFAULT_ZIPS, FORMATS, query  # noqa: E402  (shared, loader-free)
+from verify import (  # noqa: E402  (shared, loader-free)
+    DEFAULT_ZIPS, FORMATS, REPO, competition_of, query)
 
 FORMAT = {"Test": "Test", "MDM": "Test", "ODI": "ODI", "ODM": "ODI",
           "T20": "T20", "IT20": "T20", "T20I": "T20"}
 NOT_DISMISSALS = {"retired hurt", "retired not out"}
 BOWLERS = {"bowled", "caught", "caught and bowled", "lbw", "stumped", "hit wicket"}
+
+
+SCOPES = [("Test", "international"), ("ODI", "international"),
+          ("T20", "international"), ("T20", "ipl")]
+
+
+def franchises():
+    """{(competition, team): franchise} for renamed teams."""
+    with open(os.path.join(REPO, "db/teams/franchises.csv"), newline="", encoding="utf-8") as f:
+        return {(r["competition"], r["team"]): r["franchise"] for r in csv.DictReader(f)}
 
 
 def phase(fmt, over):
@@ -83,20 +98,21 @@ class Source:
             for g in order:
                 alias[(pid, g)] = pid if g == order[0] else f"{pid}-{g[0]}"
 
-        self.innings = defaultdict(set)                  # (player, fmt) -> {(match, innings)}
-        self.bat = defaultdict(Counter)                  # (player, fmt)
-        self.season = defaultdict(Counter)               # (player, fmt, year)
-        self.bowl = defaultdict(Counter)                 # (player, fmt)
-        self.era = defaultdict(Counter)                  # (year, fmt, gender)
-        self.pairs = defaultdict(lambda: defaultdict(Counter))  # (batter, fmt)[bowler]
-        # (role, player, fmt)[(phase, innings, team faced, opponent)] -> counts
+        self.franchise = franchises()
+        self.innings = defaultdict(set)                  # (player, scope) -> {(match, innings)}
+        self.bat = defaultdict(Counter)                  # (player, scope)
+        self.season = defaultdict(Counter)               # (player, scope, year)
+        self.bowl = defaultdict(Counter)                 # (player, scope)
+        self.era = defaultdict(Counter)                  # (year, scope, gender)
+        self.pairs = defaultdict(lambda: defaultdict(Counter))  # (batter, scope)[bowler]
+        # (role, player, scope)[(phase, innings, team faced, opponent)] -> counts
         self.slices = defaultdict(lambda: defaultdict(lambda: [0, 0, 0]))
         self.gender = {}
         for mid, m in read_matches(paths):
             self._read(mid, m, alias)
 
-    def count(self, role, pid, fmt, where, team, opponent, balls=0, dismissal=0, credit=0):
-        row = self.slices[(role, pid, fmt)][(*where, team, sys.intern(opponent))]
+    def count(self, role, pid, scope, where, team, opponent, balls=0, dismissal=0, credit=0):
+        row = self.slices[(role, pid, scope)][(*where, team, sys.intern(opponent))]
         row[0] += balls
         row[1] += dismissal
         row[2] += credit
@@ -104,6 +120,8 @@ class Source:
     def _read(self, mid, m, alias):
         info = m["info"]
         fmt, gender = FORMAT[info["match_type"]], info["gender"]
+        competition = competition_of(info)
+        scope = (fmt, competition)
         year = int(info["dates"][0][:4])
         reg = info["registry"]["people"]
         teams = info["teams"]
@@ -118,6 +136,9 @@ class Source:
                 continue
             batting = inn.get("team", "")
             bowling = next((t for t in teams if t != batting), "")
+            # the app filters opposition by franchise
+            batting, bowling = (self.franchise.get((competition, t), t)
+                                for t in (batting, bowling))
             for o in inn.get("overs", []):
                 for d in o["deliveries"]:
                     striker, other, bowler = who(d["batter"]), who(d["non_striker"]), who(d["bowler"])
@@ -129,32 +150,32 @@ class Source:
                     hit = 0 if d["runs"].get("non_boundary") else runs
 
                     for p in (striker, other):
-                        self.innings[(p, fmt)].add((mid, number))
-                    c = self.bat[(striker, fmt)]
+                        self.innings[(p, scope)].add((mid, number))
+                    c = self.bat[(striker, scope)]
                     c.update(runs=runs, balls=faced, fours=hit == 4, sixes=hit == 6)
-                    self.season[(striker, fmt, year)].update(runs=runs, balls=faced)
-                    self.era[(year, fmt, gender)].update(runs=runs, balls=faced)
-                    self.bowl[(bowler, fmt)].update(runs=conceded, balls=legal)
-                    pair = self.pairs[(striker, fmt)][bowler]
+                    self.season[(striker, scope, year)].update(runs=runs, balls=faced)
+                    self.era[(year, scope, gender)].update(runs=runs, balls=faced)
+                    self.bowl[(bowler, scope)].update(runs=conceded, balls=legal)
+                    pair = self.pairs[(striker, scope)][bowler]
                     pair.update(runs=runs, balls=faced)
 
                     where = (phase(fmt, o["over"]), number)
-                    self.count("batter", striker, fmt, where, bowling, bowler, balls=faced)
-                    self.count("bowler", bowler, fmt, where, batting, striker, balls=legal)
+                    self.count("batter", striker, scope, where, bowling, bowler, balls=faced)
+                    self.count("bowler", bowler, scope, where, batting, striker, balls=legal)
 
                     for w in d.get("wickets", []):
                         out = who(w["player_out"])
-                        self.innings[(out, fmt)].add((mid, number))
+                        self.innings[(out, scope)].add((mid, number))
                         dismissal = w["kind"] not in NOT_DISMISSALS
                         credit = w["kind"] in BOWLERS
                         if dismissal:
-                            self.bat[(out, fmt)]["outs"] += 1
-                            self.count("batter", out, fmt, where, bowling, bowler,
+                            self.bat[(out, scope)]["outs"] += 1
+                            self.count("batter", out, scope, where, bowling, bowler,
                                        dismissal=1, credit=int(credit))
                         if credit:
-                            self.bowl[(bowler, fmt)]["wickets"] += 1
-                            self.pairs[(out, fmt)][bowler]["dismissals"] += 1
-                            self.count("bowler", bowler, fmt, where, batting, out,
+                            self.bowl[(bowler, scope)]["wickets"] += 1
+                            self.pairs[(out, scope)][bowler]["dismissals"] += 1
+                            self.count("bowler", bowler, scope, where, batting, out,
                                        dismissal=1, credit=1)
 
     def career(self, key):
@@ -162,12 +183,12 @@ class Source:
         return {"innings": len(self.innings[key]), **{
             f: int(c.get(f, 0)) for f in ("runs", "balls", "outs", "fours", "sixes")}}
 
-    def era_years(self, pid, fmt):
+    def era_years(self, pid, scope):
         """[(year, runs, expected runs)] for the years the player faced a ball."""
         rows = []
-        for (p, f, year), c in self.season.items():
-            if p == pid and f == fmt and c["balls"]:
-                base = self.era[(year, fmt, self.gender[pid])]
+        for (p, s, year), c in self.season.items():
+            if p == pid and s == scope and c["balls"]:
+                base = self.era[(year, scope, self.gender[pid])]
                 rows.append((year, c["runs"], c["balls"] * base["runs"] / base["balls"]))
         return sorted(rows)
 
@@ -223,15 +244,18 @@ def main():
             sys.exit(f"{url} -> HTTP {e.code}: {e.read()[:200]!r}")
 
     # ---- database: every career and every era baseline ----------------------
-    stored = {(r[0], r[1]): [int(v) for v in r[2:]] for r in query(args.db, """
-        SELECT player_id, format, sum(innings_played), sum(runs_scored), sum(balls_faced),
-               sum(outs), sum(fours), sum(sixes) FROM player_career_stats GROUP BY 1, 2""")}
+    stored = {(r[0], (r[1], r[2])): [int(v) for v in r[3:]] for r in query(args.db, """
+        SELECT player_id, format, competition, sum(innings_played), sum(runs_scored),
+               sum(balls_faced), sum(outs), sum(fours), sum(sixes)
+          FROM player_career_stats GROUP BY 1, 2, 3""")}
     keys = {k for k, v in src.innings.items() if v}
     for k in sorted(keys | set(stored)):
         want = list(src.career(k).values()) if k in keys else None
         report.same("careers in the database (all players)", k, str(want), str(stored.get(k)))
-    eras = {(int(r[0]), r[1], r[2]): (int(r[3]), int(r[4]), float(r[5])) for r in query(
-        args.db, "SELECT year, format, gender, runs, balls, avg_strike_rate FROM era_averages")}
+    eras = {(int(r[0]), (r[1], r[2]), r[3]): (int(r[4]), int(r[5]), float(r[6]))
+            for r in query(args.db, """
+        SELECT year, format, competition, gender, runs, balls, avg_strike_rate
+          FROM era_averages""")}
     for k in sorted(set(src.era) | set(eras)):
         c, e = src.era.get(k), eras.get(k, (None, None, None))
         report.same("era baselines", (*k, "runs"), c and c["runs"], e[0])
@@ -240,9 +264,9 @@ def main():
 
     # ---- sample -------------------------------------------------------------
     sample = set()
-    for fmt in ("Test", "ODI", "T20"):
+    for scope in SCOPES:
         for gender in ("male", "female"):
-            group = [k for k in keys if k[1] == fmt and src.gender[k[0]] == gender]
+            group = [k for k in keys if k[1] == scope and src.gender[k[0]] == gender]
             sample.update(sorted(group, key=lambda k: -src.bat[k]["runs"])[:12])
             sample.update(sorted(group, key=lambda k: -src.bowl[k]["wickets"])[:8])
     names = query(args.db, """
@@ -260,73 +284,80 @@ def main():
 
     # ---- stats API ----------------------------------------------------------
     careers = {}
-    for pid, fmt in sample:
-        want = src.career((pid, fmt))
-        rows = get("/api/stats/career", id=pid, format=fmt)
+    for pid, scope in sample:
+        fmt, competition = scope
+        which = {"id": pid, "format": fmt, "competition": competition}
+        want = src.career((pid, scope))
+        rows = get("/api/stats/career", **which)
         got = rows[0] if len(rows) == 1 else {}
-        careers[(pid, fmt)] = got
+        careers[(pid, scope)] = got
         for f, v in want.items():
-            report.same("career counts (API)", (pid, fmt, f), v, got.get(f))
+            report.same("career counts (API)", (pid, scope, f), v, got.get(f))
         for f, v, tol in (
                 ("average", ratio(want["runs"], want["outs"]), 0.0051),
                 ("strike_rate", ratio(want["runs"], want["balls"], 100), 0.0051),
                 ("balls_per_dismissal", ratio(want["balls"], want["outs"]), 0.051),
                 ("boundary_percent", ratio(4 * want["fours"] + 6 * want["sixes"], want["runs"], 100), 0.051),
                 ("not_out_percent", ratio(want["innings"] - want["outs"], want["innings"], 100), 0.051)):
-            report.same("career rates (API)", (pid, fmt, f), v, got.get(f), tol)
-        report.same("profile equals career (API)", (pid, fmt),
+            report.same("career rates (API)", (pid, scope, f), v, got.get(f), tol)
+        report.same("profile equals career (API)", (pid, scope),
                     json.dumps(rows, sort_keys=True),
-                    json.dumps(get("/api/stats/player_full_profile", id=pid, format=fmt), sort_keys=True))
+                    json.dumps(get("/api/stats/player_full_profile", **which), sort_keys=True))
 
-        years = src.era_years(pid, fmt)
-        api_years = {r["year"]: r["era_index"] for r in get("/api/stats/era", id=pid, format=fmt)}
-        report.same("era index years (API)", (pid, fmt),
+        years = src.era_years(pid, scope)
+        api_years = {r["year"]: r["era_index"] for r in get("/api/stats/era", **which)}
+        report.same("era index years (API)", (pid, scope),
                     str([y for y, _, _ in years]), str(sorted(api_years)))
         for year, runs, expected in years:
-            report.same("era index by year (API)", (pid, fmt, year),
+            report.same("era index by year (API)", (pid, scope, year),
                         ratio(runs, expected), api_years.get(year), 0.0051)
-        report.same("career era index (API)", (pid, fmt),
+        report.same("career era index (API)", (pid, scope),
                     ratio(sum(r for _, r, _ in years), sum(e for _, _, e in years)),
                     got.get("era_index"), 0.0051)
 
-        pairs = [(b, c) for b, c in src.pairs.get((pid, fmt), {}).items() if c["balls"] > 15]
+        pairs = [(b, c) for b, c in src.pairs.get((pid, scope), {}).items() if c["balls"] > 15]
         pairs.sort(key=lambda p: (-p[1]["dismissals"], p[1]["runs"] / p[1]["balls"], p[0]))
         want_top = [(b, c["balls"], c["runs"], c["dismissals"]) for b, c in pairs[:5]]
         got_top = [(r["bowler_id"], r["balls"], r["runs"], r["dismissals"])
-                   for r in get("/api/stats/matchup", id=pid, format=fmt)]
-        report.same("top matchups (API)", (pid, fmt), str(want_top), str(got_top))
+                   for r in get("/api/stats/matchup", **which)]
+        report.same("top matchups (API)", (pid, scope), str(want_top), str(got_top))
 
     # ---- recommender --------------------------------------------------------
-    for fmt in ("Test", "ODI", "T20"):
-        ids = [p for p, f in sample if f == fmt]
+    for scope in SCOPES:
+        fmt, competition = scope
+        ids = [p for p, s in sample if s == scope]
         for role in ("batter", "bowler"):
             for i in range(0, len(ids), 20):
-                answer = get("/api/recommend", role=role, format=fmt, players=",".join(ids[i:i + 20]))
+                answer = get("/api/recommend", role=role, format=fmt, competition=competition,
+                             players=",".join(ids[i:i + 20]))
                 for p in answer["players"]:
                     pid = p["player_id"]
                     table = src.bat if role == "batter" else src.bowl
-                    c = table.get((pid, fmt), Counter())
-                    report.same("recommender: who has data", (role, pid, fmt),
+                    c = table.get((pid, scope), Counter())
+                    report.same("recommender: who has data", (role, pid, scope),
                                 str(c["balls"] > 0), str(p["data_available"]))
                     if not p["data_available"]:
                         continue
                     base = p["baseline"]
                     if role == "batter":
                         for f in ("runs", "balls", "outs"):
-                            report.same("recommender batting baselines", (pid, fmt, f), c[f], base[f])
+                            report.same("recommender batting baselines", (pid, scope, f), c[f], base[f])
                         for f in ("runs", "balls", "outs", "average", "strike_rate", "balls_per_dismissal"):
-                            report.same("recommender equals career", (pid, fmt, f),
-                                        careers[(pid, fmt)].get(f), base[f])
+                            report.same("recommender equals career", (pid, scope, f),
+                                        careers[(pid, scope)].get(f), base[f])
                     else:
                         for f, g in (("runs", "runs_conceded"), ("balls", "balls"), ("wickets", "wickets")):
-                            report.same("recommender bowling baselines", (pid, fmt, f), c[f], base[g])
+                            report.same("recommender bowling baselines", (pid, scope, f), c[f], base[g])
 
     # context factors: each player against their most-faced opponent and in a slice
     cases = []
     for role, table in (("batter", src.bat), ("bowler", src.bowl)):
-        cases += [(role, k) for k in sample if table.get(k, {}).get("balls", 0) > 200][:60]
-    for role, (pid, fmt) in cases:
-        records = src.slices.get((role, pid, fmt))
+        busy = [k for k in sample if table.get(k, {}).get("balls", 0) > 200]
+        for scope in SCOPES:
+            cases += [(role, k) for k in busy if k[1] == scope][:20]
+    for role, (pid, scope) in cases:
+        fmt, competition = scope
+        records = src.slices.get((role, pid, scope))
         if not records:
             continue
         faced, teams = Counter(), Counter()
@@ -336,8 +367,8 @@ def main():
         opponent = max(faced, key=lambda k: (faced[k], k))
         team = max(teams, key=lambda k: (teams[k], k))
         which_phase = "death" if fmt != "Test" else ""
-        answer = get("/api/recommend", role=role, format=fmt, players=pid, opponent=opponent,
-                     opposition=team, phase=which_phase, innings=2)
+        answer = get("/api/recommend", role=role, format=fmt, competition=competition,
+                     players=pid, opponent=opponent, opposition=team, phase=which_phase, innings=2)
         factors = answer["players"][0].get("factors", {})
         tests = {"matchup": lambda k: k[3] == opponent, "opposition": lambda k: k[2] == team,
                  "innings": lambda k: k[1] == 2}
@@ -349,8 +380,8 @@ def main():
             # against one opponent a batter's events are the bowler's own wickets
             events = sum(v[2 if key == "matchup" else 1] for v in chosen)
             got = factors.get(key, {})
-            report.same("context factor balls", (role, pid, fmt, key), balls or None, got.get("sample_balls"))
-            report.same("context factor events", (role, pid, fmt, key),
+            report.same("context factor balls", (role, pid, scope, key), balls or None, got.get("sample_balls"))
+            report.same("context factor events", (role, pid, scope, key),
                         events if balls else None, got.get("sample_events"))
 
     sys.exit(1 if report.finish() else 0)

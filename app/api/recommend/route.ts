@@ -1,18 +1,21 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { recommend, type Ctx, type Role } from '@/lib/recommend';
-import { findPlayers, isFormat, isPlayerId, FORMATS, type Format } from '@/lib/stats';
+import { parseScope } from '@/lib/scope';
+import { findPlayers, isPlayerId } from '@/lib/stats';
+import type { Scope } from '@/lib/types';
 
 /**
  * GET/POST /api/recommend
  *
  *   role        'batter' (default) | 'bowler'
  *   format      Test | ODI | T20                (required)
+ *   competition international (default) | ipl   (ipl needs format T20)
  *   players     player IDs, comma list / array  (omit => discovery: rank the field)
  *   venue       venue ID
  *   opponent    player ID of the named opponent — for role=batter a bowler, for
  *               role=bowler a batter. Also accepted as `bowler` / `batter`.
- *   opposition  opposing team name
+ *   opposition  opposing team name (in the IPL, any name the franchise has used)
  *   phase       powerplay | middle | death      (ignored for Test)
  *   innings     1..4
  *   gender      male (default) | female | any   (discovery only: a shortlist
@@ -27,7 +30,7 @@ const GENDERS = new Set(['male', 'female', '']); // '' => both
 
 type Parsed = {
   role: Role;
-  format: Format;
+  scope: Scope;
   players: string[] | null; // player IDs
   ctx: Ctx;
   limit: number;
@@ -38,10 +41,8 @@ function parseInput(raw: Record<string, unknown>): Parsed | { error: string } {
   const role = (String(raw.role ?? 'batter').trim() || 'batter') as Role;
   if (!ROLES.has(role)) return { error: `role must be one of ${[...ROLES].join(', ')}` };
 
-  const format = String(raw.format ?? '').trim();
-  if (!isFormat(format)) {
-    return { error: `format must be one of ${FORMATS.join(', ')}` };
-  }
+  const scope = parseScope(raw.format, raw.competition);
+  if ('error' in scope) return scope;
 
   let players: string[] | null = null;
   let raw_players: unknown = raw.players;
@@ -82,7 +83,7 @@ function parseInput(raw: Record<string, unknown>): Parsed | { error: string } {
 
   return {
     role,
-    format,
+    scope,
     players,
     limit,
     minSample,
@@ -90,7 +91,7 @@ function parseInput(raw: Record<string, unknown>): Parsed | { error: string } {
       venue: String(c.venue ?? '').trim(),
       opponent,
       opposition: String(c.opposition ?? '').trim(),
-      phase: format === 'Test' ? '' : phaseRaw,
+      phase: scope.format === 'Test' ? '' : phaseRaw,
       innings,
       gender,
     },
@@ -132,6 +133,7 @@ export async function GET(request: Request) {
     return await handle({
       role: sp.get('role'),
       format: sp.get('format'),
+      competition: sp.get('competition'),
       players: sp.get('players'),
       gender: sp.get('gender'),
       limit: sp.get('limit'),

@@ -1,6 +1,10 @@
 /** Shapes the APIs return. Safe to import from pages: types only. */
 
 export type Format = 'Test' | 'ODI' | 'T20';
+export type Competition = 'international' | 'ipl';
+
+/** What a figure is counted over: the IPL is T20 and never mixed with T20Is. */
+export type Scope = { format: Format; competition: Competition };
 
 /** Enough to name a player. unique_name tells namesakes apart. */
 export type PlayerRef = { player_id: string; name: string; unique_name: string };
