@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowRight, ListOrdered, Scale, UserRound } from 'lucide-react';
+import { ArrowRight, ListOrdered, Scale, UserRound, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import PlayerSearch from '@/components/PlayerSearch';
@@ -48,6 +48,18 @@ const FEATURES = [
     ],
     action: 'Find picks',
   },
+  {
+    href: '/teams',
+    icon: Users,
+    title: 'Teams',
+    question: 'What would my side look like?',
+    points: [
+      'Build IPL teams of your own',
+      'Or start from a franchise\u2019s line-up',
+      'Set the batting order and check the bowling',
+    ],
+    action: 'Build a team',
+  },
 ];
 
 export default function Home() {
@@ -83,7 +95,7 @@ export default function Home() {
         </div>
       </section>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {FEATURES.map(({ href, icon: Icon, title, question, points, action }) => (
           <Link
             key={href}
