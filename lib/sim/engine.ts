@@ -1,5 +1,5 @@
 import { Attack, OVERS } from './bowling';
-import { PRESSURE_BANDS, pressureBand } from './history';
+import { PRESSURE_BANDS, WICKET_BANDS, pressureBand, wicketState } from './history';
 import { Model } from './model';
 import {
   BYE,
@@ -93,17 +93,26 @@ export function simulate(
   );
 
   const bands = model.usesPressure ? PRESSURE_BANDS + 1 : 1;
-  // chances already worked out: [innings][batter][bowler][phase][band]
+  const states = model.usesWickets ? WICKET_BANDS : 1;
+  // chances already worked out: [innings][batter][bowler][phase][band][wickets]
   const known = sides.map((batting, i) => {
     const bowling = sides[1 - i];
     return new Array<Float64Array | undefined>(
-      batting.order.length * bowling.order.length * PHASE_COUNT * bands,
+      batting.order.length * bowling.order.length * PHASE_COUNT * bands * states,
     );
   });
-  const chances = (i: number, batter: number, bowler: number, phase: number, band: number) => {
+  const chances = (
+    i: number,
+    batter: number,
+    bowler: number,
+    phase: number,
+    band: number,
+    lost: number,
+  ) => {
     const bowlers = sides[1 - i].order.length;
     const slot = bands > 1 ? band + 1 : 0; // the first is for no chase
-    const key = ((batter * bowlers + bowler) * PHASE_COUNT + phase) * bands + slot;
+    const state = states > 1 ? wicketState(0, lost) : 0;
+    const key = (((batter * bowlers + bowler) * PHASE_COUNT + phase) * bands + slot) * states + state;
     let found = known[i][key];
     if (!found) {
       found = known[i][key] = new Float64Array(OUTCOMES);
@@ -115,6 +124,7 @@ export function simulate(
         phase,
         i + 1,
         band,
+        lost,
       );
     }
     return found;
@@ -126,7 +136,9 @@ export function simulate(
     return floor + (random() < value - floor ? 1 : 0);
   };
 
-  let day = 1; // above 1: a good day for batting
+  // above 1: a good day for batting; and what it does to the chance of a wicket
+  let day = 1;
+  let wicketScale = 1;
   const innings = (i: number, target: number) => {
     const batters = sides[i].order.length;
     const lastWicket = Math.min(10, batters - 1);
@@ -134,6 +146,7 @@ export function simulate(
     const bowling = tally[1 - i];
     const attack = attacks[1 - i];
     attack.reset();
+    const fixed = sides[1 - i].overs?.map((id) => (id ? sides[1 - i].order.indexOf(id) : -1));
     let striker = 0;
     let other = 1;
     let next = 2;
@@ -145,7 +158,9 @@ export function simulate(
     let consecutive = false;
 
     for (let over = 0; over < OVERS; over++) {
-      const bowler = attack.next(over, previous, random);
+      let bowler = fixed?.[over] ?? -1;
+      if (bowler < 0) bowler = attack.next(over, previous, random);
+      else attack.used[bowler] += 1;
       if (bowler === previous) consecutive = true;
       previous = bowler;
       bowling.overs[bowler] += 1;
@@ -153,10 +168,9 @@ export function simulate(
 
       for (let balls = 0; balls < 6; ) {
         const band = target && bands > 1 ? pressureBand(target - total, 120 - legal) : -1;
-        const p = chances(i, striker, bowler, phase, band);
+        const p = chances(i, striker, bowler, phase, band, wickets);
 
         // on a good day for batting, more boundaries and fewer wickets
-        const wicketScale = 1 / day;
         let draw = random();
         if (day !== 1) draw *= 1 + (day - 1) * (p[FOUR] + p[SIX]) + (wicketScale - 1) * p[WICKET];
         let o = 0;
@@ -222,7 +236,13 @@ export function simulate(
   const totals = [new Int16Array(sims), new Int16Array(sims)];
   let wins = 0;
   for (let n = 0; n < sims; n++) {
-    day = spread > 0 ? Math.exp(spread * normal(random) - (spread * spread) / 2) : 1;
+    if (spread > 0) {
+      const swing = spread * normal(random);
+      const middle = (spread * spread) / 2;
+      day = Math.exp(swing - middle);
+      // 1 / day averages above one, so loses runs; centred, both average one
+      wicketScale = model.params.dayCentred ? Math.exp(-swing - middle) : 1 / day;
+    }
     const a = innings(0, 0);
     const b = innings(1, a + 1);
     totals[0][n] = a;

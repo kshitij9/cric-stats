@@ -7,7 +7,7 @@ same day.
 |---|---|
 | 1. Team builder | Live since 27 November 2026 |
 | 2. Matchup facts | Live since 27 November 2026 |
-| 3. Simulator and its test | Done 27 November 2026: no win percentage |
+| 3. Simulator and its test | Done 27 November 2026: no win percentage. Improved version tried 28 November and dropped |
 | 4. Matchup results | Replaced by the face-off below: the simulator did not pass |
 
 Notes from stage 1:
@@ -51,6 +51,9 @@ Result of stage 3, in full in `simulator-backtest.md`:
 - Player runs did not beat the recent average. Player wickets did, by 2 to 4%.
 - Code: `lib/sim/` (simulator), `scripts/backtest/` (test). The app does not use
   it.
+- Second round (`simulator-improvement.md`): the changes did not carry over to
+  fresh matches, and the stop rule ended the work. Fantasy projections from
+  recent averages may follow.
 
 ## Face-off (agreed 28 November 2026, in place of stage 4)
 

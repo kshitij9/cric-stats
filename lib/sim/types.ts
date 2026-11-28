@@ -31,6 +31,8 @@ export type PastMatch = {
 export type SideInput = {
   order: string[]; // batting order
   bowling: BowlerUsage[]; // the same players
+  /** Who bowls each over, where known; otherwise drawn from their habits. */
+  overs?: (string | undefined)[];
 };
 
 export type BowlerUsage = {

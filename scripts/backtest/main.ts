@@ -1,29 +1,43 @@
 /**
  * The simulator's backtest.
  *
- *   ./scripts/backtest/run.sh tune     choose settings on 2019-2022 (about 10 min)
+ *   ./scripts/backtest/run.sh tune     choose the first version's settings on 2019-2022
+ *   ./scripts/backtest/run.sh tune2    choose the second's on 2013-2022
+ *   ./scripts/backtest/run.sh compare  both on IPL 2023-2026 and on internationals
+ *   ./scripts/backtest/run.sh diagnose where the first version's runs went
  *   ./scripts/backtest/run.sh checks   is the machinery right?
- *   ./scripts/backtest/run.sh test     score 2023-2026 with the frozen settings
+ *   ./scripts/backtest/run.sh test     score the first version on IPL 2023-2026
  *   ./scripts/backtest/run.sh speed    how long one matchup takes
  *
- * `tune` only prints and saves what it chooses. To use it, copy it into
- * lib/sim/params.ts and scripts/backtest/frozen.ts, and run `test` afterwards.
- * Do not change either in the light of a test result: the test then no longer
- * measures how the simulator does on matches it has not been fitted to.
+ * The tuning steps only print and save what they choose; it is copied by hand
+ * into lib/sim/params.ts and scripts/backtest/frozen.ts. Do not change either in
+ * the light of a score: it then no longer measures how the simulator does on
+ * matches it has not been fitted to.
  */
 import { writeFileSync } from 'node:fs';
 import { Pool, types } from 'pg';
 import { loadMatches, type Query } from '../../lib/sim/data';
 import { History } from '../../lib/sim/history';
-import { CALIBRATION, PARAMS } from '../../lib/sim/params';
+import { PARAMS } from '../../lib/sim/params';
 import { predict } from '../../lib/sim/predict';
 import { elo, groundAverage, playerAverages, tuneElo, type GroundParams, type PlayerParams } from './baselines';
 import { checks } from './checks';
+import { carryOn, compare, targets } from './compare';
+import { diagnose } from './diagnose';
 import { TEST, TUNE, firstWon, fixtureOf, logLoss, mae, mean, rmse, actual, type Period } from './common';
 import { calibrate, coverage, evaluate, fitCalibration } from './evaluate';
-import { ELO, GROUND, GROUND_PLAIN, PLAYER, PLAYER_PLAIN } from './frozen';
+import {
+  CALIBRATION_V1,
+  ELO,
+  GROUND,
+  GROUND_PLAIN,
+  PARAMS_V1,
+  PLAYER,
+  PLAYER_PLAIN,
+} from './frozen';
 import { report } from './report';
 import { tuneBalls } from './tune';
+import { TUNE2, tuneSecond } from './tune2';
 import type { PastMatch } from '../../lib/sim/types';
 
 types.setTypeParser(20, Number);
@@ -133,9 +147,9 @@ async function main() {
   } else if (step === 'checks') {
     if (!(await checks(matches, query, PARAMS))) process.exitCode = 1;
   } else if (step === 'test') {
-    const [rows] = evaluate(matches, TEST, [PARAMS], 10000);
+    const [rows] = evaluate(matches, TEST, [PARAMS_V1], 10000);
     const plain = playerAverages(matches, TEST, [PLAYER_PLAIN, PLAYER]);
-    const result = report(rows, CALIBRATION, {
+    const result = report(rows, CALIBRATION_V1, {
       elo: elo(matches, TEST, ELO),
       ground: [
         { name: 'ground’s recent average', totals: groundAverage(matches, TEST, GROUND_PLAIN) },
@@ -148,6 +162,35 @@ async function main() {
     });
     writeFileSync('out/test.json', json({ result, rows }));
     console.log(json(result));
+  } else if (step === 'tune2') {
+    // nothing later than the tuning seasons is passed in
+    const tuned = tuneSecond(matches.filter((m) => m.season <= TUNE2.to));
+    writeFileSync('out/tuned2.json', json(tuned));
+    console.log(json({ ...tuned, steps: undefined }));
+  } else if (step === 'compare') {
+    const sets = [
+      { name: 'IPL 2023-2026', matches, sims: 10000 },
+      {
+        name: 'T20 internationals 2023-2026',
+        matches: await loadMatches(query, 'international'),
+        sims: 4000,
+      },
+    ];
+    const done = sets.map(({ name, matches: of, sims }) => {
+      console.log(`${name}: ${of.length} matches in the history`);
+      const versions = compare(of, sims);
+      for (const v of versions) {
+        console.log(`\n== ${name}, ${v.version} version`);
+        console.log(json(v.result));
+        console.table(targets(v.result));
+      }
+      return { name, versions };
+    });
+    const carry = carryOn(done[1].versions[1].result, done[0].versions[1].result);
+    console.log(`\nstop rule: ${carry ? 'carry on with the simulator' : 'STOP'}`);
+    writeFileSync('out/compare.json', json({ done, carry }));
+  } else if (step === 'diagnose') {
+    for (const period of [TUNE, TEST]) diagnose(matches, period, PARAMS_V1, 2000);
   } else if (step === 'speed') {
     const history = new History();
     const built = Date.now();
@@ -163,7 +206,7 @@ async function main() {
       console.log(`${sims} simulations: ${times.join(', ')} ms`);
     }
   } else {
-    console.error('usage: run.sh tune | checks | test | speed');
+    console.error('usage: run.sh tune | tune2 | compare | checks | test | diagnose | speed');
     process.exitCode = 1;
   }
   await pool.end();

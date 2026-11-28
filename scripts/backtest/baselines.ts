@@ -78,29 +78,69 @@ export type GroundParams = {
   matches: number; // the ground's latest completed first innings
   league: number; // the league's latest, for what is usual now
   weight: number; // innings' worth of the usual mixed in (0: the plain average)
+  /**
+   * The same correction for the scoring level that the simulator may use: the
+   * league's recent average, each match counting half as much for every `level`
+   * played since, plus how far the ground's innings were above the level of
+   * their day. Left out: no correction.
+   */
+  level?: number;
 };
 
+/** A running average in which each addition counts for less as more follow. */
+class Fading {
+  private sum = 0;
+  private weight = 0;
+  private readonly keep: number;
+  constructor(halfLife: number) {
+    this.keep = 0.5 ** (1 / halfLife);
+  }
+  add(values: number[]) {
+    const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    this.sum = this.sum * this.keep + mean;
+    this.weight = this.weight * this.keep + 1;
+  }
+  get value() {
+    return this.weight ? this.sum / this.weight : null;
+  }
+}
+
 export function groundAverage(matches: PastMatch[], period: Period, p: GroundParams) {
-  const here = new Map<string, number[]>();
+  const here = new Map<string, { total: number; then: number }[]>();
   const all: number[] = [];
+  const fading = p.level === undefined ? null : new Fading(p.level);
   const out = new Map<string, number>();
   let date = '';
   let day: { venue: string; total: number }[] = [];
   for (const m of matches) {
     if (m.season > period.to) break;
     if (m.date !== date) {
+      const then = fading?.value;
       for (const d of day) {
         all.push(d.total);
-        here.set(d.venue, [...(here.get(d.venue) ?? []), d.total]);
+        here.set(d.venue, [
+          ...(here.get(d.venue) ?? []),
+          { total: d.total, then: then ?? d.total },
+        ]);
       }
+      for (const d of day) fading?.add([d.total]);
       day = [];
       date = m.date;
     }
     if (m.season >= period.from && all.length) {
-      const usual = mean(all.slice(-p.league));
       const seen = (here.get(m.venueId) ?? []).slice(-p.matches);
-      const weight = seen.length ? p.weight : 1;
-      out.set(m.id, (seen.reduce((a, b) => a + b, 0) + weight * usual) / (seen.length + weight));
+      if (fading) {
+        const above = seen.reduce((a, s) => a + s.total - s.then, 0);
+        const count = seen.length + p.weight;
+        out.set(m.id, fading.value! + (count ? above / count : 0));
+      } else {
+        const usual = mean(all.slice(-p.league));
+        const weight = seen.length ? p.weight : 1;
+        out.set(
+          m.id,
+          (seen.reduce((a, s) => a + s.total, 0) + weight * usual) / (seen.length + weight),
+        );
+      }
     }
     if (!m.shortened) day.push({ venue: m.venueId, total: actual(m).totals[0] });
   }
@@ -112,69 +152,135 @@ export function groundAverage(matches: PastMatch[], period: Period, p: GroundPar
 export type PlayerParams = {
   matches: number; // their latest matches
   weight: number; // matches' worth of what is usual for such a player (0: plain)
+  /**
+   * The same correction for the scoring level: what they did relative to the
+   * league's runs (and wickets) a player at the time, times that figure now.
+   */
+  level?: number;
 };
 
-type Usual = { runs: number; wickets: number; n: number };
+type Usual = { runs: number; wickets: number; runsLevel: number; wicketsLevel: number; n: number };
+type Past = { runs: number; wickets: number; runsLevel: number; wicketsLevel: number };
+export type Average = { runs: number; wickets: number };
 
 /**
- * Per player and match: recent average runs and wickets. "Usual" is the average
- * over everyone in the same part of the order (for runs) or with the same amount
- * of bowling (for wickets), this season and last.
+ * Per player and match, for each setting: recent average runs and wickets.
+ * "Usual" is the average over everyone in the same part of the order (for runs)
+ * or with the same amount of bowling (for wickets), this season and last.
  */
-export function playerAverages(matches: PastMatch[], period: Period, settings: PlayerParams[]) {
-  const out = settings.map(() => new Map<string, { runs: number; wickets: number }>());
-  const usual = new Map<string, Map<number, Usual>>(); // group -> season
+export function eachPlayerAverage(
+  matches: PastMatch[],
+  period: Period,
+  settings: PlayerParams[],
+  visit: (setting: number, match: PastMatch, id: string, average: Average) => void,
+) {
+  const usual = new Map<string, Map<number, Usual>>(); // level and group -> season
+  const own = new Map<string, Past[]>(); // level and player -> latest matches
+  const levels = [...new Set(settings.map((s) => s.level))].map((halfLife) => ({
+    halfLife,
+    runs: halfLife === undefined ? null : new Fading(halfLife),
+    wickets: halfLife === undefined ? null : new Fading(halfLife),
+  }));
   const bucket = (history: History, id: string) => ({
     bat: `bat ${positionGroup(history.usualPosition(id, 20))}`,
     bowl: `bowl ${Math.round(Math.min(4, history.oversAMatch(id, 20)))}`,
   });
-  walk(matches, { from: period.from - 2, to: period.to }, (history, day) => {
+  walk(matches, { from: matches[0].season, to: period.to }, (history, day) => {
+    // the level before this day's matches; 1 where there is no correction
+    const now = new Map(
+      levels.map((l) => [
+        l.halfLife,
+        { runs: l.runs?.value || 1, wickets: l.wickets?.value || 1 },
+      ]),
+    );
     for (const m of day) {
-      const of = (group: string) => {
-        const seasons = usual.get(group);
-        const sum = { runs: 0, wickets: 0, n: 0 };
-        for (const season of [m.season - 1, m.season]) {
-          const s = seasons?.get(season);
-          if (!s) continue;
-          sum.runs += s.runs;
-          sum.wickets += s.wickets;
-          sum.n += s.n;
-        }
-        return { runs: sum.n ? sum.runs / sum.n : 0, wickets: sum.n ? sum.wickets / sum.n : 0 };
-      };
       if (m.season < period.from) continue;
       for (const id of m.named.flat()) {
         const groups = bucket(history, id);
         settings.forEach((p, i) => {
-          const seen = history.recent(id, p.matches);
+          const level = now.get(p.level)!;
+          const of = (group: string) => {
+            const seasons = usual.get(`${p.level} ${group}`);
+            const sum = { runs: 0, wickets: 0, runsLevel: 0, wicketsLevel: 0, n: 0 };
+            for (const season of [m.season - 1, m.season]) {
+              const s = seasons?.get(season);
+              if (!s) continue;
+              sum.runs += s.runs;
+              sum.wickets += s.wickets;
+              sum.runsLevel += s.runsLevel;
+              sum.wicketsLevel += s.wicketsLevel;
+              sum.n += s.n;
+            }
+            const n = sum.n || 1;
+            return {
+              runs: sum.runs / n,
+              wickets: sum.wickets / n,
+              runsLevel: sum.n ? sum.runsLevel / n : level.runs,
+              wicketsLevel: sum.n ? sum.wicketsLevel / n : level.wickets,
+            };
+          };
+          const seen = (own.get(`${p.level} ${id}`) ?? []).slice(-p.matches);
           const weight = seen.length ? p.weight : 1;
-          out[i].set(`${m.id} ${id}`, {
+          const bat = of(groups.bat);
+          const bowl = of(groups.bowl);
+          const total = (key: keyof Past) => seen.reduce((n, a) => n + a[key], 0);
+          visit(i, m, id, {
             runs:
-              (seen.reduce((n, a) => n + a.runs, 0) + weight * of(groups.bat).runs) /
-              (seen.length + weight),
+              (level.runs * (total('runs') + weight * bat.runs)) /
+              (total('runsLevel') + weight * bat.runsLevel || 1),
             wickets:
-              (seen.reduce((n, a) => n + a.wickets, 0) + weight * of(groups.bowl).wickets) /
-              (seen.length + weight),
+              (level.wickets * (total('wickets') + weight * bowl.wickets)) /
+              (total('wicketsLevel') + weight * bowl.wicketsLevel || 1),
           });
         });
       }
     }
     for (const m of day) {
       const happened = actual(m).players;
-      for (const id of m.named.flat()) {
-        const groups = bucket(history, id);
-        const a = happened.get(id)!;
-        for (const group of [groups.bat, groups.bowl]) {
-          const seasons = usual.get(group) ?? new Map<number, Usual>();
-          const s = seasons.get(m.season) ?? { runs: 0, wickets: 0, n: 0 };
-          s.runs += a.runs;
-          s.wickets += a.wickets;
-          s.n += 1;
-          seasons.set(m.season, s);
-          usual.set(group, seasons);
+      const named = m.named.flat();
+      if (!named.length) continue;
+      for (const l of levels) {
+        const level = now.get(l.halfLife)!;
+        for (const id of named) {
+          const groups = bucket(history, id);
+          const a = happened.get(id)!;
+          const record = {
+            runs: a.runs,
+            wickets: a.wickets,
+            runsLevel: level.runs,
+            wicketsLevel: level.wickets,
+          };
+          const key = `${l.halfLife} ${id}`;
+          const list = own.get(key) ?? [];
+          list.push(record);
+          if (list.length > 40) list.shift();
+          own.set(key, list);
+          for (const group of [groups.bat, groups.bowl]) {
+            const name = `${l.halfLife} ${group}`;
+            const seasons = usual.get(name) ?? new Map<number, Usual>();
+            const s =
+              seasons.get(m.season) ??
+              { runs: 0, wickets: 0, runsLevel: 0, wicketsLevel: 0, n: 0 };
+            s.runs += record.runs;
+            s.wickets += record.wickets;
+            s.runsLevel += record.runsLevel;
+            s.wicketsLevel += record.wicketsLevel;
+            s.n += 1;
+            seasons.set(m.season, s);
+            usual.set(name, seasons);
+          }
         }
+        l.runs?.add(named.map((id) => happened.get(id)!.runs));
+        l.wickets?.add(named.map((id) => happened.get(id)!.wickets));
       }
     }
+  });
+}
+
+export function playerAverages(matches: PastMatch[], period: Period, settings: PlayerParams[]) {
+  const out = settings.map(() => new Map<string, Average>());
+  eachPlayerAverage(matches, period, settings, (i, m, id, average) => {
+    out[i].set(`${m.id} ${id}`, average);
   });
   return out;
 }

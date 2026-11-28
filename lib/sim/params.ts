@@ -1,8 +1,12 @@
 import type { Params } from './model';
 
 /**
- * Chosen on the IPL seasons 2019 to 2022 by `scripts/backtest/run.sh tune`, run
- * on 27 November 2026. See docs/simulator-backtest.md before using the results.
+ * The second version: chosen on the IPL of 2013 to 2022 by
+ * `scripts/backtest/run.sh tune2`, 28 November 2026. The first version's
+ * settings are in scripts/backtest/frozen.ts.
+ *
+ * It did not pass, and was no better than the first on matches fresh to both:
+ * read docs/simulator-improvement.md before using any result.
  */
 export const PARAMS: Params = {
   halfLife: 3,
@@ -15,12 +19,17 @@ export const PARAMS: Params = {
   pairK: 300,
   byInnings: true,
   pressureK: 0,
-  recentMatches: 10,
+  recentMatches: 20,
   daySpread: 0.2,
+  dayCentred: true,
+  levelMatches: 60,
+  wicketsK: 4000,
 };
 
-/** How a simulated chance is turned into a stated one (scripts/backtest/evaluate.ts). */
-// A slope of 0 gives every match the same chance (45% to the side batting first):
-// on the tuning seasons the simulated chances told nothing about who won. The app
-// must not show it as a prediction.
-export const CALIBRATION = { slope: 0, shift: -0.214254 };
+/**
+ * How a simulated chance is turned into a stated one (scripts/backtest/evaluate.ts).
+ * A slope near 0 gives nearly every match the same chance: on the tuning seasons
+ * the simulated chances told next to nothing about who won. The app must not show
+ * it as a prediction.
+ */
+export const CALIBRATION = { slope: 0.052053, shift: -0.223146 };

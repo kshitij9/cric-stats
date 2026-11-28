@@ -42,7 +42,8 @@ export function evaluate(
     const models = settings.map((s) => new Model(history, day[0].season, s));
     for (const match of day) {
       const fixture = fixtureOf(match);
-      if (!fixture) continue;
+      // a few internationals list too few players to play a match with
+      if (!fixture || fixture.first.length < 11 || fixture.second.length < 11) continue;
       const happened = actual(match);
       settings.forEach((params, i) => {
         const result = predict(history, params, fixture, {

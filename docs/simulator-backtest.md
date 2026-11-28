@@ -1,6 +1,7 @@
 # CricIntell: how the match simulator did
 
-Run on 27 November 2026, data to 25 November 2026.
+Run on 27 November 2026, data to 25 November 2026. This is the first version; a
+second was tried and dropped (`simulator-improvement.md`).
 
 ## Verdict
 

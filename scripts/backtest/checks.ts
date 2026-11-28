@@ -3,7 +3,7 @@ import { Model, type Params } from '../../lib/sim/model';
 import { predict } from '../../lib/sim/predict';
 import { sideFrom } from '../../lib/sim/sides';
 import { simulate } from '../../lib/sim/engine';
-import type { Query } from '../../lib/sim/data';
+import { loadMatches, type Query } from '../../lib/sim/data';
 import type { PastMatch } from '../../lib/sim/types';
 import { TEST, fixtureOf, seedOf, walk } from './common';
 
@@ -49,6 +49,32 @@ export async function checks(matches: PastMatch[], query: Query, params: Params)
     0,
   );
   check(`every delivery counted once (${counted})`, counted === Number(n), `database ${n}`);
+
+  // ---- the internationals used as a fresh check ----------------------------
+  const abroad = await loadMatches(query, 'international');
+  const [db] = await query<{ matches: string; balls: string; runs: string; out: string }>(
+    `WITH m AS (SELECT match_id FROM matches
+                 WHERE competition = 'international' AND format = 'T20' AND gender = 'male')
+     SELECT (SELECT count(*) FROM m) AS matches,
+            count(*) AS balls, sum(d.runs_batter + d.extras) AS runs,
+            (SELECT count(*) FROM wickets w JOIN deliveries x ON x.id = w.delivery_id
+              WHERE x.match_id IN (SELECT match_id FROM m) AND w.dismissal
+                AND x.innings <= 2) AS out
+       FROM deliveries d WHERE d.match_id IN (SELECT match_id FROM m) AND d.innings <= 2`,
+  );
+  const sum = (of: (m: PastMatch) => number) => abroad.reduce((n, m) => n + of(m), 0);
+  const mine = [
+    abroad.length,
+    sum((m) => m.balls.length),
+    sum((m) => m.balls.reduce((n, b) => n + b.runs, 0)),
+    sum((m) => m.balls.reduce((n, b) => n + b.out.length, 0)),
+  ];
+  const theirs = [db.matches, db.balls, db.runs, db.out].map(Number);
+  check(
+    `internationals: ${mine[0]} matches, ${mine[1]} balls, runs and wickets match the database`,
+    mine.every((v, i) => v === theirs[i]),
+    `loaded ${mine.join(' ')}, database ${theirs.join(' ')}`,
+  );
 
   // ---- every simulated innings obeys the rules -----------------------------
   const sample = matches.filter((m) => m.season >= TEST.from && m.battingFirst !== null);

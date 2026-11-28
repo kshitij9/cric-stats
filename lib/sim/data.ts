@@ -1,10 +1,21 @@
 import { outcomeOf } from './outcomes';
 import type { Ball, PastMatch } from './types';
 
-/** Reads every IPL match, in date order, from the match database. */
+/** Reads every match of one T20 competition, in date order, from the database. */
 export type Query = <T>(sql: string) => Promise<T[]>;
 
-export async function loadMatches(query: Query): Promise<PastMatch[]> {
+/** The IPL, or men's T20 internationals (used to check the simulator on fresh matches). */
+export type Source = 'ipl' | 'international';
+
+// fixed text, never from a request
+const WHERE: Record<Source, (table: string) => string> = {
+  ipl: (t) => `${t}.competition = 'ipl' AND ${t}.format = 'T20'`,
+  international: (t) =>
+    `${t}.competition = 'international' AND ${t}.format = 'T20' AND ${t}.gender = 'male'`,
+};
+
+export async function loadMatches(query: Query, source: Source = 'ipl'): Promise<PastMatch[]> {
+  const only = WHERE[source];
   const matches = await query<{
     match_id: string;
     date: string;
@@ -16,19 +27,19 @@ export async function loadMatches(query: Query): Promise<PastMatch[]> {
   }>(
     `SELECT match_id, date::text AS date, venue_id, team1, team2,
             coalesce(winner, eliminator, bowl_out) AS winner, result_method
-       FROM matches WHERE competition = 'ipl' ORDER BY date, match_id`,
+       FROM matches m WHERE ${only('m')} ORDER BY date, match_id`,
   );
   const franchise = new Map(
     (
       await query<{ team_name: string; franchise: string }>(
-        `SELECT team_name, franchise FROM team_aliases WHERE competition = 'ipl'`,
+        `SELECT team_name, franchise FROM team_aliases WHERE competition = '${source}'`,
       )
     ).map((r) => [r.team_name, r.franchise]),
   );
   const players = await query<{ match_id: string; team: string; player_id: string }>(
     `SELECT mp.match_id, mp.team, mp.player_id
        FROM match_players mp JOIN matches m ON m.match_id = mp.match_id
-      WHERE m.competition = 'ipl' ORDER BY mp.match_id, mp.team, mp.player_id`,
+      WHERE ${only('m')} ORDER BY mp.match_id, mp.team, mp.player_id`,
   );
   const wickets = await query<{
     delivery_id: string | number;
@@ -38,7 +49,7 @@ export async function loadMatches(query: Query): Promise<PastMatch[]> {
   }>(
     `SELECT w.delivery_id, w.player_out_id, w.dismissal, w.bowlers_wicket
        FROM wickets w JOIN deliveries d ON d.id = w.delivery_id
-      WHERE d.competition = 'ipl' AND d.format = 'T20' AND w.dismissal`,
+      WHERE ${only('d')} AND w.dismissal`,
   );
   const out = new Map<number, { ids: string[]; bowler: boolean }>();
   for (const w of wickets) {
@@ -65,7 +76,7 @@ export async function loadMatches(query: Query): Promise<PastMatch[]> {
   }>(
     `SELECT id, match_id, innings, over, batter_id, non_striker_id, bowler_id, runs_batter,
             extras, wides, noballs, byes + legbyes AS byes, batting_team
-       FROM deliveries WHERE competition = 'ipl' AND format = 'T20' ORDER BY id`,
+       FROM deliveries d WHERE ${only('d')} ORDER BY id`,
   );
 
   const balls = new Map<string, Ball[]>();

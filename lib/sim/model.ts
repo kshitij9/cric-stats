@@ -1,4 +1,14 @@
-import { History, SITUATIONS, positionGroup, situation, type Seasons } from './history';
+import {
+  History,
+  POSITION_GROUPS,
+  SITUATIONS,
+  WICKET_BANDS,
+  positionGroup,
+  situation,
+  wicketState,
+  type League,
+  type Seasons,
+} from './history';
 import {
   BATTER_GROUPS,
   GROUP,
@@ -39,6 +49,9 @@ export type Params = {
   pressureK: number; // Infinity: a chase is batted like any innings
   recentMatches: number; // for batting position and bowling use
   daySpread: number; // how much one match's pitch can differ from another's
+  dayCentred: boolean; // whether that difference leaves the averages where they were
+  levelMatches: number; // league rates follow the latest matches; Infinity: by season
+  wicketsK: number; // Infinity: wickets in hand make no difference
 };
 
 type Rates = {
@@ -60,26 +73,26 @@ export class Model {
   private readonly bowlerCache = new Map<string, Float64Array>();
   private readonly groundCache = new Map<string, Float64Array>();
   private readonly pressureCache = new Map<number, Float64Array>();
+  private readonly wicketCache = new Map<number, Float64Array>();
 
-  /** `season`: that of the match being predicted. */
+  /**
+   * `season`: that of the match being predicted. `level`: the league's outcomes
+   * to simulate from, in place of the history's recent ones (used to find out
+   * what a wrong level costs).
+   */
   constructor(
     readonly history: History,
     readonly season: number,
     readonly params: Params,
+    level?: League,
   ) {
-    const counts = new Float64Array(SITUATIONS * OUTCOMES);
-    const runs = new Float64Array(PHASE_COUNT * OUTCOMES);
-    const batRuns = new Float64Array(PHASE_COUNT * OUTCOMES);
     for (const [past, league] of history.league) {
       this.seasonRates.set(past, this.rates(league.counts));
-      const w = 0.5 ** ((season - past) / params.leagueHalfLife);
-      for (let i = 0; i < counts.length; i++) counts[i] += w * league.counts[i];
-      for (let i = 0; i < runs.length; i++) {
-        runs[i] += w * league.runs[i];
-        batRuns[i] += w * league.batRuns[i];
-      }
     }
     if (!history.league.size) throw new Error('there is no earlier match to learn from');
+    const recent = level ?? history.level(season, params.leagueHalfLife, params.levelMatches);
+    const counts = recent.counts.slice();
+    const { runs, batRuns } = recent;
     this.pool(counts);
 
     for (let at = 0; at < SITUATIONS; at++) {
@@ -241,6 +254,55 @@ export class Model {
     );
   }
 
+  /**
+   * How a state of wickets and phase differs from that phase generally, for the
+   * same parts of the batting order: what happened there over what those batters
+   * do in the phase whatever the wickets.
+   */
+  private wickets(state: number) {
+    return this.cached(this.wicketCache, state, () => {
+      const phase = Math.floor(state / WICKET_BANDS);
+      const observed = new Float64Array(GROUPS);
+      const expected = new Float64Array(GROUPS);
+      for (const [past, { counts }] of this.history.states) {
+        const w = 0.5 ** ((this.season - past) / this.params.halfLife);
+        for (let group = 0; group < POSITION_GROUPS; group++) {
+          const usual = new Float64Array(OUTCOMES);
+          let all = 0;
+          for (let band = 0; band < WICKET_BANDS; band++) {
+            const at = ((phase * WICKET_BANDS + band) * POSITION_GROUPS + group) * OUTCOMES;
+            for (let o = 0; o < OUTCOMES; o++) {
+              usual[o] += counts[at + o];
+              all += counts[at + o];
+            }
+          }
+          if (!all) continue;
+          const at = (state * POSITION_GROUPS + group) * OUTCOMES;
+          let here = 0;
+          for (let o = 0; o < OUTCOMES; o++) here += counts[at + o];
+          for (let o = 0; o < OUTCOMES; o++) {
+            const g = GROUP[o];
+            if (g < 0) continue;
+            observed[g] += w * counts[at + o];
+            expected[g] += (w * here * usual[o]) / all;
+          }
+        }
+      }
+      const ratio = new Float64Array(GROUPS).fill(1);
+      for (let g = 0; g < BATTER_GROUPS; g++) {
+        const added = this.params.wicketsK * this.typicalFaced[g];
+        const under = expected[g] + added;
+        if (under > 0) ratio[g] = (observed[g] + added) / under;
+      }
+      return ratio;
+    });
+  }
+
+  /** Whether the chance of an outcome depends on the wickets already lost. */
+  get usesWickets() {
+    return isFinite(this.params.wicketsK);
+  }
+
   /** Whether the chance of an outcome depends on how the chase is going. */
   get usesPressure() {
     return isFinite(this.params.pressureK);
@@ -248,7 +310,7 @@ export class Model {
 
   /**
    * Writes the chance of each outcome into `out`. `band` is the chase's required
-   * rate (lib/sim/history.ts) or -1.
+   * rate (lib/sim/history.ts) or -1; `lost` the wickets already down.
    */
   chances(
     out: Float64Array,
@@ -258,6 +320,7 @@ export class Model {
     phase: number,
     innings: number,
     band = -1,
+    lost = 0,
   ) {
     const bat = this.batter(batter);
     const bowl = this.bowler(bowler);
@@ -278,6 +341,7 @@ export class Model {
     // damped by K, as a share of all that pressure seems to do
     const chase = band >= 0 && this.usesPressure ? this.chase(band) : null;
     const strength = chase ? 1000 / (1000 + this.params.pressureK) : 0;
+    const inHand = this.usesWickets ? this.wickets(wicketState(phase, lost)) : null;
 
     let total = 0;
     for (let o = 0; o < OUTCOMES; o++) {
@@ -287,6 +351,7 @@ export class Model {
         p *= bat[g] * bowl[g] * ground[g];
         if (pair) p *= pair[g];
         if (chase) p *= chase[g] ** strength;
+        if (inHand) p *= inHand[g];
       }
       out[o] = p;
       total += p;
