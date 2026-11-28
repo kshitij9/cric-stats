@@ -26,6 +26,9 @@ export default function TeamsPage() {
         on the server, so every device sees them. With two of them, see how they match up at a
         ground.
       </PageHeader>
+      <Link href="/rivalry" className={SECONDARY}>
+        <Swords size={14} aria-hidden /> Franchise rivalries
+      </Link>
       <IplOnly>
         <Teams />
       </IplOnly>

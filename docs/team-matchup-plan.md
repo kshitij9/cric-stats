@@ -64,7 +64,7 @@ prediction and no overall winner.
 |---|---|
 | 1. Team v team and key battles | Live since 28 November 2026 |
 | 2. Best performers at the ground, and switching between grounds | Live since 28 November 2026 |
-| 3. Franchise rivalry: past meetings, overall and at the ground | Not started |
+| 3. Franchise rivalry: past meetings, overall and at the ground | Live since 28 November 2026 |
 
 Step 1:
 
@@ -89,6 +89,18 @@ Step 2:
 - Ground by ground: both sides' batting strike rate or bowling economy at every
   ground of the latest season (and the chosen one); choosing a row switches.
 - `db/etl/verify_matchup.py` found no differences in 671,731 values.
+
+Step 3:
+
+- Its own screen, Rivalry (`/rivalry`), reached from Teams and Matchup. It is
+  about the franchises as they lined up in each match, not teams made in the app,
+  so former franchises can be chosen too.
+- All seasons (default) or the last four; all grounds, or one.
+- The record (a super over's winner counts as the winner), the last five
+  winners, every meeting with its scores, each side's top three run scorers and
+  wicket takers, and the record at every ground where they have met.
+- `db/etl/verify_rivalry.py` found no differences in 75,907 values. It only
+  reads, so it can be run against any app.
 
 Past meetings are thin: of the combinations of two current franchises and a
 ground of 2026, 70% have never been played, and 9% five times or more.

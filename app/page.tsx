@@ -58,6 +58,7 @@ const FEATURES = [
       'Or start from a franchise\u2019s line-up',
       'Set the batting order and check the bowling',
       'Match two of them up at a ground',
+      'Follow the rivalry between two franchises',
     ],
     action: 'Build a team',
   },

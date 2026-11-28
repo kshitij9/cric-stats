@@ -37,9 +37,14 @@ export default function MatchupPage() {
         had the better of whom, and how a ground plays. These are records of past matches. It does
         not predict a result.
       </PageHeader>
-      <Link href="/teams" className={SECONDARY}>
-        <ArrowLeft size={14} aria-hidden /> All teams
-      </Link>
+      <div className="flex flex-wrap gap-2">
+        <Link href="/teams" className={SECONDARY}>
+          <ArrowLeft size={14} aria-hidden /> All teams
+        </Link>
+        <Link href="/rivalry" className={SECONDARY}>
+          Franchise rivalries
+        </Link>
+      </div>
       <IplOnly>
         {/* the choices are in the address, so a matchup can be bookmarked */}
         <Suspense fallback={<Loading />}>

@@ -1,6 +1,6 @@
 'use client';
 
-import { House, ListOrdered, Scale, UserRound, Users } from 'lucide-react';
+import { House, ListOrdered, Scale, UserRound, Users, type LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Segmented } from '@/components/ui';
@@ -8,12 +8,14 @@ import { useApp } from '@/hooks/useApp';
 import { FORMATS, scopeName } from '@/lib/scope';
 import type { Competition, Format } from '@/lib/types';
 
-export const SCREENS = [
+type Screen = { href: string; label: string; icon: LucideIcon; also?: string[] };
+
+export const SCREENS: Screen[] = [
   { href: '/', label: 'Home', icon: House },
   { href: '/player', label: 'Player', icon: UserRound },
   { href: '/compare', label: 'Compare', icon: Scale },
   { href: '/recommend', label: 'Picks', icon: ListOrdered },
-  { href: '/teams', label: 'Teams', icon: Users, also: '/matchup' },
+  { href: '/teams', label: 'Teams', icon: Users, also: ['/matchup', '/rivalry'] },
 ];
 
 const COMPETITIONS: { value: Competition; label: string }[] = [
@@ -39,7 +41,7 @@ export default function AppHeader() {
               // a screen's own pages count as it: /teams/3 is Teams
               const active =
                 pathname === href ||
-                pathname === also ||
+                also?.includes(pathname) ||
                 (href !== '/' && pathname.startsWith(`${href}/`));
               return (
                 <li key={href}>
