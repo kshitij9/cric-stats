@@ -78,14 +78,19 @@ export type Side = {
   missing: number; // saved players no longer in the match data
 };
 
-/** One batter against one bowler, over every IPL season and ground. */
-export type Pair = {
-  batter_id: string;
-  bowler_id: string;
+export type Meeting = {
   balls: number; // faced
   runs: number; // off the bat
   dismissals: number; // taken by this bowler
   strike_rate: number | null;
+};
+
+/** One batter against one bowler, over every IPL season and ground. */
+export type Pair = Meeting & {
+  batter_id: string;
+  bowler_id: string;
+  /** The part of it at the chosen ground; null if none was chosen or they never met there. */
+  at_ground: Meeting | null;
 };
 
 export type Matchup = {

@@ -98,6 +98,15 @@ async function firstInnings(venueId: string, from: number): Promise<Innings[]> {
   return [...matches.values()];
 }
 
+/** The first IPL season a choice counts, and the latest there is. */
+export async function seasonRange(choice: SeasonChoice) {
+  const [{ first, latest }] = await query<{ first: number; latest: number }>(
+    `SELECT extract(year FROM min(date))::int AS first, extract(year FROM max(date))::int AS latest
+       FROM matches WHERE competition = 'ipl'`,
+  );
+  return { from: choice === 'all' ? first : latest - RECENT_SEASONS + 1, latest };
+}
+
 const mean = <T>(items: T[], of: (item: T) => number) =>
   items.reduce((total, item) => total + of(item), 0) / items.length;
 
@@ -146,11 +155,7 @@ export async function groundProfile(
   venue: VenueRef,
   choice: SeasonChoice,
 ): Promise<GroundProfile> {
-  const [{ first, latest }] = await query<{ first: number; latest: number }>(
-    `SELECT extract(year FROM min(date))::int AS first, extract(year FROM max(date))::int AS latest
-       FROM matches WHERE competition = 'ipl'`,
-  );
-  const from = choice === 'all' ? first : latest - RECENT_SEASONS + 1;
+  const { from, latest } = await seasonRange(choice);
 
   const [innings, matches] = await Promise.all([
     firstInnings(venue.venue_id, from),

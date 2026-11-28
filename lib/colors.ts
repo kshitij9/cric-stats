@@ -12,3 +12,6 @@ export const PLAYER_COLORS = [
 ] as const;
 
 export const MAX_COMPARE = PLAYER_COLORS.length;
+
+/** The two sides of a matchup, first and second. */
+export const TEAM_COLORS = [PLAYER_COLORS[0], PLAYER_COLORS[1]] as const;

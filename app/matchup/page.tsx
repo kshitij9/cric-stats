@@ -4,13 +4,24 @@ import { ArrowLeft, Swords } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
+import FaceOff from '@/components/FaceOff';
 import GroundCard from '@/components/GroundCard';
 import GroundRecords from '@/components/GroundRecords';
 import HeadToHead from '@/components/HeadToHead';
 import IplOnly from '@/components/IplOnly';
-import { Card, Empty, ErrorNote, Loading, PageHeader, SECONDARY } from '@/components/ui';
+import KeyBattles from '@/components/KeyBattles';
+import {
+  Card,
+  Empty,
+  ErrorNote,
+  Loading,
+  PageHeader,
+  SECONDARY,
+  Segmented,
+} from '@/components/ui';
 import VenueSearch from '@/components/VenueSearch';
 import { useJson } from '@/hooks/useJson';
+import type { FaceOff as FaceOffData } from '@/lib/faceoff-types';
 import type { CurrentGround, GroundProfile, Matchup, SeasonChoice } from '@/lib/matchup-types';
 import { TEAM_SIZE, type TeamListing } from '@/lib/teams';
 
@@ -18,9 +29,9 @@ export default function MatchupPage() {
   return (
     <>
       <PageHeader icon={Swords} title="Matchup">
-        Set two of your teams against each other at a ground: how it plays, what their players have
-        done there, and who has met whom. These are records of past matches. It does not predict a
-        result.
+        Set two of your teams against each other: which side has batted and bowled better, who has
+        had the better of whom, and how a ground plays. These are records of past matches. It does
+        not predict a result.
       </PageHeader>
       <Link href="/teams" className={SECONDARY}>
         <ArrowLeft size={14} aria-hidden /> All teams
@@ -75,6 +86,14 @@ function Chosen() {
       ? `/api/matchup?a=${a.team_id}&b=${b.team_id}` +
           (groundOk ? `&venue=${encodeURIComponent(choice.ground)}` : '') +
           // a team changed since must be asked about afresh
+          `&v=${a.version}.${b.version}`
+      : null,
+  );
+
+  const compared = useJson<FaceOffData>(
+    a && b && !profile.loading
+      ? `/api/matchup/faceoff?a=${a.team_id}&b=${b.team_id}&seasons=${choice.seasons}` +
+          (groundOk ? `&venue=${encodeURIComponent(choice.ground)}` : '') +
           `&v=${a.version}.${b.version}`
       : null,
   );
@@ -146,6 +165,21 @@ function Chosen() {
             </div>
           </div>
         )}
+        <div className="space-y-1.5">
+          <Segmented<SeasonChoice>
+            label="Seasons"
+            options={[
+              { value: 'recent', label: 'Last 4 seasons' },
+              { value: 'all', label: 'All seasons' },
+            ]}
+            value={choice.seasons}
+            onChange={(seasons) => seasons && choose({ seasons })}
+          />
+          <p className="text-[11px] text-zinc-500">
+            For the team comparison and the ground. Battles, player records and head-to-heads cover
+            every season.
+          </p>
+        </div>
         {shared.length > 0 && (
           <p className="text-xs text-amber-300">
             In both teams: {shared.join(', ')}.
@@ -158,13 +192,20 @@ function Chosen() {
         ))}
       </Card>
 
-      {choice.ground && (
-        <GroundCard
-          profile={profile}
-          choice={choice.seasons}
-          onChoice={(seasons) => choose({ seasons })}
-        />
+      {a && b && (
+        <>
+          <FaceOff faceOff={compared} />
+          {matched.data && (
+            <KeyBattles
+              sides={matched.data.sides}
+              pairs={matched.data.pairs}
+              ground={matched.data.venue !== null}
+            />
+          )}
+        </>
       )}
+
+      {choice.ground && <GroundCard profile={profile} />}
 
       {!a || !b ? (
         <Empty>Choose two teams to see their players’ records and head-to-heads.</Empty>

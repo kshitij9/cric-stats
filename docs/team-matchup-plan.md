@@ -8,7 +8,7 @@ same day.
 | 1. Team builder | Live since 27 November 2026 |
 | 2. Matchup facts | Live since 27 November 2026 |
 | 3. Simulator and its test | Done 27 November 2026: no win percentage |
-| 4. Matchup results | Not started; scope to be agreed |
+| 4. Matchup results | Replaced by the face-off below: the simulator did not pass |
 
 Notes from stage 1:
 
@@ -50,7 +50,34 @@ Result of stage 3, in full in `simulator-backtest.md`:
 - First-innings totals ran 18 runs low and did not beat the ground's average.
 - Player runs did not beat the recent average. Player wickets did, by 2 to 4%.
 - Code: `lib/sim/` (simulator), `scripts/backtest/` (test). The app does not use
-  it yet.
+  it.
+
+## Face-off (agreed 28 November 2026, in place of stage 4)
+
+Compare two teams on what has happened, on the Matchup screen, with no
+prediction and no overall winner.
+
+| Step | State |
+|---|---|
+| 1. Team v team and key battles | Live since 28 November 2026 |
+| 2. Best performers at the ground, and switching between grounds | Not started |
+| 3. Franchise rivalry: past meetings, overall and at the ground | Not started |
+
+Step 1:
+
+- Team v team adds up every IPL ball of a side's present players, whoever they
+  played for: strike rate, balls hit for four or six, balls per dismissal,
+  economy and balls per wicket, over all overs or one phase. Beside it, the same
+  at the chosen ground. It follows the season choice (last four, or all).
+- The side ahead is marked where both have 120 balls or more.
+- Key battles, over every season: most dismissals (two or more) and fastest
+  scoring (12 balls or more), up to three each way.
+- `db/etl/verify_matchup.py` found no differences in 503,143 values.
+- Two things to watch: ground samples are uneven (a home side has far more balls
+  there), and players with long careers weigh more.
+
+Past meetings are thin: of the combinations of two current franchises and a
+ground of 2026, 70% have never been played, and 9% five times or more.
 
 ## Goal
 

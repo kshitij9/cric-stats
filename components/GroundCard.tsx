@@ -1,7 +1,7 @@
 import { AlertTriangle } from 'lucide-react';
-import { Card, Empty, ErrorNote, Loading, Segmented } from '@/components/ui';
+import { Card, Empty, ErrorNote, Loading } from '@/components/ui';
 import type { Loaded } from '@/hooks/useJson';
-import { FEW_INNINGS, type GroundProfile, type SeasonChoice } from '@/lib/matchup-types';
+import { FEW_INNINGS, type GroundProfile } from '@/lib/matchup-types';
 
 const PHASES = {
   powerplay: { label: 'Powerplay', overs: 'overs 1–6' },
@@ -39,15 +39,7 @@ function Versus({
 }
 
 /** How the chosen ground plays. */
-export default function GroundCard({
-  profile,
-  choice,
-  onChoice,
-}: {
-  profile: Loaded<GroundProfile>;
-  choice: SeasonChoice;
-  onChoice: (choice: SeasonChoice) => void;
-}) {
+export default function GroundCard({ profile }: { profile: Loaded<GroundProfile> }) {
   const { data, error } = profile;
   const here = data?.here;
   const elsewhere = data?.elsewhere;
@@ -61,18 +53,6 @@ export default function GroundCard({
           ? `IPL ${data.seasons.to}.`
           : `IPL ${data.seasons.from} to ${data.seasons.to}.`) +
           ' “Elsewhere” is every other ground in the same seasons.'
-      }
-      actions={
-        <Segmented<SeasonChoice>
-          label="Seasons"
-          hideLabel
-          options={[
-            { value: 'recent', label: 'Last 4 seasons' },
-            { value: 'all', label: 'All seasons' },
-          ]}
-          value={choice}
-          onChange={(v) => v && onChoice(v)}
-        />
       }
     >
       {error ? (

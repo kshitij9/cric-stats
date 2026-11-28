@@ -9,7 +9,10 @@ using the loader, the SQL or the app's code:
             first-innings scores, runs and wickets by phase, matches won
             batting first, and the same for the other grounds in those seasons
   records   every IPL player's batting and bowling at every ground
-  meetings  batter against bowler, between the sides matched up
+  meetings  batter against bowler, between the sides matched up, at every
+            ground and at the chosen one
+  team v team  each side's batting and bowling by phase, at every ground and
+            at the chosen one, over both choices of seasons
 
 A "complete" first innings is one of 120 legal balls, or ten wickets.
 
@@ -60,6 +63,9 @@ class Source:
         self.batted = defaultdict(set)       # (player, ground) -> {(match, innings)}
         self.bowled = defaultdict(set)
         self.pairs = defaultdict(Counter)    # (batter, bowler)
+        self.pairs_at = defaultdict(Counter)  # (batter, bowler, ground)
+        # player -> {(season, ground, phase): counts}, for the team figures
+        self.part = defaultdict(lambda: defaultdict(Counter))
         with zipfile.ZipFile(path) as zf:
             for name in sorted(zf.namelist()):
                 if not name.endswith(".json"):
@@ -95,6 +101,11 @@ class Source:
                     if number == 1:
                         match["batted_first"] = inn["team"]
                         phases[phase].update(runs=d["runs"]["total"], legal=int(legal))
+                    when = (match["season"], ground, phase)
+                    boundary = runs in (4, 6) and not d["runs"].get("non_boundary")
+                    self.part[striker][when].update(
+                        faced=int(faced), scored=runs, boundaries=int(boundary))
+                    self.part[bowler][when].update(bowled=int(legal), conceded=conceded)
                     for p in (striker, other):
                         self.batted[(p, ground)].add((mid, number))
                     self.bowled[(bowler, ground)].add((mid, number))
@@ -102,6 +113,8 @@ class Source:
                         self.bat[(striker, key)].update(runs=runs, balls=int(faced))
                         self.bowl[(bowler, key)].update(runs=conceded, balls=int(legal))
                     self.pairs[(striker, bowler)].update(runs=runs, balls=int(faced))
+                    self.pairs_at[(striker, bowler, ground)].update(
+                        runs=runs, balls=int(faced), seen=1)
                     for w in d.get("wickets", []):
                         out = reg[w["player_out"]]
                         self.batted[(out, ground)].add((mid, number))
@@ -110,16 +123,28 @@ class Source:
                                 phases[phase]["wickets"] += 1
                             for key in (ground, None):
                                 self.bat[(out, key)]["outs"] += 1
+                            self.part[out][when]["outs"] += 1
                         if w["kind"] in BOWLERS:
                             for key in (ground, None):
                                 self.bowl[(bowler, key)]["wickets"] += 1
+                            self.part[bowler][when]["wickets"] += 1
                             self.pairs[(out, bowler)]["dismissals"] += 1
+                            self.pairs_at[(out, bowler, ground)]["dismissals"] += 1
             if number == 1 and match["batted_first"]:
                 total = sum(c["runs"] for c in phases.values())
                 complete = (sum(c["legal"] for c in phases.values()) >= 120
                             or sum(c["wickets"] for c in phases.values()) >= 10)
                 if complete:
                     match["first"] = {"total": total, "phases": phases}
+
+    def team(self, players, since, ground, phase):
+        """The counts of these players added up; ground or phase None: all of them."""
+        total = Counter()
+        for p in players:
+            for (season, where, when), counts in self.part.get(p, {}).items():
+                if season >= since and ground in (None, where) and phase in (None, when):
+                    total.update(counts)
+        return total
 
     def seasons(self):
         years = [m["season"] for m in self.matches]
@@ -273,6 +298,45 @@ def main():
         if len(others) % 2:
             others.append(sides[0])
 
+        def face_off(a, b, ground, choice):
+            venue = ids.get(ground)
+            since = latest - RECENT_SEASONS + 1 if choice == "recent" else first
+            params = {"a": a["team_id"], "b": b["team_id"], "seasons": choice,
+                      **({"venue": venue} if venue else {})}
+            app = call("/api/matchup/faceoff", **params)
+            report.same("team v team: seasons", choice, f"{since}-{latest}",
+                        f"{app['seasons']['from']}-{app['seasons']['to']}")
+            for team, side in zip((a, b), app["sides"]):
+                players = [p.split("-")[0] for p in team["players"]]
+                report.same("team v team: ground figures present", team["name"],
+                            int(venue is not None), int(side["ground"] is not None))
+                for scope, where in (("all", None), ("ground", ground)):
+                    if scope == "ground" and not venue:
+                        continue
+                    for phase in (None, *PHASES):
+                        c = src.team(players, since, where, phase)
+                        bat = side[scope][phase or "all"]["batting"]
+                        bowl = side[scope][phase or "all"]["bowling"]
+                        what = f"{team['name']} {choice} {where and where[0]} {phase}"
+                        for field, got, want, tolerance in (
+                                ("faced", bat["balls"], c["faced"], 0),
+                                ("runs", bat["runs"], c["scored"], 0),
+                                ("strike rate", bat["strike_rate"],
+                                 ratio(c["scored"], c["faced"], 100), 0.0051),
+                                ("boundaries", bat["boundary_percent"],
+                                 ratio(c["boundaries"], c["faced"], 100), 0.0501),
+                                ("balls a dismissal", bat["balls_per_dismissal"],
+                                 ratio(c["faced"], c["outs"]), 0.0501),
+                                ("bowled", bowl["balls"], c["bowled"], 0),
+                                ("conceded", bowl["runs_conceded"], c["conceded"], 0),
+                                ("wickets", bowl["wickets"], c["wickets"], 0),
+                                ("economy", bowl["economy"],
+                                 ratio(c["conceded"], c["bowled"], 6), 0.0051),
+                                ("balls a wicket", bowl["balls_per_wicket"],
+                                 ratio(c["bowled"], c["wickets"]), 0.0501)):
+                            report.same(f"team v team: {scope}", f"{what} {field}", want, got,
+                                        tolerance)
+
         def check(a, b, ground):
             venue = ids.get(ground)
             params = {"a": a["team_id"], "b": b["team_id"], **({"venue": venue} if venue else {})}
@@ -327,7 +391,19 @@ def main():
                 report.same("meetings: longest first", batters["name"],
                             str(sorted(balls, reverse=True)), str(balls))
                 for key in want & set(got):
-                    c = src.pairs[(key[0].split("-")[0], key[1].split("-")[0])]
+                    reg = (key[0].split("-")[0], key[1].split("-")[0])
+                    there = src.pairs_at.get((*reg, ground)) if ground else None
+                    part = got[key]["at_ground"]
+                    report.same("meetings at the ground: present", str(key),
+                                int(there is not None), int(part is not None))
+                    if there is not None and part is not None:
+                        for field, value, tolerance in (
+                                ("balls", there["balls"], 0), ("runs", there["runs"], 0),
+                                ("dismissals", there["dismissals"], 0),
+                                ("strike_rate", ratio(there["runs"], there["balls"], 100), 0.0051)):
+                            report.same("meetings at the ground", f"{key} {field}", value,
+                                        part[field], tolerance)
+                    c = src.pairs[reg]
                     for field, value, tolerance in (
                             ("balls", c["balls"], 0), ("runs", c["runs"], 0),
                             ("dismissals", c["dismissals"], 0),
@@ -336,12 +412,16 @@ def main():
 
         # every player at every ground
         for i in range(0, len(others), 2):
-            for ground in ids:
+            for n, ground in enumerate(ids):
                 check(others[i], others[i + 1], ground)
+                # the two choices of seasons in turn
+                face_off(others[i], others[i + 1], ground, ("recent", "all")[n % 2])
         # every franchise against every other, with and without a ground
         for i, a in enumerate(sides):
             for b in sides[i + 1:]:
                 check(a, b, None)
+                for choice in ("recent", "all"):
+                    face_off(a, b, None, choice)
     finally:
         for team in made:
             call(f"/api/teams/{team['team_id']}", "DELETE", version=team["version"])
