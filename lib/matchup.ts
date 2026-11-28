@@ -25,10 +25,23 @@ const AT_GROUND = `
                          WHERE venue_id = $2 AND competition = 'ipl')
   )`;
 
+/** Rows of one innings each, gathered by player. */
+function byPlayer<T extends { player_id: string }>(rows: T[]) {
+  const players = new Map<string, T[]>();
+  for (const row of rows) {
+    const theirs = players.get(row.player_id);
+    if (theirs) theirs.push(row);
+    else players.set(row.player_id, [row]);
+  }
+  return players;
+}
+
+const total = <T>(rows: T[], of: (row: T) => number) =>
+  rows.reduce((sum, row) => sum + of(row), 0);
+
 async function battingAt(ids: string[], venueId: string) {
   const rows = await query<{
     player_id: string;
-    innings: number;
     runs: number;
     balls: number;
     outs: number;
@@ -41,31 +54,47 @@ async function battingAt(ids: string[], venueId: string) {
        UNION SELECT w.player_out_id, b.match_id, b.innings
                FROM wickets w JOIN balls b ON b.id = w.delivery_id
      ),
-     played AS (
-       SELECT player_id, count(*) AS innings FROM appearances
-        WHERE player_id = ANY($1::text[]) GROUP BY 1
-     ),
      faced AS (
-       SELECT batter_id AS player_id, sum(runs_batter) AS runs,
+       SELECT batter_id AS player_id, match_id, innings, sum(runs_batter) AS runs,
               count(*) FILTER (WHERE ball_faced) AS balls
-         FROM balls WHERE batter_id = ANY($1::text[]) GROUP BY 1
+         FROM balls WHERE batter_id = ANY($1::text[]) GROUP BY 1, 2, 3
      ),
      dismissed AS (
-       SELECT w.player_out_id AS player_id, count(*) AS outs
+       SELECT w.player_out_id AS player_id, b.match_id, b.innings, count(*) AS outs
          FROM wickets w JOIN balls b ON b.id = w.delivery_id
-        WHERE w.dismissal AND w.player_out_id = ANY($1::text[]) GROUP BY 1
+        WHERE w.dismissal AND w.player_out_id = ANY($1::text[]) GROUP BY 1, 2, 3
      )
-     SELECT player_id, innings, coalesce(runs, 0) AS runs, coalesce(balls, 0) AS balls,
+     SELECT player_id, coalesce(runs, 0) AS runs, coalesce(balls, 0) AS balls,
             coalesce(outs, 0) AS outs
-       FROM played
-       LEFT JOIN faced USING (player_id)
-       LEFT JOIN dismissed USING (player_id)`,
+       FROM appearances
+       LEFT JOIN faced USING (player_id, match_id, innings)
+       LEFT JOIN dismissed USING (player_id, match_id, innings)
+      WHERE player_id = ANY($1::text[])`,
     [ids, venueId],
   );
   return new Map<string, GroundBatting>(
-    rows.map(({ player_id, ...counts }) => {
+    [...byPlayer(rows)].map(([player_id, innings]) => {
+      const counts = {
+        innings: innings.length,
+        runs: total(innings, (i) => i.runs),
+        balls: total(innings, (i) => i.balls),
+        outs: total(innings, (i) => i.outs),
+      };
+      const [best] = [...innings].sort(
+        (a, b) => b.runs - a.runs || a.outs - b.outs || a.balls - b.balls,
+      );
       const { average, strike_rate } = battingFigures({ ...counts, fours: 0, sixes: 0 });
-      return [player_id, { ...counts, average, strike_rate }];
+      return [
+        player_id,
+        {
+          ...counts,
+          average,
+          strike_rate,
+          best_runs: best.runs,
+          best_balls: best.balls,
+          best_not_out: best.outs === 0,
+        },
+      ];
     }),
   );
 }
@@ -73,28 +102,42 @@ async function battingAt(ids: string[], venueId: string) {
 async function bowlingAt(ids: string[], venueId: string) {
   const rows = await query<{
     player_id: string;
-    innings: number;
     balls: number;
     runs: number;
     wickets: number;
   }>(
     `${AT_GROUND}
      SELECT b.bowler_id AS player_id,
-            count(DISTINCT (b.match_id, b.innings))   AS innings,
-            count(*) FILTER (WHERE b.legal_ball)      AS balls,
-            sum(b.bowler_runs)                        AS runs,
-            sum(w.taken)                              AS wickets
+            count(*) FILTER (WHERE b.legal_ball) AS balls,
+            sum(b.bowler_runs)                   AS runs,
+            sum(w.taken)                         AS wickets
        FROM balls b
       CROSS JOIN LATERAL (SELECT count(*) AS taken FROM wickets w
                            WHERE w.delivery_id = b.id AND w.bowlers_wicket) w
       WHERE b.bowler_id = ANY($1::text[])
-      GROUP BY 1`,
+      GROUP BY b.bowler_id, b.match_id, b.innings`,
     [ids, venueId],
   );
   return new Map<string, GroundBowling>(
-    rows.map(({ player_id, innings, ...counts }) => {
-      const { runs_conceded, balls, wickets, economy } = bowlingFigures(counts);
-      return [player_id, { innings, balls, runs_conceded, wickets, economy }];
+    [...byPlayer(rows)].map(([player_id, innings]) => {
+      const { runs_conceded, balls, wickets, economy } = bowlingFigures({
+        runs: total(innings, (i) => i.runs),
+        balls: total(innings, (i) => i.balls),
+        wickets: total(innings, (i) => i.wickets),
+      });
+      const [best] = [...innings].sort((a, b) => b.wickets - a.wickets || a.runs - b.runs);
+      return [
+        player_id,
+        {
+          innings: innings.length,
+          balls,
+          runs_conceded,
+          wickets,
+          economy,
+          best_wickets: best.wickets,
+          best_runs: best.runs,
+        },
+      ];
     }),
   );
 }

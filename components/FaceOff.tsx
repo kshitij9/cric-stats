@@ -15,6 +15,7 @@ import {
   type PhaseKey,
   type TeamFigures,
 } from '@/lib/faceoff-types';
+import type { VenueRef } from '@/lib/types';
 
 const PHASES: { value: PhaseKey; label: string }[] = [
   { value: 'all', label: 'All overs' },
@@ -142,7 +143,17 @@ function Table({ data, phase, ground }: { data: Data; phase: PhaseKey; ground: s
 }
 
 /** The two sides' players, batting and bowling, side against side. */
-export default function FaceOff({ faceOff }: { faceOff: Loaded<Data> }) {
+export default function FaceOff({
+  faceOff,
+  grounds,
+  ground: chosen,
+  onGround,
+}: {
+  faceOff: Loaded<Data>;
+  grounds: VenueRef[]; // to switch between, the chosen one among them
+  ground: string; // venue ID, or '' for none
+  onGround: (venueId: string) => void;
+}) {
   const [phase, setPhase] = useState<PhaseKey>('all');
   const { data, error } = faceOff;
   const ground = data?.venue?.name ?? null;
@@ -159,13 +170,28 @@ export default function FaceOff({ faceOff }: { faceOff: Loaded<Data> }) {
         }, whoever they played for then. This is what has happened, not a prediction.`
       }
       actions={
-        <Segmented<PhaseKey>
-          label="Overs"
-          hideLabel
-          options={PHASES}
-          value={phase}
-          onChange={(v) => v && setPhase(v)}
-        />
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <select
+            aria-label="Switch ground"
+            className="min-w-0 max-w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-xs font-semibold outline-none focus:ring-2 focus:ring-sky-500"
+            value={chosen}
+            onChange={(e) => onGround(e.target.value)}
+          >
+            <option value="">No ground</option>
+            {grounds.map((g) => (
+              <option key={g.venue_id} value={g.venue_id}>
+                {g.name}
+              </option>
+            ))}
+          </select>
+          <Segmented<PhaseKey>
+            label="Overs"
+            hideLabel
+            options={PHASES}
+            value={phase}
+            onChange={(v) => v && setPhase(v)}
+          />
+        </div>
       }
     >
       {error ? (

@@ -63,7 +63,7 @@ prediction and no overall winner.
 | Step | State |
 |---|---|
 | 1. Team v team and key battles | Live since 28 November 2026 |
-| 2. Best performers at the ground, and switching between grounds | Not started |
+| 2. Best performers at the ground, and switching between grounds | Live since 28 November 2026 |
 | 3. Franchise rivalry: past meetings, overall and at the ground | Not started |
 
 Step 1:
@@ -78,6 +78,17 @@ Step 1:
 - `db/etl/verify_matchup.py` found no differences in 503,143 values.
 - Two things to watch: ground samples are uneven (a home side has far more balls
   there), and players with long careers weigh more.
+
+Step 2:
+
+- Ground stars: each side's three highest run scorers and wicket takers at the
+  chosen ground, every season, with their best innings or figures there. Ties go
+  to the quicker scorer and the more economical bowler.
+- A ground switcher on Team v team. Changing a choice keeps the old figures,
+  dimmed, until the new ones arrive, so the page does not jump.
+- Ground by ground: both sides' batting strike rate or bowling economy at every
+  ground of the latest season (and the chosen one); choosing a row switches.
+- `db/etl/verify_matchup.py` found no differences in 671,731 values.
 
 Past meetings are thin: of the combinations of two current franchises and a
 ground of 2026, 70% have never been played, and 9% five times or more.

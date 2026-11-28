@@ -64,6 +64,9 @@ class Source:
         self.bowled = defaultdict(set)
         self.pairs = defaultdict(Counter)    # (batter, bowler)
         self.pairs_at = defaultdict(Counter)  # (batter, bowler, ground)
+        # (player, ground) -> {(match, innings): counts}, for the best innings
+        self.knock = defaultdict(lambda: defaultdict(Counter))
+        self.spell = defaultdict(lambda: defaultdict(Counter))
         # player -> {(season, ground, phase): counts}, for the team figures
         self.part = defaultdict(lambda: defaultdict(Counter))
         with zipfile.ZipFile(path) as zf:
@@ -106,6 +109,9 @@ class Source:
                     self.part[striker][when].update(
                         faced=int(faced), scored=runs, boundaries=int(boundary))
                     self.part[bowler][when].update(bowled=int(legal), conceded=conceded)
+                    self.knock[(striker, ground)][(mid, number)].update(
+                        runs=runs, balls=int(faced))
+                    self.spell[(bowler, ground)][(mid, number)].update(runs=conceded)
                     for p in (striker, other):
                         self.batted[(p, ground)].add((mid, number))
                     self.bowled[(bowler, ground)].add((mid, number))
@@ -124,10 +130,12 @@ class Source:
                             for key in (ground, None):
                                 self.bat[(out, key)]["outs"] += 1
                             self.part[out][when]["outs"] += 1
+                            self.knock[(out, ground)][(mid, number)]["outs"] += 1
                         if w["kind"] in BOWLERS:
                             for key in (ground, None):
                                 self.bowl[(bowler, key)]["wickets"] += 1
                             self.part[bowler][when]["wickets"] += 1
+                            self.spell[(bowler, ground)][(mid, number)]["wickets"] += 1
                             self.pairs[(out, bowler)]["dismissals"] += 1
                             self.pairs_at[(out, bowler, ground)]["dismissals"] += 1
             if number == 1 and match["batted_first"]:
@@ -145,6 +153,19 @@ class Source:
                 if season >= since and ground in (None, where) and phase in (None, when):
                     total.update(counts)
         return total
+
+    def best_innings(self, player, ground):
+        """(runs, balls, not out): most runs, then not out, then fewest balls."""
+        knocks = [self.knock.get((player, ground), {}).get(k, Counter())
+                  for k in self.batted[(player, ground)]]
+        top = min(knocks, key=lambda c: (-c["runs"], c["outs"], c["balls"]))
+        return top["runs"], top["balls"], int(not top["outs"])
+
+    def best_bowling(self, player, ground):
+        """(wickets, runs): most wickets, then fewest runs."""
+        spells = [self.spell[(player, ground)][k] for k in self.bowled[(player, ground)]]
+        top = min(spells, key=lambda c: (-c["wickets"], c["runs"]))
+        return top["wickets"], top["runs"]
 
     def seasons(self):
         years = [m["season"] for m in self.matches]
@@ -306,6 +327,28 @@ def main():
             app = call("/api/matchup/faceoff", **params)
             report.same("team v team: seasons", choice, f"{since}-{latest}",
                         f"{app['seasons']['from']}-{app['seasons']['to']}")
+            wanted = {ids[g] for g in this_season} | ({venue} if venue else set())
+            report.same("ground by ground: which grounds", choice, str(sorted(wanted)),
+                        str(sorted(g["venue_id"] for g in app["grounds"])))
+            counts = [g["matches"] for g in listed]
+            report.same("ground by ground: busiest first", choice,
+                        str([g["venue_id"] for g in listed]),
+                        str([g["venue_id"] for g in app["grounds"]][:len(counts)]))
+            named = {vid: g for g, vid in ids.items()}
+            for entry in app["grounds"]:
+                for team, got in zip((a, b), entry["sides"]):
+                    players = [p.split("-")[0] for p in team["players"]]
+                    c = src.team(players, since, named[entry["venue_id"]], None)
+                    bat, bowl = got["batting"], got["bowling"]
+                    for field, said, want, tolerance in (
+                            ("faced", bat["balls"], c["faced"], 0),
+                            ("strike rate", bat["strike_rate"],
+                             ratio(c["scored"], c["faced"], 100), 0.0051),
+                            ("bowled", bowl["balls"], c["bowled"], 0),
+                            ("economy", bowl["economy"],
+                             ratio(c["conceded"], c["bowled"], 6), 0.0051)):
+                        report.same("ground by ground", f"{team['name']} {choice} "
+                                    f"{entry['name']} {field}", want, said, tolerance)
             for team, side in zip((a, b), app["sides"]):
                 players = [p.split("-")[0] for p in team["players"]]
                 report.same("team v team: ground figures present", team["name"],
@@ -370,6 +413,9 @@ def main():
                                 ("strike_rate", ratio(c["runs"], c["balls"], 100), 0.0051)):
                             report.same("batting at ground", f"{who} {field}", want, bat[field],
                                         tolerance)
+                        top = src.best_innings(pid, ground)
+                        report.same("best innings at ground", who, str(top), str(
+                            (bat["best_runs"], bat["best_balls"], int(bat["best_not_out"]))))
                     bowl, c = p["at_ground"]["bowling"], src.bowl.get((pid, ground), Counter())
                     innings = len(src.bowled.get((pid, ground), ()))
                     report.same("bowling at ground: present", who, int(innings > 0),
@@ -381,6 +427,9 @@ def main():
                                 ("economy", ratio(c["runs"], c["balls"], 6), 0.0051)):
                             report.same("bowling at ground", f"{who} {field}", want, bowl[field],
                                         tolerance)
+                        report.same("best bowling at ground", who,
+                                    str(src.best_bowling(pid, ground)),
+                                    str((bowl["best_wickets"], bowl["best_runs"])))
             for (batters, bowlers), pairs in zip(((a, b), (b, a)), app["pairs"]):
                 want = {(x, y) for x in batters["players"] for y in bowlers["players"]
                         if (x.split("-")[0], y.split("-")[0]) in src.pairs}

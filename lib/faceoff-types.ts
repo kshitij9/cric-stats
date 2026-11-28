@@ -3,7 +3,15 @@
  * which batters and bowlers have had the better of each other. Records of past
  * balls only; nothing here predicts a result. Safe to import from pages.
  */
-import { FEW_PAIR_BALLS, type Pair, type PlayingPhase, type SeasonChoice } from '@/lib/matchup-types';
+import {
+  FEW_PAIR_BALLS,
+  type GroundBatting,
+  type GroundBowling,
+  type MatchupPlayer,
+  type Pair,
+  type PlayingPhase,
+  type SeasonChoice,
+} from '@/lib/matchup-types';
 import type { VenueRef } from '@/lib/types';
 
 /** A side's figure over fewer balls than this is not compared. */
@@ -11,6 +19,7 @@ export const FEW_TEAM_BALLS = 120;
 /** Once is chance: a bowler has troubled a batter from this many dismissals. */
 export const BATTLE_DISMISSALS = 2;
 export const BATTLES_SHOWN = 3;
+export const STARS_SHOWN = 3;
 
 export type PhaseKey = 'all' | PlayingPhase;
 
@@ -39,7 +48,11 @@ export type FaceOff = {
   teams: [{ team_id: number; name: string }, { team_id: number; name: string }];
   /** For each team: its players' figures at every ground, and at the chosen one. */
   sides: [{ all: ByPhase; ground: ByPhase | null }, { all: ByPhase; ground: ByPhase | null }];
+  /** Both teams at each ground of the latest season, and at the chosen one. */
+  grounds: AtGround[];
 };
+
+export type AtGround = VenueRef & { sides: [TeamFigures, TeamFigures] };
 
 export type Measure = {
   key: string;
@@ -125,3 +138,35 @@ export const scoredFastest = (pairs: Pair[]) =>
       (a, b) => (b.strike_rate ?? 0) - (a.strike_rate ?? 0) || b.balls - a.balls || steady(a, b),
     )
     .slice(0, BATTLES_SHOWN);
+
+export type Star<T> = { player: MatchupPlayer; here: T };
+
+/** Who has made the most runs at the chosen ground; ties go to the quicker. */
+export const topRunScorers = (players: MatchupPlayer[]): Star<GroundBatting>[] =>
+  players
+    .flatMap((player) => {
+      const here = player.at_ground.batting;
+      return here && here.runs > 0 ? [{ player, here }] : [];
+    })
+    .sort(
+      (a, b) =>
+        b.here.runs - a.here.runs ||
+        a.here.balls - b.here.balls ||
+        a.player.player_id.localeCompare(b.player.player_id),
+    )
+    .slice(0, STARS_SHOWN);
+
+/** Who has taken the most wickets there; ties go to the more economical. */
+export const topWicketTakers = (players: MatchupPlayer[]): Star<GroundBowling>[] =>
+  players
+    .flatMap((player) => {
+      const here = player.at_ground.bowling;
+      return here && here.wickets > 0 ? [{ player, here }] : [];
+    })
+    .sort(
+      (a, b) =>
+        b.here.wickets - a.here.wickets ||
+        (a.here.economy ?? Infinity) - (b.here.economy ?? Infinity) ||
+        a.player.player_id.localeCompare(b.player.player_id),
+    )
+    .slice(0, STARS_SHOWN);

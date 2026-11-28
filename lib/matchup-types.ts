@@ -56,6 +56,10 @@ export type GroundBatting = {
   outs: number;
   average: number | null;
   strike_rate: number | null;
+  /** The highest innings here: most runs, then not out, then fewest balls. */
+  best_runs: number;
+  best_balls: number;
+  best_not_out: boolean;
 };
 
 export type GroundBowling = {
@@ -64,6 +68,9 @@ export type GroundBowling = {
   runs_conceded: number;
   wickets: number;
   economy: number | null;
+  /** The best innings here: most wickets, then fewest runs. */
+  best_wickets: number;
+  best_runs: number;
 };
 
 /** A player's whole IPL record, and their record at the chosen ground. */

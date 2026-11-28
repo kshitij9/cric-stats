@@ -5,11 +5,14 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import FaceOff from '@/components/FaceOff';
+import GroundByGround from '@/components/GroundByGround';
 import GroundCard from '@/components/GroundCard';
 import GroundRecords from '@/components/GroundRecords';
+import GroundStars from '@/components/GroundStars';
 import HeadToHead from '@/components/HeadToHead';
 import IplOnly from '@/components/IplOnly';
 import KeyBattles from '@/components/KeyBattles';
+import Stale from '@/components/Stale';
 import {
   Card,
   Empty,
@@ -21,6 +24,7 @@ import {
 } from '@/components/ui';
 import VenueSearch from '@/components/VenueSearch';
 import { useJson } from '@/hooks/useJson';
+import { useKept } from '@/hooks/useKept';
 import type { FaceOff as FaceOffData } from '@/lib/faceoff-types';
 import type { CurrentGround, GroundProfile, Matchup, SeasonChoice } from '@/lib/matchup-types';
 import { TEAM_SIZE, type TeamListing } from '@/lib/teams';
@@ -97,6 +101,17 @@ function Chosen() {
           `&v=${a.version}.${b.version}`
       : null,
   );
+
+  // what is on screen stays, dimmed, until the answer to a new choice arrives
+  const ground = useKept(profile);
+  const records = useKept(matched);
+  const figures = useKept(compared);
+
+  // the chosen ground is offered with the others even if not used lately
+  const switchable =
+    venue && !grounds.data?.some((g) => g.venue_id === venue.venue_id)
+      ? [...(grounds.data ?? []), venue]
+      : (grounds.data ?? []);
 
   if (teams.error) return <ErrorNote>{teams.error}</ErrorNote>;
   if (!teams.data) return <Loading />;
@@ -176,8 +191,8 @@ function Chosen() {
             onChange={(seasons) => seasons && choose({ seasons })}
           />
           <p className="text-[11px] text-zinc-500">
-            For the team comparison and the ground. Battles, player records and head-to-heads cover
-            every season.
+            For the team comparisons and the ground. Stars, battles, player records and
+            head-to-heads cover every season.
           </p>
         </div>
         {shared.length > 0 && (
@@ -194,43 +209,68 @@ function Chosen() {
 
       {a && b && (
         <>
-          <FaceOff faceOff={compared} />
-          {matched.data && (
-            <KeyBattles
-              sides={matched.data.sides}
-              pairs={matched.data.pairs}
-              ground={matched.data.venue !== null}
+          <Stale when={figures.stale}>
+            <FaceOff
+              faceOff={figures}
+              grounds={switchable}
+              ground={groundOk ? choice.ground : ''}
+              onGround={(id) => choose({ ground: id })}
             />
+          </Stale>
+          {records.data && (
+            <Stale when={records.stale}>
+              <div className="space-y-6">
+                {records.data.venue && (
+                  <GroundStars sides={records.data.sides} ground={records.data.venue.name} />
+                )}
+                <KeyBattles
+                  sides={records.data.sides}
+                  pairs={records.data.pairs}
+                  ground={records.data.venue !== null}
+                />
+              </div>
+            </Stale>
+          )}
+          {figures.data && (
+            <Stale when={figures.stale}>
+              <GroundByGround data={figures.data} onGround={(id) => choose({ ground: id })} />
+            </Stale>
           )}
         </>
       )}
 
-      {choice.ground && <GroundCard profile={profile} />}
+      {choice.ground && (
+        <Stale when={ground.stale}>
+          <GroundCard profile={ground} />
+        </Stale>
+      )}
 
       {!a || !b ? (
         <Empty>Choose two teams to see their players’ records and head-to-heads.</Empty>
-      ) : matched.error ? (
-        <ErrorNote>{matched.error}</ErrorNote>
-      ) : !matched.data ? (
+      ) : records.error ? (
+        <ErrorNote>{records.error}</ErrorNote>
+      ) : !records.data ? (
         <Loading />
       ) : (
-        <>
-          {matched.data.sides.map(
-            (side) =>
-              side.missing > 0 && (
-                <ErrorNote key={side.team_id}>
-                  {side.missing} of {side.name}’s players are no longer in the match data. Edit the
-                  team.
-                </ErrorNote>
-              ),
-          )}
-          {matched.data.venue ? (
-            <GroundRecords sides={matched.data.sides} ground={matched.data.venue.name} />
-          ) : (
-            <Empty>Choose a ground to see what these players have done there.</Empty>
-          )}
-          <HeadToHead sides={matched.data.sides} pairs={matched.data.pairs} />
-        </>
+        <Stale when={records.stale}>
+          <div className="space-y-6">
+            {records.data.sides.map(
+              (side) =>
+                side.missing > 0 && (
+                  <ErrorNote key={side.team_id}>
+                    {side.missing} of {side.name}’s players are no longer in the match data. Edit the
+                    team.
+                  </ErrorNote>
+                ),
+            )}
+            {records.data.venue ? (
+              <GroundRecords sides={records.data.sides} ground={records.data.venue.name} />
+            ) : (
+              <Empty>Choose a ground to see what these players have done there.</Empty>
+            )}
+            <HeadToHead sides={records.data.sides} pairs={records.data.pairs} />
+          </div>
+        </Stale>
       )}
     </>
   );

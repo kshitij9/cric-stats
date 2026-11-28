@@ -1,6 +1,6 @@
 import { query } from '@/lib/db';
 import type { ByPhase, FaceOff, PhaseKey, TeamFigures } from '@/lib/faceoff-types';
-import { seasonRange } from '@/lib/ground';
+import { currentGrounds, seasonRange } from '@/lib/ground';
 import type { SeasonChoice } from '@/lib/matchup-types';
 import { battingFigures, bowlingFigures, round } from '@/lib/stats';
 import type { Team } from '@/lib/teams';
@@ -23,21 +23,21 @@ type Counts = {
   wickets: number;
 };
 
-type Row = { player_id: string; phase: string; here: boolean } & Partial<Counts>;
+type Row = { player_id: string; phase: string; venue_id: string | null } & Partial<Counts>;
 
 const PHASES: PhaseKey[] = ['all', 'powerplay', 'middle', 'death'];
 
-// $1 players, $2 the ground (or NULL), $3 the first season counted
+// $1 players, $2 the first season counted
 const THEIRS = (player: string) => `
   ${player} = ANY($1::text[]) AND d.format = 'T20' AND d.competition = 'ipl'
-  AND d.date >= make_date($3::int, 1, 1)`;
-const HERE = `coalesce(d.venue_id = $2, false) AS here`;
+  AND d.date >= make_date($2::int, 1, 1)`;
 
-async function counts(ids: string[], venueId: string | null, from: number): Promise<Row[]> {
-  const values = [ids, venueId, from];
+/** What each player did, by phase and ground. */
+async function counts(ids: string[], from: number): Promise<Row[]> {
+  const values = [ids, from];
   const found = await Promise.all([
     query<Row>(
-      `SELECT d.batter_id AS player_id, d.phase, ${HERE},
+      `SELECT d.batter_id AS player_id, d.phase, d.venue_id,
               count(*) FILTER (WHERE d.ball_faced) AS faced,
               sum(d.runs_batter) AS scored,
               count(*) FILTER (WHERE d.boundary AND d.runs_batter IN (4, 6)) AS boundaries
@@ -47,14 +47,14 @@ async function counts(ids: string[], venueId: string | null, from: number): Prom
     ),
     // a dismissal counts for the player out, at either end
     query<Row>(
-      `SELECT w.player_out_id AS player_id, d.phase, ${HERE}, count(*) AS outs
+      `SELECT w.player_out_id AS player_id, d.phase, d.venue_id, count(*) AS outs
          FROM wickets w JOIN deliveries d ON d.id = w.delivery_id
         WHERE w.dismissal AND ${THEIRS('w.player_out_id')}
         GROUP BY 1, 2, 3`,
       values,
     ),
     query<Row>(
-      `SELECT d.bowler_id AS player_id, d.phase, ${HERE},
+      `SELECT d.bowler_id AS player_id, d.phase, d.venue_id,
               count(*) FILTER (WHERE d.legal_ball) AS bowled,
               sum(d.bowler_runs) AS conceded,
               sum(w.taken) AS wickets
@@ -119,22 +119,30 @@ export async function faceOff(
 ): Promise<FaceOff> {
   const { from, latest } = await seasonRange(choice);
   const ids = [...new Set(teams.flatMap((t) => t.players))];
-  const rows = await counts(ids, venue?.venue_id ?? null, from);
+  const [rows, current] = await Promise.all([counts(ids, from), currentGrounds()]);
 
-  const side = (team: Team) => {
+  const of = (team: Team) => {
     const players = new Set(team.players);
-    const theirs = rows.filter((r) => players.has(r.player_id));
-    return {
-      all: byPhase(theirs),
-      ground: venue ? byPhase(theirs.filter((r) => r.here)) : null,
-    };
+    return rows.filter((r) => players.has(r.player_id));
   };
+  const theirs = [of(teams[0]), of(teams[1])];
+  const at = (side: Row[], venueId: string) => side.filter((r) => r.venue_id === venueId);
+  const side = (i: 0 | 1) => ({
+    all: byPhase(theirs[i]),
+    ground: venue ? byPhase(at(theirs[i], venue.venue_id)) : null,
+  });
+  const listed: VenueRef[] = current.map(({ venue_id, name, city }) => ({ venue_id, name, city }));
+  if (venue && !listed.some((g) => g.venue_id === venue.venue_id)) listed.push(venue);
   const named = ({ team_id, name }: Team) => ({ team_id, name });
 
   return {
     venue,
     seasons: { choice, from, to: latest },
     teams: [named(teams[0]), named(teams[1])],
-    sides: [side(teams[0]), side(teams[1])],
+    sides: [side(0), side(1)],
+    grounds: listed.map((g) => ({
+      ...g,
+      sides: [figures(at(theirs[0], g.venue_id)), figures(at(theirs[1], g.venue_id))],
+    })),
   };
 }
