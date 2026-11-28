@@ -7,8 +7,8 @@ same day.
 |---|---|
 | 1. Team builder | Live since 27 November 2026 |
 | 2. Matchup facts | Live since 27 November 2026 |
-| 3. Simulator and its test | Not started |
-| 4. Matchup results | Not started |
+| 3. Simulator and its test | Done 27 November 2026: no win percentage |
+| 4. Matchup results | Not started; scope to be agreed |
 
 Notes from stage 1:
 
@@ -42,6 +42,15 @@ Notes from stage 2:
 - `db/etl/verify_matchup.py` found no differences in 258,777 values. It saves
   and removes temporary teams, so it needs an app with a scratch team database.
 - No loader change. Released with only an app rebuild.
+
+Result of stage 3, in full in `simulator-backtest.md`:
+
+- On 2023 to 2026 the win chance was no better than 50/50, so by the decision
+  point below none is shown.
+- First-innings totals ran 18 runs low and did not beat the ground's average.
+- Player runs did not beat the recent average. Player wickets did, by 2 to 4%.
+- Code: `lib/sim/` (simulator), `scripts/backtest/` (test). The app does not use
+  it yet.
 
 ## Goal
 

@@ -42,6 +42,10 @@ yarn-error.log*
 /db/etl/_etl.log
 __pycache__/
 
+# backtest build and results
+/.simbuild/
+/scripts/backtest/out/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
